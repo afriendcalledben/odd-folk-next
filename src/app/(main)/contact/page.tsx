@@ -1,7 +1,9 @@
 'use client';
 
 import ContactPage from '@/components/ContactPage';
+import { useAppNavigate } from '@/lib/navigation';
 
 export default function ContactRoute() {
-  return <ContactPage />;
+  const navigate = useAppNavigate();
+  return <ContactPage onNavigate={navigate} />;
 }

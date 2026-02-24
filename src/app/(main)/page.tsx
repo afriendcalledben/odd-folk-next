@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Hero from '@/components/Hero';
 import SearchBar, { type SearchFilters } from '@/components/SearchBar';
 import ProductGrid from '@/components/ProductGrid';
@@ -10,20 +11,22 @@ import { useAuth } from '@/context/AuthContext';
 import type { Product } from '@/types';
 
 const categories = [
-  "Furniture",
+  "Event furniture",
   "Lighting",
-  "Decor",
-  "Tableware",
-  "Textiles",
-  "Plants",
-  "Seasonal",
-  "Photography",
+  "Backdrops & installations",
+  "Tableware & serving",
+  "Textiles & soft furnishings",
+  "Decorative props",
+  "Plants & greenery",
+  "Seasonal/themed items",
+  "Photography & film",
   "Weddings",
-  "Signage"
+  "Signage & displays"
 ];
 
 export default function HomePage() {
-  const { toggleFavorite } = useAuth();
+  const router = useRouter();
+  const { toggleFavorite, favoriteIds, isLoggedIn } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({ search: '', location: '', startDate: '', endDate: '' });
@@ -46,9 +49,7 @@ export default function HomePage() {
   const handleSearch = useCallback((filters: SearchFilters) => {
     setSearchFilters(filters);
     setSelectedCategory('All');
-    loadProducts({
-      search: filters.search || undefined,
-    });
+    loadProducts({ search: filters.search || undefined });
   }, [loadProducts]);
 
   const handleCategoryChange = useCallback((category: string) => {
@@ -117,7 +118,10 @@ export default function HomePage() {
             ) : (
               <ProductGrid
                 products={products}
+                onSelectProduct={(product) => router.push(`/products/${product.id}`)}
+                favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
+                isLoggedIn={isLoggedIn}
               />
             )}
           </div>

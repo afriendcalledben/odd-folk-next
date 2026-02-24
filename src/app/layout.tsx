@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo_Black, Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import LayoutWrapper from "@/components/LayoutWrapper";
+import { AuthProvider } from "@/context/AuthContext";
 
 const archivoBlack = Archivo_Black({
   weight: "400",
@@ -29,7 +28,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${archivoBlack.variable} ${inter.variable} antialiased`}>
         <AuthProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          {children}
         </AuthProvider>
       </body>
     </html>

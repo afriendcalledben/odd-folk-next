@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { fetchProductById } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+import { useAppNavigate } from '@/lib/navigation';
 import ProductDetail from '@/components/ProductDetail';
 import type { Product } from '@/types';
 
 export default function ProductPage() {
   const params = useParams();
-  const { toggleFavorite } = useAuth();
+  const router = useRouter();
+  const navigate = useAppNavigate();
+  const { toggleFavorite, favoriteIds } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +43,9 @@ export default function ProductPage() {
   return (
     <ProductDetail
       product={product}
+      onBack={() => router.back()}
+      onNavigate={navigate}
+      isFavorited={favoriteIds.includes(product.id.toString())}
       onFavoriteChange={(productId) => toggleFavorite(productId)}
     />
   );

@@ -1,7 +1,9 @@
 'use client';
 
 import ListItem from '@/components/ListItem';
+import { useAppNavigate } from '@/lib/navigation';
 
 export default function ListItemPage() {
-  return <ListItem />;
+  const navigate = useAppNavigate();
+  return <ListItem onNavigate={navigate} />;
 }

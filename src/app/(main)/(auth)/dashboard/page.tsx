@@ -1,18 +1,24 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Dashboard from '@/components/Dashboard';
 
 function DashboardContent() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab') || 'listings';
 
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   if (!user) return null;
 
-  return <Dashboard user={user} activeTab={tab} />;
+  return <Dashboard user={user} activeTab={tab} onLogout={handleLogout} />;
 }
 
 export default function DashboardPage() {
