@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo_Black, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "react-hot-toast";
 
 const archivoBlack = Archivo_Black({
   weight: "400",
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className={`${archivoBlack.variable} ${inter.variable} antialiased`}>
         <AuthProvider>
           {children}
+          <Toaster position="bottom-center" toastOptions={{ style: { fontFamily: 'var(--font-inter)', borderRadius: '12px' } }} />
         </AuthProvider>
       </body>
     </html>

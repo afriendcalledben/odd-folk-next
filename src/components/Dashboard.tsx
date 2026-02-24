@@ -382,6 +382,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                     </div>
                 );
 
+            case 'favorites':
+                return (
+                    <div className="space-y-6">
+                        <h2 className="font-heading text-3xl text-brand-blue mb-8">Your Favourites</h2>
+                        <div className="bg-white border border-brand-grey rounded-[2.5rem] p-12 shadow-xl text-center">
+                            <svg className="w-16 h-16 text-brand-blue/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            <p className="font-heading text-xl text-brand-blue/50">Items you heart will appear here</p>
+                            <p className="text-sm text-brand-blue/40 mt-2">Browse the marketplace and tap the heart icon on any item to save it.</p>
+                        </div>
+                    </div>
+                );
+
             case 'profile':
                 return (
                     <div className="bg-white border border-brand-grey rounded-[2.5rem] p-10 shadow-xl">

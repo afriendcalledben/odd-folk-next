@@ -2,6 +2,7 @@
 
 
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { createDispute, reportUser, updateBookingStatus } from '../services/api';
 
 interface SupportCenterProps {
@@ -47,7 +48,7 @@ const SupportCenter: React.FC<SupportCenterProps> = ({ mode, bookingId, targetId
       setSuccess(true);
     } catch (err) {
       console.error(err);
-      alert("Something went wrong. Please try again.");
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

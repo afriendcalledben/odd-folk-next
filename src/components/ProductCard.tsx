@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import toast from 'react-hot-toast';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -21,7 +22,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isLoggedIn) {
-      alert('Please log in to save favorites');
+      toast('Log in to save favourites', { icon: '🔒' });
       return;
     }
     if (onToggleFavorite) {

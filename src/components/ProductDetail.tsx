@@ -2,6 +2,7 @@
 
 
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import type { Product, Review } from '../types';
 import { createBookingRequest, fetchReviewsForProduct, toggleFavorite, auth, getProductAvailability } from '../services/api';
 import BookingCalendar from './BookingCalendar';
@@ -43,7 +44,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
 
   const handleToggleFavorite = async () => {
     if (!auth.isLoggedIn()) {
-      alert('Please log in to save favorites');
+      toast('Log in to save favourites', { icon: '🔒' });
       return;
     }
     try {
@@ -76,7 +77,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
 
   const handleRequestBook = async () => {
       if (!pickupDate || !dropoffDate) {
-          alert("Please select rental dates.");
+          toast('Please select rental dates', { icon: '📅' });
           return;
       }
       try {
@@ -85,7 +86,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
           await createBookingRequest(product, startDateStr, endDateStr, selectedQuantity);
           if (onNavigate) onNavigate('dashboard');
       } catch (error: any) {
-          alert(error.message || "Booking failed");
+          toast.error(error.message || 'Booking failed');
       }
   };
 
@@ -116,7 +117,28 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
           <div className="lg:col-span-7 space-y-4">
              <div className="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group">
                  <img src={productImages[activeImageIndex]} alt={product.name} className="w-full h-full object-cover" />
-                 {/* ... (Existing navigation buttons) ... */}
+                 {productImages.length > 1 && (
+                   <>
+                     <button
+                       onClick={() => setActiveImageIndex(i => (i - 1 + productImages.length) % productImages.length)}
+                       className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow flex items-center justify-center hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
+                       aria-label="Previous image"
+                     >
+                       <svg className="w-5 h-5 text-brand-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                       </svg>
+                     </button>
+                     <button
+                       onClick={() => setActiveImageIndex(i => (i + 1) % productImages.length)}
+                       className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow flex items-center justify-center hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
+                       aria-label="Next image"
+                     >
+                       <svg className="w-5 h-5 text-brand-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                       </svg>
+                     </button>
+                   </>
+                 )}
              </div>
              <div className="flex gap-4 overflow-x-auto pb-2">
                  {productImages.map((img, idx) => (
@@ -233,7 +255,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                          <button
                             onClick={handleRequestBook}
                             disabled={product.quantityAvailable === 0 || !pickupDate || !dropoffDate}
-                            className="w-full bg-brand-orange text-white font-heading text-lg py-3 rounded-lg hover:brightness-90 shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
+                            className="w-full bg-brand-orange text-white font-heading text-lg py-3 rounded-full hover:brightness-90 shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
                          >
                              {product.quantityAvailable > 0 ? 'Send request' : 'Out of stock'}
                          </button>

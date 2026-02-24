@@ -103,7 +103,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialFilters }) => {
         )}
         <button
           type="submit"
-          className="flex-grow md:flex-grow-0 bg-brand-orange text-brand-white rounded px-6 py-3 hover:brightness-90 transition-all font-medium"
+          className="flex-grow md:flex-grow-0 bg-brand-orange text-brand-white rounded-full px-6 py-3 hover:brightness-90 transition-all font-heading"
         >
           Search
         </button>
