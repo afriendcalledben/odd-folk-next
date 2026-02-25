@@ -66,11 +66,11 @@ export async function signupAction(
   })
 
   if (error) {
-    console.error('[signupAction] Supabase error:', error.message, error.code, error.status)
-    if (error.message.toLowerCase().includes('already registered')) {
+    const msg = error.message.toLowerCase()
+    if (msg.includes('already registered') || msg.includes('duplicate') || msg.includes('unique constraint')) {
       return { error: 'An account with this email already exists' }
     }
-    return { error: `Could not create account: ${error.message}` }
+    return { error: 'Could not create account. Please try again.' }
   }
 
   // If email confirmation is disabled in Supabase, redirect to dashboard.
