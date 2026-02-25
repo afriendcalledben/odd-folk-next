@@ -1,37 +1,27 @@
-'use client';
+import { redirect } from 'next/navigation'
+import { createClient } from '@/utils/supabase/server'
+import LoginForm from '@/components/auth/LoginForm'
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense } from 'react';
-import Login from '@/components/Login';
-import { useAppNavigate } from '@/lib/navigation';
-import { useAuth } from '@/context/AuthContext';
-
-function LoginContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const navigate = useAppNavigate();
-  const { refreshUser } = useAuth();
-
-  const mode = searchParams.get('mode') === 'signup' ? 'signup' : 'login';
-
-  const handleLogin = async () => {
-    await refreshUser();
-    router.push('/dashboard');
-  };
-
-  return (
-    <Login
-      onNavigate={navigate}
-      initialMode={mode}
-      onLogin={handleLogin}
-    />
-  );
+interface Props {
+  searchParams: Promise<{ mode?: string; message?: string; error?: string }>
 }
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: Props) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    redirect('/dashboard')
+  }
+
+  const params = await searchParams
+  const mode = params.mode === 'signup' ? 'signup' : 'login'
+
   return (
-    <Suspense>
-      <LoginContent />
-    </Suspense>
-  );
+    <LoginForm
+      initialMode={mode}
+      message={params.message}
+      error={params.error}
+    />
+  )
 }

@@ -1,41 +1,31 @@
-import jwt from 'jsonwebtoken';
-import prisma from './prisma';
-import { NextRequest } from 'next/server';
-
-interface JwtPayload {
-  userId: string;
-  email: string;
-}
+import { createServerClient } from '@supabase/ssr'
+import { NextRequest } from 'next/server'
 
 export async function getAuthUser(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll()
+        },
+        // Session refresh is handled by middleware; no-op here
+        setAll() {},
+      },
+    }
+  )
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'secret'
-    ) as JwtPayload;
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, email: true },
-    });
-
-    return user;
-  } catch {
-    return null;
-  }
+  return { id: user.id, email: user.email! }
 }
 
 export async function requireAuth(req: NextRequest) {
-  const user = await getAuthUser(req);
+  const user = await getAuthUser(req)
   if (!user) {
-    throw new Error('Unauthorized');
+    throw new Error('Unauthorized')
   }
-  return user;
+  return user
 }

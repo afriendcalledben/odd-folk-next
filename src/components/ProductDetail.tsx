@@ -4,7 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import type { Product, Review } from '../types';
-import { createBookingRequest, fetchReviewsForProduct, toggleFavorite, auth, getProductAvailability } from '../services/api';
+import { createBookingRequest, fetchReviewsForProduct, toggleFavorite, getProductAvailability } from '../services/api';
+import { useAuth } from '@/context/AuthContext';
 import BookingCalendar from './BookingCalendar';
 import SupportCenter from './SupportCenter';
 import PriceBreakdown from './PriceBreakdown';
@@ -24,6 +25,7 @@ const formatDateLong = (date: Date | null) => {
 };
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNavigate, isFavorited = false, onFavoriteChange }) => {
+  const { isLoggedIn } = useAuth();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [localIsFavorite, setLocalIsFavorite] = useState(isFavorited);
@@ -43,7 +45,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
   }, [isFavorited]);
 
   const handleToggleFavorite = async () => {
-    if (!auth.isLoggedIn()) {
+    if (!isLoggedIn) {
       toast('Log in to save favourites', { icon: '🔒' });
       return;
     }

@@ -1,15 +1,15 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { auth, getUserFavoriteIds, toggleFavorite as apiToggleFavorite, type User } from '@/services/api';
+import { createClient } from '@/utils/supabase/client';
+import { getUserFavoriteIds, toggleFavorite as apiToggleFavorite, getCurrentUserProfile } from '@/services/api';
+import type { User } from '@/services/api';
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
   favoriteIds: string[];
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   loadFavorites: () => Promise<void>;
   toggleFavorite: (productId: string) => Promise<void>;
@@ -24,19 +24,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const supabase = createClient();
+
   const loadFavorites = useCallback(async () => {
-    if (auth.isLoggedIn()) {
+    try {
       const ids = await getUserFavoriteIds();
       setFavoriteIds(ids);
-    } else {
+    } catch {
       setFavoriteIds([]);
     }
   }, []);
 
   const refreshUser = useCallback(async () => {
-    const currentUser = await auth.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      setUser(profile);
       setIsLoggedIn(true);
       await loadFavorites();
     } else {
@@ -46,26 +48,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadFavorites]);
 
-  // Check for existing session on mount
   useEffect(() => {
+    // Fetch initial session
     refreshUser().finally(() => setIsLoading(false));
-  }, [refreshUser]);
 
-  const login = async (email: string, password: string) => {
-    await auth.login(email, password);
-    await refreshUser();
-  };
+    // Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        await refreshUser();
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsLoggedIn(false);
+        setFavoriteIds([]);
+      }
+    });
 
-  const signup = async (email: string, password: string, name: string) => {
-    await auth.signup(email, password, name);
-    await refreshUser();
-  };
+    return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const logout = () => {
-    auth.logout();
+  const logout = async () => {
     setUser(null);
     setIsLoggedIn(false);
     setFavoriteIds([]);
+    await supabase.auth.signOut();
   };
 
   const toggleFavorite = async (productId: string) => {
@@ -86,8 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isLoggedIn,
       favoriteIds,
-      login,
-      signup,
       logout,
       refreshUser,
       loadFavorites,
