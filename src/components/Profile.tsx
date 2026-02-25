@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { Camera } from 'lucide-react';
 import BookingCalendar from './BookingCalendar';
 import VerificationSection from './VerificationSection';
+import { useAuth } from '@/context/AuthContext';
+import { uploadAvatar, removeAvatar } from '@/services/api';
 
 interface ProfileProps {
   user: any;
@@ -12,9 +15,35 @@ interface ProfileProps {
 type ProfileSection = 'listings' | 'bookings' | 'favourites' | 'locations' | 'block-days' | 'wallet' | 'personal-info' | 'verification' | 'delete-account';
 
 const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
+  const { refreshUser } = useAuth();
   const [activeSection, setActiveSection] = useState<ProfileSection>('personal-info');
   const [vacationMode, setVacationMode] = useState(false);
   const [blockedDates, setBlockedDates] = useState<Date[]>([]);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      await uploadAvatar(file);
+      await refreshUser();
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setIsUploadingAvatar(true);
+    try {
+      await removeAvatar();
+      await refreshUser();
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   // Mock data for new sections
   const locations = [
@@ -45,6 +74,38 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
           <div className="space-y-8 animate-fade-in">
             <section className="bg-brand-white rounded-2xl shadow-sm border border-brand-grey p-8">
                <h2 className="font-heading text-2xl text-brand-burgundy mb-6">Personal information</h2>
+
+               {/* Avatar editor */}
+               <div className="flex items-center gap-6 mb-8">
+                 <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                   <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-brand-orange/20 bg-brand-blue flex items-center justify-center">
+                     {user.avatarUrl ? (
+                       <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                     ) : (
+                       <span className="font-heading text-3xl text-white">
+                         {user.name?.charAt(0).toUpperCase()}
+                       </span>
+                     )}
+                   </div>
+                   <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                     <Camera className="w-6 h-6 text-white" />
+                   </div>
+                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                 </div>
+                 <div className="space-y-1">
+                   <p className="font-body text-sm text-brand-burgundy/60">
+                     {isUploadingAvatar ? 'Uploading...' : 'Hover to change photo'}
+                   </p>
+                   <button
+                     onClick={handleRemoveAvatar}
+                     disabled={!!user.isGoogleUser || !user.avatarUrl || isUploadingAvatar}
+                     className="text-sm text-red-500 font-bold hover:underline disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
+                   >
+                     {user.isGoogleUser ? 'Managed by Google' : 'Remove photo'}
+                   </button>
+                 </div>
+               </div>
+
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                      <label className="block font-body text-sm font-bold text-brand-burgundy">Full name</label>
@@ -232,7 +293,13 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
             <div className="bg-brand-blue rounded-3xl shadow-xl border border-brand-white/10 overflow-hidden text-brand-white p-2">
                 <div className="p-6 border-b border-brand-white/10 mb-2">
                     <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveSection('personal-info')}>
-                        <img src={user.avatarUrl || 'https://i.pravatar.cc/150'} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-brand-yellow" />
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-brand-yellow" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full border-2 border-brand-yellow bg-brand-orange flex items-center justify-center flex-shrink-0">
+                            <span className="font-heading text-lg text-white">{user.name?.charAt(0).toUpperCase()}</span>
+                          </div>
+                        )}
                         <div>
                             <p className="font-bold text-sm leading-tight">{user.name}</p>
                             <p className="text-[10px] text-brand-yellow font-bold uppercase tracking-widest mt-1">Verified Folk</p>

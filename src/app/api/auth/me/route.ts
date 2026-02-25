@@ -1,13 +1,20 @@
 import { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
-import { requireAuth } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const authUser = await requireAuth(req);
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE!,
+      { cookies: { getAll: () => req.cookies.getAll(), setAll() {} } }
+    );
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return errorResponse('Unauthorized', 401);
 
-    // Fetch full user data
+    const isGoogleUser = authUser.identities?.some(i => i.provider === 'google') ?? false;
+
     const user = await prisma.user.findUnique({
       where: { id: authUser.id },
       select: {
@@ -30,10 +37,9 @@ export async function GET(req: NextRequest) {
       return errorResponse('User not found', 404);
     }
 
-    return successResponse({ user });
+    return successResponse({ user: { ...user, isGoogleUser } });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
-    const status = message === 'Unauthorized' ? 401 : message.includes('already') ? 400 : 500;
-    return errorResponse(message, status);
+    return errorResponse(message, 500);
   }
 }

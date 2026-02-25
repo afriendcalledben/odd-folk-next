@@ -89,6 +89,7 @@ export interface User {
   avatarUrl?: string;
   phone?: string;
   bio?: string;
+  isGoogleUser?: boolean;
 }
 
 export const getCurrentUserProfile = async (): Promise<User | null> => {
@@ -98,6 +99,26 @@ export const getCurrentUserProfile = async (): Promise<User | null> => {
   } catch {
     return null;
   }
+};
+
+export const uploadAvatar = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  const res = await fetch(`${API_BASE_URL}/users/me/avatar`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Upload failed' }));
+    throw new Error(error.error || 'Upload failed');
+  }
+  const data = await res.json();
+  return data.avatarUrl;
+};
+
+export const removeAvatar = async (): Promise<void> => {
+  await api.delete('/users/me/avatar');
 };
 
 // --- HELPER: Convert backend product to frontend Product type ---
