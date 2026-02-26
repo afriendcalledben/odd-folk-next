@@ -8,7 +8,7 @@ A peer-to-peer rental marketplace for event furniture and decorative props in Lo
 - **Language:** TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4 with custom brand theme in `globals.css`
 - **Database:** PostgreSQL via Supabase, using Prisma 7 ORM
-- **Auth:** JWT-based (bcryptjs + jsonwebtoken), stored in localStorage
+- **Auth:** Supabase Auth (`@supabase/ssr` + `@supabase/supabase-js`), session via cookies
 - **Payments:** Stripe (two-sided marketplace with Connect)
 - **Package manager:** npm
 - **Icons:** Lucide React
@@ -20,14 +20,18 @@ A peer-to-peer rental marketplace for event furniture and decorative props in Lo
 src/
 ├── app/                    # App Router pages and API routes
 │   ├── (main)/             # Main layout group
-│   │   ├── (auth)/         # Protected routes (dashboard, profile, list-item)
+│   │   ├── (auth)/         # Protected routes (dashboard, list-item, welcome)
 │   │   └── ...             # Public routes (products, users, faq, etc.)
 │   ├── api/                # API route handlers
-│   └── login/
+│   ├── auth/callback/      # Supabase OAuth PKCE callback
+│   └── login/              # Login page + server actions
 ├── components/             # React components (organised by feature)
+│   ├── auth/               # LoginForm, WelcomeForm
+│   └── ui/                 # Input, Textarea, Select, Button (exported via index.ts)
 ├── context/                # React Context providers (AuthContext)
 ├── services/               # API client (services/api.ts)
 ├── lib/                    # Server utilities (prisma, auth, api-response)
+├── utils/supabase/         # Supabase clients: client.ts (browser), server.ts (server)
 └── types.ts                # Shared TypeScript type definitions
 ```
 
@@ -69,7 +73,10 @@ Key variables in `.env.local`:
 
 - `DATABASE_URL` — Supabase pooled connection string
 - `DIRECT_URL` — Direct PostgreSQL connection (for migrations)
-- `JWT_SECRET` / `JWT_EXPIRES_IN` — Auth token configuration
+- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key (browser-safe)
+- `SUPABASE_SECRET_KEY` — Supabase secret key (server-only, for admin actions)
+- `NEXT_PUBLIC_SITE_URL` — Full site URL for OAuth redirect
 - `UPLOAD_DIR` — File upload directory
 
 ## Git
@@ -78,8 +85,8 @@ Do not create git commits unless explicitly asked.
 
 ## Key Patterns
 
-- **Auth flow:** Register/login via `/api/auth/*`, JWT returned and stored in localStorage, attached to requests via `Authorization: Bearer` header by `services/api.ts`.
-- **Protected routes:** Wrapped in the `(auth)` layout group which checks authentication.
+- **Auth flow:** Login/signup via server actions in `src/app/login/actions.ts` (Supabase Auth). Session stored in cookies, refreshed by `middleware.ts`. API routes authenticate via `requireAuth(req)` in `lib/auth.ts` which reads the Supabase session from cookies.
+- **Protected routes:** Wrapped in the `(auth)` layout group. Middleware at `middleware.ts` handles session refresh and redirects.
 - **State management:** React Context (`AuthContext`) for auth state and user favourites. No external state library.
 - **Database IDs:** UUIDs throughout.
 - **Images:** Configured for remote patterns (`i.pravatar.cc`, `picsum.photos`) in `next.config.ts`.

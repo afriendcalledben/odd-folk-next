@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import { Input, Textarea, Button } from '@/components/ui';
 import Chat from './Chat';
+import AvatarCropModal from './AvatarCropModal';
 import BookingCalendar from './BookingCalendar';
 import type { Booking, BookingStatus, Product } from '../types';
 
@@ -128,6 +129,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     const [profileErrors, setProfileErrors] = useState<{ username?: string; phone?: string }>({});
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
+    const [cropFile, setCropFile] = useState<File | null>(null);
+
+    type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken';
+    const [profileUsernameStatus, setProfileUsernameStatus] = useState<UsernameStatus>('idle');
+    const profileUsernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         setLocalAvatarUrl(user.avatarUrl);
@@ -137,12 +143,44 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
         setProfilePhone(user.phone || '');
     }, [user.avatarUrl, user.name, user.username, user.bio, user.phone]);
 
-    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Debounced username availability check (skip if unchanged from saved username)
+    const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
+    useEffect(() => {
+        if (profileUsernameDebounceRef.current) clearTimeout(profileUsernameDebounceRef.current);
+
+        const unchanged = profileUsername.toLowerCase() === (user.username || '').toLowerCase();
+        if (unchanged || !profileUsername || !USERNAME_RE.test(profileUsername)) {
+            setProfileUsernameStatus('idle');
+            return;
+        }
+
+        setProfileUsernameStatus('checking');
+        profileUsernameDebounceRef.current = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(profileUsername.toLowerCase())}`);
+                const json = await res.json();
+                setProfileUsernameStatus(json.data?.available ? 'available' : 'taken');
+            } catch {
+                setProfileUsernameStatus('idle');
+            }
+        }, 400);
+
+        return () => {
+            if (profileUsernameDebounceRef.current) clearTimeout(profileUsernameDebounceRef.current);
+        };
+    }, [profileUsername, user.username]);
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        if (avatarInputRef.current) avatarInputRef.current.value = ''; // allow re-selecting same file
+        setCropFile(file);
+    };
+
+    const handleCropConfirm = async (croppedFile: File) => {
         setIsUploadingAvatar(true);
         try {
-            const newUrl = await uploadAvatar(file);
+            const newUrl = await uploadAvatar(croppedFile);
             setLocalAvatarUrl(newUrl);
             await refreshUser();
             toast.success('Profile photo updated');
@@ -152,9 +190,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
             toast.error(msg);
         } finally {
             setIsUploadingAvatar(false);
-            if (avatarInputRef.current) avatarInputRef.current.value = '';
+            setCropFile(null);
         }
     };
+
+    const handleCropCancel = () => setCropFile(null);
 
     const handleRemoveAvatar = async () => {
         setIsUploadingAvatar(true);
@@ -173,9 +213,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         const newErrors: { username?: string; phone?: string } = {};
-        const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
         if (profileUsername && !USERNAME_RE.test(profileUsername)) {
             newErrors.username = 'Username must be 3–30 characters: letters, numbers, _ or -';
+        }
+        if (profileUsernameStatus === 'taken') {
+            newErrors.username = 'That username is already taken';
+        }
+        if (profileUsernameStatus === 'checking') {
+            return;
         }
         if (profilePhone && !validatePhone(profilePhone)) {
             newErrors.phone = 'Enter a valid phone number';
@@ -527,18 +572,47 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
 
                             {/* Form Fields */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <Input
-                                    label="Username"
-                                    type="text"
-                                    value={profileUsername}
-                                    onChange={e => {
-                                        setProfileUsername(e.target.value);
-                                        if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
-                                    }}
-                                    prefix="@"
-                                    error={profileErrors.username}
-                                    spellCheck={false}
-                                />
+                                <div>
+                                    <Input
+                                        label="Username"
+                                        type="text"
+                                        value={profileUsername}
+                                        onChange={e => {
+                                            setProfileUsername(e.target.value);
+                                            if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
+                                        }}
+                                        prefix="@"
+                                        error={profileErrors.username}
+                                        spellCheck={false}
+                                    />
+                                    <div className="mt-1 h-4 flex items-center gap-1.5">
+                                        {profileUsernameStatus === 'checking' && (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 animate-spin text-brand-burgundy/40" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                                </svg>
+                                                <span className="text-xs text-brand-burgundy/40">Checking…</span>
+                                            </>
+                                        )}
+                                        {profileUsernameStatus === 'available' && (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                <span className="text-xs text-green-600 font-medium">Username available!</span>
+                                            </>
+                                        )}
+                                        {profileUsernameStatus === 'taken' && (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                <span className="text-xs text-red-500 font-medium">Username taken.</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                                 <Input
                                     label="Full Name"
                                     type="text"
@@ -587,7 +661,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                 <Button
                                     type="submit"
                                     isLoading={isSavingProfile}
-                                    disabled={bioOverLimit}
+                                    disabled={bioOverLimit || profileUsernameStatus === 'taken' || profileUsernameStatus === 'checking'}
                                     size="lg"
                                 >
                                     {isSavingProfile ? 'Saving…' : 'Save Profile'}
@@ -633,6 +707,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                     </div>
                 </div>
             </div>
+
+            {cropFile && (
+                <AvatarCropModal
+                    file={cropFile}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                />
+            )}
         </div>
     );
 };
