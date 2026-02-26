@@ -8,6 +8,7 @@ import VerificationSection from './VerificationSection';
 import { useAuth } from '@/context/AuthContext';
 import { uploadAvatar, removeAvatar, updateUserProfile } from '@/services/api';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
+import { Input, Textarea, Button } from '@/components/ui';
 
 interface ProfileProps {
   user: any;
@@ -145,8 +146,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
       case 'personal-info': {
         const bioWords = profileBio.trim() === '' ? 0 : profileBio.trim().split(/\s+/).length;
         const bioOverLimit = bioWords > 200;
-        const inputClass = 'w-full p-3 bg-brand-white border border-brand-grey rounded-lg font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors';
-        const labelClass = 'block font-body text-sm font-bold text-brand-burgundy mb-1';
 
         return (
           <div className="space-y-8 animate-fade-in">
@@ -186,45 +185,35 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
 
                <form onSubmit={handleSaveProfile} noValidate>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div>
-                     <label className={labelClass}>Full name</label>
-                     <input
-                       type="text"
-                       value={profileName}
-                       onChange={e => setProfileName(e.target.value)}
-                       className={inputClass}
-                     />
-                   </div>
-                   <div>
-                     <label className={labelClass}>Username</label>
-                     <div className="relative">
-                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-burgundy/40 font-body text-sm select-none">@</span>
-                       <input
-                         type="text"
-                         value={profileUsername}
-                         onChange={e => {
-                           setProfileUsername(e.target.value);
-                           if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
-                         }}
-                         className={`${inputClass} pl-7`}
-                         spellCheck={false}
-                       />
-                     </div>
-                     {profileErrors.username && (
-                       <p className="mt-1 text-xs text-red-500">{profileErrors.username}</p>
-                     )}
-                   </div>
+                   <Input
+                     label="Full name"
+                     type="text"
+                     value={profileName}
+                     onChange={e => setProfileName(e.target.value)}
+                   />
+                   <Input
+                     label="Username"
+                     type="text"
+                     value={profileUsername}
+                     onChange={e => {
+                       setProfileUsername(e.target.value);
+                       if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
+                     }}
+                     prefix="@"
+                     error={profileErrors.username}
+                     spellCheck={false}
+                   />
                    <div className="md:col-span-2">
-                     <label className={labelClass}>Email address</label>
-                     <input
+                     <Input
+                       label="Email address"
                        type="email"
                        value={user.email}
                        readOnly
-                       className={`${inputClass} opacity-50 cursor-not-allowed`}
+                       className="opacity-50 cursor-not-allowed"
                      />
                    </div>
                    <div className="md:col-span-2">
-                     <label className={labelClass}>Phone number</label>
+                     <label className="block font-body text-sm font-bold text-brand-burgundy mb-1">Phone number</label>
                      <PhoneInput
                        value={profilePhone}
                        onChange={v => {
@@ -235,27 +224,29 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
                      />
                    </div>
                    <div className="md:col-span-2">
-                     <label className={labelClass}>Bio</label>
-                     <textarea
+                     <Textarea
+                       label="Bio"
+                       optional
                        value={profileBio}
                        onChange={e => setProfileBio(e.target.value)}
                        placeholder="Tell the community a little about yourself…"
                        rows={4}
-                       className={`${inputClass} resize-none`}
+                       hint={
+                         <p className={`text-xs text-right ${bioOverLimit ? 'text-red-500 font-bold' : 'text-brand-burgundy/40'}`}>
+                           {bioWords} / 200 words
+                         </p>
+                       }
                      />
-                     <p className={`mt-1 text-xs text-right ${bioOverLimit ? 'text-red-500 font-bold' : 'text-brand-burgundy/40'}`}>
-                       {bioWords} / 200 words
-                     </p>
                    </div>
                  </div>
                  <div className="mt-6 flex justify-end">
-                   <button
+                   <Button
                      type="submit"
-                     disabled={isSavingProfile || bioOverLimit}
-                     className="bg-brand-orange text-white font-heading px-8 py-3 rounded-xl hover:brightness-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                     isLoading={isSavingProfile}
+                     disabled={bioOverLimit}
                    >
                      {isSavingProfile ? 'Saving…' : 'Save changes'}
-                   </button>
+                   </Button>
                  </div>
                </form>
             </section>

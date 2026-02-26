@@ -79,16 +79,16 @@ const Chat: React.FC<ChatProps> = ({ bookingId, currentUserId }) => {
 
             <div className="border-t border-brand-grey bg-brand-white rounded-b-xl">
                 <form onSubmit={handleSend} className="p-3 flex gap-2">
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..." 
-                        className="flex-grow p-2.5 border border-brand-grey rounded-lg font-body text-brand-burgundy focus:outline-none focus:ring-1 focus:ring-brand-orange text-sm"
+                        placeholder="Type a message..."
+                        className="flex-grow p-2.5 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors text-sm"
                     />
-                    <button 
+                    <button
                         type="submit"
-                        className="bg-brand-orange text-white p-2.5 rounded-lg hover:brightness-90 transition-all"
+                        className="bg-brand-orange text-white p-2.5 rounded-xl hover:brightness-110 transition-all"
                     >
                         <svg className="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     </button>

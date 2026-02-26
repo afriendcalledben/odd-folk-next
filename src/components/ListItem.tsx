@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { createProduct, uploadImages, getLocations } from '../services/api';
+import { Button } from '@/components/ui';
+
+const inputClass = 'w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors';
+const labelClass = 'block font-body text-sm font-bold text-brand-burgundy mb-1';
 
 const FormStep: React.FC<{ number: number; title: string; children: React.ReactNode; className?: string }> = ({ number, title, children, className = "" }) => (
   <div className={`flex gap-6 ${className}`}>
@@ -11,7 +15,7 @@ const FormStep: React.FC<{ number: number; title: string; children: React.ReactN
       </div>
     </div>
     <div className="flex-grow pt-1">
-      <h2 className="font-heading text-2xl text-brand-blue mb-2">{title}</h2>
+      <h2 className="font-heading text-2xl text-brand-burgundy mb-2">{title}</h2>
       {children}
     </div>
   </div>
@@ -58,7 +62,6 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
   ];
 
   useEffect(() => {
-    // Fetch user's locations
     getLocations().then((locs) => {
       setLocations(locs || []);
     }).catch(() => {
@@ -85,7 +88,6 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
     const newFiles = [...imageFiles];
     const newPreviews = [...imagePreviews];
 
-    // Replace or add at index
     newFiles[index] = file;
     newPreviews[index] = URL.createObjectURL(file);
 
@@ -96,36 +98,16 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
   const handleSubmit = async () => {
     setError('');
 
-    // Validation
-    if (!title.trim()) {
-      setError('Please enter a title for your item');
-      return;
-    }
-    if (!selectedCategory) {
-      setError('Please select a category');
-      return;
-    }
-    if (!condition) {
-      setError('Please select the condition');
-      return;
-    }
-    if (!color) {
-      setError('Please select a color');
-      return;
-    }
-    if (!price1Day || parseFloat(price1Day) <= 0) {
-      setError('Please enter a valid price for 1 day');
-      return;
-    }
-    if (imageFiles.filter(f => f).length < 1) {
-      setError('Please upload at least one image');
-      return;
-    }
+    if (!title.trim()) { setError('Please enter a title for your item'); return; }
+    if (!selectedCategory) { setError('Please select a category'); return; }
+    if (!condition) { setError('Please select the condition'); return; }
+    if (!color) { setError('Please select a color'); return; }
+    if (!price1Day || parseFloat(price1Day) <= 0) { setError('Please enter a valid price for 1 day'); return; }
+    if (imageFiles.filter(f => f).length < 1) { setError('Please upload at least one image'); return; }
 
     setIsSubmitting(true);
 
     try {
-      // Upload images first
       const validFiles = imageFiles.filter(f => f);
       let imageUrls: string[] = [];
 
@@ -133,7 +115,6 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
         imageUrls = await uploadImages(validFiles);
       }
 
-      // Create the product
       await createProduct({
         title: title.trim(),
         description: description.trim(),
@@ -149,7 +130,6 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
         locationId: selectedLocationId || undefined,
       });
 
-      // Success - navigate to dashboard
       onNavigate('dashboard-listings');
     } catch (err: any) {
       setError(err.message || 'Failed to create listing. Please try again.');
@@ -168,7 +148,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
             <p className="font-body text-brand-orange text-lg">Dust off that velvet chair. Share your oddities with the London creative community.</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl border border-brand-grey p-8 md:p-12 space-y-16 text-brand-blue">
+        <div className="bg-white rounded-3xl shadow-2xl border border-brand-grey p-8 md:p-12 space-y-16">
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
@@ -178,24 +158,19 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
 
           {/* Step 1: Category */}
           <FormStep number={1} title="Pick a category">
-            <div className="relative">
-                <select
-                  className="w-full p-4 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none appearance-none cursor-pointer"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                  <option value="" className="text-brand-burgundy" disabled>Select where it fits</option>
-                  {categories.map(cat => <option key={cat} value={cat} className="text-brand-burgundy">{cat}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-brand-blue">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                </div>
-            </div>
+            <select
+              className={inputClass}
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="" disabled>Select where it fits</option>
+              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
           </FormStep>
 
           {/* Step 2: Tags */}
           <FormStep number={2} title="Help them find it">
-              <p className="font-body text-brand-blue/70 mb-4 text-sm -mt-2">Keywords matter. Think 'vintage', 'boho', '70s', 'neon'.</p>
+              <p className="font-body text-brand-burgundy/60 mb-4 text-sm -mt-2">Keywords matter. Think 'vintage', 'boho', '70s', 'neon'.</p>
               <div className="flex gap-2 mb-4">
                   <input
                       type="text"
@@ -203,20 +178,17 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={handleAddTag}
                       placeholder="e.g. velvet..."
-                      className="flex-grow p-4 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue outline-none focus:ring-1 focus:ring-brand-blue placeholder-brand-blue/30"
+                      className={inputClass}
                   />
-                  <button
-                    onClick={handleAddTag}
-                    className="bg-brand-blue text-white font-heading px-6 py-2 rounded-xl hover:brightness-110 transition-all active:scale-95 shadow-md"
-                  >
+                  <Button variant="secondary" size="sm" onClick={handleAddTag} className="flex-shrink-0">
                     Add
-                  </button>
+                  </Button>
               </div>
               <div className="flex flex-wrap gap-2">
                   {selectedTags.map(tag => (
-                      <span key={tag} className="px-4 py-2 rounded-full text-sm bg-brand-blue/5 text-brand-blue border border-brand-blue/20 flex items-center gap-2 group">
+                      <span key={tag} className="px-4 py-2 rounded-full text-sm bg-brand-orange/10 text-brand-burgundy border border-brand-orange/20 flex items-center gap-2 group">
                           {tag}
-                          <button onClick={() => removeTag(tag)} className="text-brand-blue/40 hover:text-brand-orange transition-colors">
+                          <button onClick={() => removeTag(tag)} className="text-brand-burgundy/40 hover:text-brand-orange transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                       </span>
@@ -226,68 +198,62 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
 
           {/* Step 3: Item Details */}
           <FormStep number={3} title="The gritty details">
-            <div className="space-y-6 text-brand-blue">
+            <div className="space-y-6">
               <div>
-                <label className="block font-bold text-brand-blue/90 mb-2 text-sm uppercase tracking-wider">Give it a name</label>
+                <label className={labelClass}>Give it a name</label>
                 <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Stunning Mid-Century Velvet Armchair"
-                    className="w-full p-4 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue outline-none focus:ring-1 focus:ring-brand-blue placeholder-brand-blue/30"
+                    className={inputClass}
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="relative">
-                    <label className="block font-bold text-brand-blue/90 mb-2 text-sm uppercase tracking-wider">Condition</label>
+                  <div>
+                    <label className={labelClass}>Condition</label>
                     <select
-                        className="w-full p-4 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue outline-none focus:ring-1 focus:ring-brand-blue appearance-none cursor-pointer"
+                        className={inputClass}
                         value={condition}
                         onChange={(e) => setCondition(e.target.value)}
                     >
-                        <option value="" disabled className="text-brand-burgundy">Be honest...</option>
-                        {['Like New', 'Good', 'Fair', 'Poor', 'Vintage/Antique'].map(c => <option key={c} value={c} className="text-brand-burgundy">{c}</option>)}
+                        <option value="" disabled>Be honest...</option>
+                        {['Like New', 'Good', 'Fair', 'Poor', 'Vintage/Antique'].map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <div className="pointer-events-none absolute bottom-4 right-4 text-brand-blue">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                    </div>
                   </div>
-                  <div className="relative">
-                    <label className="block font-bold text-brand-blue/90 mb-2 text-sm uppercase tracking-wider">Colour</label>
+                  <div>
+                    <label className={labelClass}>Colour</label>
                     <select
-                        className="w-full p-4 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue outline-none focus:ring-1 focus:ring-brand-blue appearance-none cursor-pointer"
+                        className={inputClass}
                         value={color}
                         onChange={(e) => setColor(e.target.value)}
                     >
-                        <option value="" disabled className="text-brand-burgundy">Select colour</option>
-                        {colors.map(c => <option key={c} value={c} className="text-brand-burgundy">{c}</option>)}
+                        <option value="" disabled>Select colour</option>
+                        {colors.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <div className="pointer-events-none absolute bottom-4 right-4 text-brand-blue">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                    </div>
                   </div>
                   <div>
-                    <label className="block font-bold text-brand-blue/90 mb-2 text-sm uppercase tracking-wider">How many do you have?</label>
+                    <label className={labelClass}>How many do you have?</label>
                     <input
                       type="number"
                       min="1"
                       value={quantity}
                       onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                      className="w-full p-4 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue outline-none focus:ring-1 focus:ring-brand-blue"
+                      className={inputClass}
                     />
                   </div>
               </div>
 
               <div>
-                <label className="block font-bold text-brand-blue/90 mb-2 text-sm uppercase tracking-wider">Tell its story</label>
+                <label className={labelClass}>Tell its story</label>
                 <textarea
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full p-4 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue resize-none outline-none focus:ring-1 focus:ring-brand-blue placeholder-brand-blue/30"
+                    className={`${inputClass} resize-none`}
                     placeholder="Describe the style, history, dimensions, and any unique features. Sell the dream."
-                ></textarea>
+                />
               </div>
             </div>
           </FormStep>
@@ -295,12 +261,12 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
           {/* Step 4: Pictures */}
           <FormStep number={4} title="Show it off">
             <div className="space-y-4">
-              <p className="font-body text-sm text-brand-blue/70 leading-relaxed">
+              <p className="font-body text-sm text-brand-burgundy/60 leading-relaxed">
                 Upload at least 1 photo. First one on a plain background, please. Then let us see it in the wild.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <label key={i} className="aspect-[4/3] bg-brand-blue/5 border-2 border-dashed border-brand-blue/20 rounded-xl flex items-center justify-center cursor-pointer hover:bg-brand-blue/10 hover:border-brand-blue transition-all group overflow-hidden relative">
+                  <label key={i} className="aspect-[4/3] bg-brand-orange/5 border-2 border-dashed border-brand-orange/20 rounded-xl flex items-center justify-center cursor-pointer hover:bg-brand-orange/10 hover:border-brand-orange transition-all group overflow-hidden relative">
                     <input
                       type="file"
                       className="hidden"
@@ -310,8 +276,8 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
                     {imagePreviews[i] ? (
                       <img src={imagePreviews[i]} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
                     ) : (
-                      <svg className="w-8 h-8 text-brand-blue/30 group-hover:text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <svg className="w-8 h-8 text-brand-burgundy/20 group-hover:text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     )}
@@ -324,55 +290,31 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
           {/* Step 5: Price */}
           <FormStep number={5} title="Set your price">
             <div className="space-y-6">
-              <p className="font-body text-sm text-brand-blue/70">
+              <p className="font-body text-sm text-brand-burgundy/60">
                 You can offer deals for longer bookings. It's up to you.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-brand-blue/70 mb-2 uppercase tracking-tight">Price for 1 day (required)</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-blue/60 font-body">£</span>
-                    <input
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      value={price1Day}
-                      onChange={(e) => setPrice1Day(e.target.value)}
-                      placeholder="20"
-                      className="w-full pl-8 pr-4 py-3.5 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none placeholder-brand-blue/20"
-                    />
+                {[
+                  { label: 'Price for 1 day (required)', value: price1Day, setter: setPrice1Day, placeholder: '20' },
+                  { label: 'Price for 3 days', value: price3Day, setter: setPrice3Day, placeholder: '50' },
+                  { label: 'Price for 7 days', value: price7Day, setter: setPrice7Day, placeholder: '100' },
+                ].map(({ label, value, setter, placeholder }) => (
+                  <div key={label}>
+                    <label className={labelClass}>{label}</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-burgundy/40 font-body text-sm select-none">£</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        value={value}
+                        onChange={(e) => setter(e.target.value)}
+                        placeholder={placeholder}
+                        className={`${inputClass} pl-7`}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-brand-blue/70 mb-2 uppercase tracking-tight">Price for 3 days</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-blue/60 font-body">£</span>
-                    <input
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      value={price3Day}
-                      onChange={(e) => setPrice3Day(e.target.value)}
-                      placeholder="50"
-                      className="w-full pl-8 pr-4 py-3.5 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none placeholder-brand-blue/20"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-brand-blue/70 mb-2 uppercase tracking-tight">Price for 7 days</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-blue/60 font-body">£</span>
-                    <input
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      value={price7Day}
-                      onChange={(e) => setPrice7Day(e.target.value)}
-                      placeholder="100"
-                      className="w-full pl-8 pr-4 py-3.5 bg-brand-white border border-brand-blue/30 rounded-xl font-body text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none placeholder-brand-blue/20"
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </FormStep>
@@ -380,7 +322,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
           {/* Step 6: Location */}
           <FormStep number={6} title="Where does it live?">
             <div className="space-y-6">
-              <p className="font-body text-sm text-brand-blue/70">
+              <p className="font-body text-sm text-brand-burgundy/60">
                 We won't share the exact address until a booking is confirmed and paid for.
               </p>
               {locations.length > 0 ? (
@@ -393,30 +335,33 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
                         value={loc.id}
                         checked={selectedLocationId === loc.id}
                         onChange={(e) => setSelectedLocationId(e.target.value)}
-                        className="mt-1 w-5 h-5 rounded-full border-brand-blue/30 bg-brand-white text-brand-blue focus:ring-brand-blue"
+                        className="mt-1 w-5 h-5 rounded-full border-brand-grey bg-brand-white text-brand-orange focus:ring-brand-orange"
                       />
                       <div className="font-body">
-                        <p className="font-bold text-brand-blue group-hover:underline">{loc.name}</p>
-                        <p className="text-sm text-brand-blue/60">{loc.address}, {loc.city}</p>
+                        <p className="font-bold text-brand-burgundy group-hover:underline">{loc.name}</p>
+                        <p className="text-sm text-brand-burgundy/60">{loc.address}, {loc.city}</p>
                       </div>
                     </label>
                   ))}
                 </div>
               ) : (
-                <p className="text-brand-blue/50 italic">No locations saved yet. You can add one from your profile.</p>
+                <p className="text-brand-burgundy/50 italic">No locations saved yet. You can add one from your profile.</p>
               )}
             </div>
           </FormStep>
 
           <div className="pt-8 border-t border-brand-grey">
-             <button
+             <Button
                 onClick={handleSubmit}
-                disabled={!isFormValid || isSubmitting}
-                className="w-full bg-brand-orange text-white text-xl font-heading px-12 py-5 rounded-2xl hover:brightness-110 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-1 active:translate-y-0"
+                fullWidth
+                size="lg"
+                isLoading={isSubmitting}
+                disabled={!isFormValid}
+                className="text-xl py-5 rounded-2xl hover:-translate-y-1 active:translate-y-0"
              >
                 {isSubmitting ? 'Publishing...' : 'Publish treasure'}
-             </button>
-             <p className="text-center text-brand-blue/50 text-xs mt-6">
+             </Button>
+             <p className="text-center text-brand-burgundy/40 text-xs mt-6">
                 By publishing, you agree to Odd Folk's Terms of Service.
              </p>
           </div>

@@ -74,7 +74,7 @@ export default function PhoneInput({ value, onChange, error, disabled }: PhoneIn
     onChange(newNumber ? `${dial} ${newNumber}` : '');
   };
 
-  const baseInput = 'bg-brand-white border border-brand-grey font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors disabled:opacity-50';
+  const base = 'bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <div>
@@ -83,7 +83,7 @@ export default function PhoneInput({ value, onChange, error, disabled }: PhoneIn
           value={dial}
           onChange={e => handleDialChange(e.target.value)}
           disabled={disabled}
-          className={`${baseInput} rounded-lg px-2 py-3 text-sm flex-shrink-0 w-36`}
+          className={`${base} px-2 py-3 text-sm flex-shrink-0 w-36 appearance-none`}
         >
           {COUNTRIES.map(c => (
             <option key={c.code} value={c.dial}>
@@ -97,7 +97,7 @@ export default function PhoneInput({ value, onChange, error, disabled }: PhoneIn
           onChange={e => handleNumberChange(e.target.value)}
           placeholder="7700 900077"
           disabled={disabled}
-          className={`${baseInput} rounded-lg p-3 flex-1 min-w-0`}
+          className={`${base} p-3 flex-1 min-w-0 placeholder:text-brand-burgundy/40`}
         />
       </div>
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}

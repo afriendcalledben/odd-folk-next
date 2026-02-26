@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { submitContactForm } from '../services/api';
+import { Input, Select, Textarea, Button } from '@/components/ui';
 
 interface ContactPageProps {
   onNavigate: (view: string) => void;
@@ -51,12 +52,9 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
           <p className="font-body text-brand-burgundy/70 text-lg mb-8">
             Thank you for reaching out. We'll get back to you within 24-48 hours.
           </p>
-          <button
-            onClick={() => onNavigate('home')}
-            className="bg-brand-orange text-white font-heading px-8 py-3 rounded-lg hover:brightness-90 transition-all"
-          >
+          <Button onClick={() => onNavigate('home')}>
             Back to Home
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -84,81 +82,57 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block font-body text-sm font-bold text-brand-burgundy mb-2">
-                      Your Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      required
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="w-full p-3 bg-white border border-brand-grey rounded-lg font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                      placeholder="Jane Smith"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-body text-sm font-bold text-brand-burgundy mb-2">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full p-3 bg-white border border-brand-grey rounded-lg font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                      placeholder="jane@example.com"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-body text-sm font-bold text-brand-burgundy mb-2">
-                    Subject *
-                  </label>
-                  <select
-                    name="subject"
+                  <Input
+                    label="Your Name"
+                    type="text"
+                    name="name"
                     required
-                    value={formData.subject}
+                    value={formData.name}
                     onChange={handleChange}
-                    className="w-full p-3 bg-white border border-brand-grey rounded-lg font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue"
-                  >
-                    <option value="">Select a topic</option>
-                    <option value="General Inquiry">General Inquiry</option>
-                    <option value="Booking Help">Booking Help</option>
-                    <option value="Listing Help">Listing Help</option>
-                    <option value="Payment Issue">Payment Issue</option>
-                    <option value="Report a Problem">Report a Problem</option>
-                    <option value="Partnership">Partnership</option>
-                    <option value="Press">Press</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-body text-sm font-bold text-brand-burgundy mb-2">
-                    Message *
-                  </label>
-                  <textarea
-                    name="message"
+                    placeholder="Jane Smith"
+                  />
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    name="email"
                     required
-                    rows={6}
-                    value={formData.message}
+                    value={formData.email}
                     onChange={handleChange}
-                    className="w-full p-3 bg-white border border-brand-grey rounded-lg font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue resize-none"
-                    placeholder="Tell us how we can help..."
+                    placeholder="jane@example.com"
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-brand-orange text-white font-heading text-lg py-4 rounded-lg hover:brightness-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                <Select
+                  label="Subject"
+                  name="subject"
+                  required
+                  value={formData.subject}
+                  onChange={handleChange}
                 >
+                  <option value="">Select a topic</option>
+                  <option value="General Inquiry">General Inquiry</option>
+                  <option value="Booking Help">Booking Help</option>
+                  <option value="Listing Help">Listing Help</option>
+                  <option value="Payment Issue">Payment Issue</option>
+                  <option value="Report a Problem">Report a Problem</option>
+                  <option value="Partnership">Partnership</option>
+                  <option value="Press">Press</option>
+                  <option value="Other">Other</option>
+                </Select>
+
+                <Textarea
+                  label="Message"
+                  name="message"
+                  required
+                  rows={6}
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Tell us how we can help..."
+                />
+
+                <Button type="submit" fullWidth size="lg" isLoading={isSubmitting}>
                   {isSubmitting ? 'Sending...' : 'Send Message'}
-                </button>
+                </Button>
               </form>
             </div>
           </div>
@@ -200,12 +174,14 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
               <p className="text-sm text-brand-burgundy/70 mb-4">
                 Find quick answers to common questions about renting, listing, and more.
               </p>
-              <button
+              <Button
                 onClick={() => onNavigate('faq')}
-                className="w-full bg-brand-burgundy text-white font-heading py-2 rounded-lg hover:brightness-90 transition-all text-sm"
+                variant="danger"
+                size="sm"
+                fullWidth
               >
                 View FAQ
-              </button>
+              </Button>
             </div>
 
             {/* Location Card */}

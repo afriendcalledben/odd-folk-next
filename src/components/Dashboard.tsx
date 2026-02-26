@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar } from '../services/api';
 import { useAuth } from '@/context/AuthContext';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
+import { Input, Textarea, Button } from '@/components/ui';
 import Chat from './Chat';
 import BookingCalendar from './BookingCalendar';
 import type { Booking, BookingStatus, Product } from '../types';
@@ -492,11 +493,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
             case 'profile': {
                 const bioWords = profileBio.trim() === '' ? 0 : profileBio.trim().split(/\s+/).length;
                 const bioOverLimit = bioWords > 200;
-                const fieldClass = 'w-full p-4 bg-brand-blue/5 border border-brand-grey rounded-2xl font-bold text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all';
-                const labelClass = 'text-[10px] uppercase font-bold text-brand-blue/40 tracking-widest ml-1';
                 return (
                     <div className="bg-white border border-brand-grey rounded-[2.5rem] p-10 shadow-xl">
-                        <h2 className="font-heading text-3xl text-brand-blue mb-10">Your Profile Information</h2>
+                        <h2 className="font-heading text-3xl text-brand-burgundy mb-10">Your Profile Information</h2>
                         <form onSubmit={handleSaveProfile} noValidate>
                           <div className="space-y-12">
                             {/* Profile Photo Section */}
@@ -505,21 +504,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                     <img
                                       src={localAvatarUrl || '/avatar-placeholder.svg'}
                                       alt={user.name}
-                                      className="w-32 h-32 rounded-full object-cover border-4 border-brand-blue/10 group-hover:border-brand-blue transition-all"
+                                      className="w-32 h-32 rounded-full object-cover border-4 border-brand-orange/20 group-hover:border-brand-orange transition-all"
                                     />
-                                    <label className="absolute bottom-0 right-0 bg-brand-blue text-white p-2 rounded-full cursor-pointer shadow-lg hover:scale-110 transition-transform">
+                                    <label className="absolute bottom-0 right-0 bg-brand-orange text-white p-2 rounded-full cursor-pointer shadow-lg hover:scale-110 transition-transform">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
                                         <input ref={avatarInputRef} type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isUploadingAvatar} />
                                     </label>
                                 </div>
                                 <div className="text-center md:text-left">
-                                    <h4 className="font-heading text-xl text-brand-blue">Profile Photo</h4>
-                                    <p className="text-sm text-brand-blue/50 max-w-xs mt-1">{isUploadingAvatar ? 'Uploading…' : 'Make a great first impression. We recommend a clear, friendly photo of yourself.'}</p>
+                                    <h4 className="font-heading text-xl text-brand-burgundy">Profile Photo</h4>
+                                    <p className="text-sm text-brand-burgundy/50 max-w-xs mt-1">{isUploadingAvatar ? 'Uploading…' : 'Make a great first impression. We recommend a clear, friendly photo of yourself.'}</p>
                                     <button
                                         type="button"
                                         onClick={handleRemoveAvatar}
                                         disabled={!localAvatarUrl || isUploadingAvatar}
-                                        className="mt-4 text-brand-blue font-bold text-sm hover:underline disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
+                                        className="mt-4 text-red-500 font-bold text-sm hover:underline disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
                                     >
                                         Remove photo
                                     </button>
@@ -528,49 +527,43 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
 
                             {/* Form Fields */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-2">
-                                    <label className={labelClass}>Username</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-blue/30 font-bold">@</span>
-                                        <input
-                                            type="text"
-                                            value={profileUsername}
-                                            onChange={e => {
-                                                setProfileUsername(e.target.value);
-                                                if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
-                                            }}
-                                            className={`${fieldClass} pl-9`}
-                                            spellCheck={false}
-                                        />
-                                    </div>
-                                    {profileErrors.username && <p className="mt-1 text-xs text-red-500">{profileErrors.username}</p>}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className={labelClass}>Full Name</label>
-                                    <input
-                                        type="text"
-                                        value={profileName}
-                                        onChange={e => setProfileName(e.target.value)}
-                                        className={fieldClass}
-                                    />
-                                </div>
+                                <Input
+                                    label="Username"
+                                    type="text"
+                                    value={profileUsername}
+                                    onChange={e => {
+                                        setProfileUsername(e.target.value);
+                                        if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
+                                    }}
+                                    prefix="@"
+                                    error={profileErrors.username}
+                                    spellCheck={false}
+                                />
+                                <Input
+                                    label="Full Name"
+                                    type="text"
+                                    value={profileName}
+                                    onChange={e => setProfileName(e.target.value)}
+                                />
 
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className={labelClass}>Bio</label>
-                                    <textarea
+                                <div className="md:col-span-2">
+                                    <Textarea
+                                        label="Bio"
+                                        optional
                                         rows={4}
                                         value={profileBio}
                                         onChange={e => setProfileBio(e.target.value)}
                                         placeholder="Tell other folk a bit about yourself, your style, or what you collect..."
-                                        className={`${fieldClass} resize-none`}
+                                        hint={
+                                            <p className={`text-right text-xs font-bold ${bioOverLimit ? 'text-red-500' : 'text-brand-burgundy/40'}`}>
+                                                {bioWords} / 200 words
+                                            </p>
+                                        }
                                     />
-                                    <p className={`text-right text-[10px] font-bold uppercase tracking-tight ${bioOverLimit ? 'text-red-500' : 'text-brand-blue/30'}`}>
-                                        {bioWords} / 200 words
-                                    </p>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className={labelClass}>Phone Number</label>
+                                <div>
+                                    <label className="block font-body text-sm font-bold text-brand-burgundy mb-1">Phone Number</label>
                                     <PhoneInput
                                         value={profilePhone}
                                         onChange={v => {
@@ -580,24 +573,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                         error={profileErrors.phone}
                                     />
                                 </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className={labelClass}>Email Address</label>
-                                    <input
+                                <div className="md:col-span-2">
+                                    <Input
+                                        label="Email Address"
                                         type="email"
                                         value={user.email || ''}
                                         readOnly
-                                        className={`${fieldClass} opacity-50 cursor-not-allowed`}
+                                        className="opacity-50 cursor-not-allowed"
                                     />
                                 </div>
                             </div>
                             <div className="pt-6 border-t border-brand-grey flex justify-end">
-                                <button
+                                <Button
                                     type="submit"
-                                    disabled={isSavingProfile || bioOverLimit}
-                                    className="bg-brand-blue text-white font-heading px-12 py-4 rounded-2xl hover:brightness-110 shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    isLoading={isSavingProfile}
+                                    disabled={bioOverLimit}
+                                    size="lg"
                                 >
                                     {isSavingProfile ? 'Saving…' : 'Save Profile'}
-                                </button>
+                                </Button>
                             </div>
                           </div>
                         </form>

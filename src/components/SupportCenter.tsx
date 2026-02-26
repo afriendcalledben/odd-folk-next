@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { createDispute, reportUser, updateBookingStatus } from '../services/api';
+import { Select, Textarea, Button } from '@/components/ui';
 
 interface SupportCenterProps {
   mode: 'dispute' | 'report_user' | 'handover' | 'return';
@@ -67,7 +68,7 @@ const SupportCenter: React.FC<SupportCenterProps> = ({ mode, bookingId, targetId
              mode === 'return' ? 'Return confirmed. Funds released.' : 
              'Your report has been submitted for review.'}
           </p>
-          <button onClick={onClose} className="w-full bg-brand-blue text-white py-2 rounded-lg font-bold">Close</button>
+          <Button variant="secondary" fullWidth onClick={onClose}>Close</Button>
         </div>
       </div>
     );
@@ -115,13 +116,14 @@ const SupportCenter: React.FC<SupportCenterProps> = ({ mode, bookingId, targetId
                 </label>
               </div>
 
-              <button 
-                onClick={handleSubmit} 
-                disabled={!conditionConfirmed || !photosTaken || isSubmitting}
-                className="w-full bg-brand-orange text-white py-3 rounded-xl font-bold hover:brightness-95 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              <Button
+                onClick={handleSubmit}
+                fullWidth
+                isLoading={isSubmitting}
+                disabled={!conditionConfirmed || !photosTaken}
               >
                 {isSubmitting ? 'Processing...' : 'Confirm & Complete'}
-              </button>
+              </Button>
 
               <div className="text-center pt-2">
                 <button className="text-sm text-red-500 font-bold hover:underline">
@@ -134,49 +136,43 @@ const SupportCenter: React.FC<SupportCenterProps> = ({ mode, bookingId, targetId
           {/* DISPUTE / REPORT FORM */}
           {(mode === 'dispute' || mode === 'report_user') && (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-brand-burgundy mb-2">Reason</label>
-                <select 
-                  value={reason} 
-                  onChange={(e) => setReason(e.target.value)} 
-                  required 
-                  className="w-full p-3 border border-brand-grey rounded-lg focus:ring-1 focus:ring-brand-orange outline-none"
-                >
-                  <option value="" disabled>Select a reason...</option>
-                  {mode === 'dispute' ? (
-                    <>
-                      <option value="damage">Item damaged</option>
-                      <option value="missing_item">Item missing / not received</option>
-                      <option value="not_as_described">Not as described</option>
-                      <option value="other">Other</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="harassment">Harassment</option>
-                      <option value="scam">Suspicious / Scam</option>
-                      <option value="no_show">No show</option>
-                      <option value="other">Other</option>
-                    </>
-                  )}
-                </select>
-              </div>
+              <Select
+                label="Reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select a reason...</option>
+                {mode === 'dispute' ? (
+                  <>
+                    <option value="damage">Item damaged</option>
+                    <option value="missing_item">Item missing / not received</option>
+                    <option value="not_as_described">Not as described</option>
+                    <option value="other">Other</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="harassment">Harassment</option>
+                    <option value="scam">Suspicious / Scam</option>
+                    <option value="no_show">No show</option>
+                    <option value="other">Other</option>
+                  </>
+                )}
+              </Select>
 
-              <div>
-                <label className="block text-sm font-bold text-brand-burgundy mb-2">Description</label>
-                <textarea 
-                  value={description} 
-                  onChange={(e) => setDescription(e.target.value)} 
-                  required 
-                  rows={4}
-                  className="w-full p-3 border border-brand-grey rounded-lg focus:ring-1 focus:ring-brand-orange outline-none resize-none"
-                  placeholder="Please provide specific details..."
-                ></textarea>
-              </div>
+              <Textarea
+                label="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                rows={4}
+                placeholder="Please provide specific details..."
+              />
 
               {mode === 'dispute' && (
                 <div>
-                  <label className="block text-sm font-bold text-brand-burgundy mb-2">Evidence (Optional)</label>
-                  <div className="border-2 border-dashed border-brand-grey rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="block font-body text-sm font-bold text-brand-burgundy mb-1">Evidence (Optional)</label>
+                  <div className="border-2 border-dashed border-brand-grey rounded-xl p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors">
                     <input type="file" onChange={handleFileUpload} className="hidden" id="file-upload" />
                     <label htmlFor="file-upload" className="cursor-pointer">
                       <p className="text-brand-blue font-bold">Click to upload photo</p>
@@ -186,13 +182,9 @@ const SupportCenter: React.FC<SupportCenterProps> = ({ mode, bookingId, targetId
                 </div>
               )}
 
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="w-full bg-brand-burgundy text-white py-3 rounded-xl font-bold hover:bg-brand-orange transition-colors"
-              >
+              <Button type="submit" variant="danger" fullWidth isLoading={isSubmitting}>
                 {isSubmitting ? 'Submitting...' : 'Submit Report'}
-              </button>
+              </Button>
             </form>
           )}
         </div>

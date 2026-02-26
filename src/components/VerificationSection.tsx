@@ -8,6 +8,7 @@ import {
   uploadImages,
   type VerificationStatus,
 } from '../services/api';
+import { Button } from '@/components/ui';
 
 interface VerificationSectionProps {
   onVerificationChange?: () => void;
@@ -167,14 +168,14 @@ const VerificationSection: React.FC<VerificationSectionProps> = ({ onVerificatio
                   }}
                   disabled={uploadingId}
                 />
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-heading text-sm ${
+                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-heading text-sm transition-all ${
                   uploadingId
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-brand-orange text-white hover:brightness-90'
+                    ? 'bg-brand-orange/50 text-white cursor-not-allowed'
+                    : 'bg-brand-orange text-white hover:brightness-110'
                 }`}>
                   {uploadingId ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Uploading...
                     </>
                   ) : (
@@ -224,14 +225,14 @@ const VerificationSection: React.FC<VerificationSectionProps> = ({ onVerificatio
                   }}
                   disabled={uploadingAddress}
                 />
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-heading text-sm ${
+                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-heading text-sm transition-all ${
                   uploadingAddress
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-brand-orange text-white hover:brightness-90'
+                    ? 'bg-brand-orange/50 text-white cursor-not-allowed'
+                    : 'bg-brand-orange text-white hover:brightness-110'
                 }`}>
                   {uploadingAddress ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Uploading...
                     </>
                   ) : (
@@ -267,19 +268,15 @@ const VerificationSection: React.FC<VerificationSectionProps> = ({ onVerificatio
                       placeholder="+44 7700 900000"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="flex-grow px-3 py-2 border border-brand-grey rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30"
+                      className="flex-grow p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors text-sm"
                     />
-                    <button
+                    <Button
+                      size="sm"
                       onClick={handlePhoneVerify}
-                      disabled={verifyingPhone}
-                      className={`px-4 py-2 rounded-lg font-heading text-sm ${
-                        verifyingPhone
-                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                          : 'bg-brand-orange text-white hover:brightness-90'
-                      }`}
+                      isLoading={verifyingPhone}
                     >
                       {verifyingPhone ? 'Verifying...' : 'Verify'}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>

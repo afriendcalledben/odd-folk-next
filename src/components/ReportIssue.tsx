@@ -2,6 +2,7 @@
 
 
 import React, { useState } from 'react';
+import { Select, Textarea, Button } from '@/components/ui';
 
 interface ReportIssueProps {
   onClose: () => void;
@@ -29,7 +30,7 @@ const ReportIssue: React.FC<ReportIssueProps> = ({ onClose, type, id }) => {
           </div>
           <h3 className="font-heading text-xl text-brand-burgundy mb-2">Report Received</h3>
           <p className="font-body text-brand-burgundy/70 mb-6 text-sm">Thank you for keeping our community safe. We will review your report within 24 hours.</p>
-          <button onClick={onClose} className="bg-brand-blue text-white px-6 py-2 rounded-lg font-bold hover:brightness-90 transition-all">Close</button>
+          <Button variant="secondary" onClick={onClose}>Close</Button>
         </div>
       </div>
     );
@@ -48,37 +49,32 @@ const ReportIssue: React.FC<ReportIssueProps> = ({ onClose, type, id }) => {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-brand-burgundy mb-2">Reason</label>
-            <select 
-              value={reason} 
-              onChange={(e) => setReason(e.target.value)}
-              className="w-full p-3 border border-brand-grey rounded-lg focus:outline-none focus:border-brand-orange text-brand-burgundy font-body"
-              required
-            >
-              <option value="" disabled>Select a reason</option>
-              <option value="inappropriate">Inappropriate content</option>
-              <option value="scam">Suspicious or scam</option>
-              <option value="misleading">Misleading information</option>
-              <option value="harassment">Harassment or abusive behavior</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-bold text-brand-burgundy mb-2">Details</label>
-            <textarea 
-              value={details}
-              onChange={(e) => setDetails(e.target.value)}
-              className="w-full p-3 border border-brand-grey rounded-lg h-32 resize-none focus:outline-none focus:border-brand-orange text-brand-burgundy font-body"
-              placeholder="Please provide more context..."
-              required
-            ></textarea>
-          </div>
+          <Select
+            label="Reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            required
+          >
+            <option value="" disabled>Select a reason</option>
+            <option value="inappropriate">Inappropriate content</option>
+            <option value="scam">Suspicious or scam</option>
+            <option value="misleading">Misleading information</option>
+            <option value="harassment">Harassment or abusive behavior</option>
+            <option value="other">Other</option>
+          </Select>
 
-          <button type="submit" className="w-full bg-brand-burgundy text-white py-3 rounded-lg font-bold hover:bg-brand-orange transition-colors">
+          <Textarea
+            label="Details"
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            className="h-32"
+            placeholder="Please provide more context..."
+            required
+          />
+
+          <Button type="submit" variant="danger" fullWidth>
             Submit Report
-          </button>
+          </Button>
         </form>
       </div>
     </div>
