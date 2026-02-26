@@ -75,7 +75,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, onBack, onProductClic
             {/* Avatar */}
             <div className="relative">
               <img
-                src={profile.avatarUrl || 'https://i.pravatar.cc/150'}
+                src={profile.avatarUrl || '/avatar-placeholder.svg'}
                 alt={profile.name}
                 className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-brand-orange/20"
               />
@@ -214,7 +214,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, onBack, onProductClic
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <img
-                          src={review.reviewer.avatarUrl || 'https://i.pravatar.cc/150'}
+                          src={review.reviewer.avatarUrl || '/avatar-placeholder.svg'}
                           alt={review.reviewer.name}
                           className="w-10 h-10 rounded-full object-cover border border-brand-grey/30"
                         />

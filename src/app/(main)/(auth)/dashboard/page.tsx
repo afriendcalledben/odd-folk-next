@@ -26,6 +26,12 @@ function DashboardContent() {
 
   if (!user) return null;
 
+  // Safety net: send users who haven't completed onboarding to /welcome
+  if (!user.username) {
+    router.replace('/welcome');
+    return null;
+  }
+
   return <Dashboard user={user} activeTab={tab} onLogout={handleLogout} />;
 }
 

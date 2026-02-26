@@ -314,7 +314,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={review.reviewerAvatar || 'https://i.pravatar.cc/150'}
+                          src={review.reviewerAvatar || '/avatar-placeholder.svg'}
                           alt={review.reviewerName}
                           className="w-10 h-10 rounded-full object-cover border border-brand-grey/30"
                         />

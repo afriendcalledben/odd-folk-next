@@ -86,6 +86,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  username?: string;
   avatarUrl?: string;
   phone?: string;
   bio?: string;
@@ -114,12 +115,19 @@ export const uploadAvatar = async (file: File): Promise<string> => {
     throw new Error(error.error || 'Upload failed');
   }
   const data = await res.json();
-  return data.avatarUrl;
+  return data.data?.avatarUrl;
 };
 
 export const removeAvatar = async (): Promise<void> => {
   await api.delete('/users/me/avatar');
 };
+
+export const updateUserProfile = async (data: {
+  name?: string;
+  username?: string;
+  phone?: string;
+  bio?: string;
+}): Promise<User> => api.put<User>('/users/me', data);
 
 // --- HELPER: Convert backend product to frontend Product type ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,7 +145,7 @@ const toFrontendProduct = (p: any): Product => ({
   owner: {
     id: p.owner?.id || p.ownerId,
     name: p.owner?.name || 'Unknown',
-    avatarUrl: p.owner?.avatarUrl || 'https://i.pravatar.cc/150',
+    avatarUrl: p.owner?.avatarUrl || '/avatar-placeholder.svg',
   },
 });
 

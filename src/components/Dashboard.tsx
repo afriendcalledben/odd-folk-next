@@ -162,7 +162,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
             <div className="bg-brand-blue rounded-[2.5rem] shadow-xl border border-white/10 overflow-hidden text-brand-white">
                 <div className="p-8 border-b border-white/10">
                     <div className="flex items-center space-x-4">
-                        <img src={user.avatarUrl || 'https://i.pravatar.cc/150'} alt={user.name} className="w-16 h-16 rounded-full object-cover border-2 border-white/20" />
+                        <img src={user.avatarUrl || '/avatar-placeholder.svg'} alt={user.name} className="w-16 h-16 rounded-full object-cover border-2 border-white/20" />
                         <div>
                             <p className="font-heading text-xl leading-tight">{user.name}</p>
                             <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1">Odd Folk Member</p>
@@ -405,7 +405,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                             <div className="flex flex-col md:flex-row items-center gap-8 pb-8 border-b border-brand-grey">
                                 <div className="relative group">
                                     <img
-                                      src={user.avatarUrl || 'https://i.pravatar.cc/150'}
+                                      src={user.avatarUrl || '/avatar-placeholder.svg'}
                                       alt={user.name}
                                       className="w-32 h-32 rounded-full object-cover border-4 border-brand-blue/10 group-hover:border-brand-blue transition-all"
                                     />

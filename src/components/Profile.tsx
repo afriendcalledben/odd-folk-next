@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BookingCalendar from './BookingCalendar';
 import VerificationSection from './VerificationSection';
 import { useAuth } from '@/context/AuthContext';
-import { uploadAvatar, removeAvatar } from '@/services/api';
+import { uploadAvatar, removeAvatar, updateUserProfile } from '@/services/api';
+import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 
 interface ProfileProps {
   user: any;
@@ -24,6 +25,27 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
   // Local avatar URL so the UI updates immediately without waiting for prop re-render
   const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null | undefined>(user.avatarUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep local avatar state in sync when parent refreshes user data
+  useEffect(() => {
+    setLocalAvatarUrl(user.avatarUrl);
+  }, [user.avatarUrl]);
+
+  // Personal-info form state
+  const [profileName, setProfileName] = useState(user.name || '');
+  const [profileUsername, setProfileUsername] = useState(user.username || '');
+  const [profileBio, setProfileBio] = useState(user.bio || '');
+  const [profilePhone, setProfilePhone] = useState(user.phone || '');
+  const [profileErrors, setProfileErrors] = useState<{ username?: string; phone?: string }>({});
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Sync profile form fields when user prop updates
+  useEffect(() => {
+    setProfileName(user.name || '');
+    setProfileUsername(user.username || '');
+    setProfileBio(user.bio || '');
+    setProfilePhone(user.phone || '');
+  }, [user.name, user.username, user.bio, user.phone]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,6 +78,44 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
     }
   };
 
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: { username?: string; phone?: string } = {};
+    const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
+
+    if (profileUsername && !USERNAME_RE.test(profileUsername)) {
+      newErrors.username = 'Username must be 3–30 characters: letters, numbers, _ or -';
+    }
+    if (profilePhone && !validatePhone(profilePhone)) {
+      newErrors.phone = 'Enter a valid phone number';
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setProfileErrors(newErrors);
+      return;
+    }
+    setProfileErrors({});
+    setIsSavingProfile(true);
+    try {
+      await updateUserProfile({
+        name: profileName || undefined,
+        username: profileUsername ? profileUsername.toLowerCase() : undefined,
+        bio: profileBio.trim() || undefined,
+        phone: profilePhone || undefined,
+      });
+      await refreshUser();
+      toast.success('Profile updated');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not save profile';
+      if (message.toLowerCase().includes('username')) {
+        setProfileErrors(prev => ({ ...prev, username: 'That username is already taken' }));
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   // Mock data for new sections
   const locations = [
     { id: 1, name: 'studio', address: 'Argall Avenue 15, E10 7QE London', type: 'Work' },
@@ -80,7 +140,12 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
 
   const renderSectionContent = () => {
     switch (activeSection) {
-      case 'personal-info':
+      case 'personal-info': {
+        const bioWords = profileBio.trim() === '' ? 0 : profileBio.trim().split(/\s+/).length;
+        const bioOverLimit = bioWords > 200;
+        const inputClass = 'w-full p-3 bg-brand-white border border-brand-grey rounded-lg font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors';
+        const labelClass = 'block font-body text-sm font-bold text-brand-burgundy mb-1';
+
         return (
           <div className="space-y-8 animate-fade-in">
             <section className="bg-brand-white rounded-2xl shadow-sm border border-brand-grey p-8">
@@ -117,23 +182,84 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
                  </div>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                     <label className="block font-body text-sm font-bold text-brand-burgundy">Full name</label>
-                     <input type="text" defaultValue={user.name} className="w-full p-3 bg-brand-white border border-brand-grey rounded-lg font-body text-brand-burgundy" />
-                  </div>
-                  <div className="space-y-2">
-                     <label className="block font-body text-sm font-bold text-brand-burgundy">Phone number</label>
-                     <input type="tel" defaultValue="+44 7700 900077" className="w-full p-3 bg-brand-white border border-brand-grey rounded-lg font-body text-brand-burgundy" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                     <label className="block font-body text-sm font-bold text-brand-burgundy">Email address</label>
-                     <input type="email" defaultValue="jamie@oddfolk.co.uk" className="w-full p-3 bg-brand-white border border-brand-grey rounded-lg font-body text-brand-burgundy" />
-                  </div>
-               </div>
+               <form onSubmit={handleSaveProfile} noValidate>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                     <label className={labelClass}>Full name</label>
+                     <input
+                       type="text"
+                       value={profileName}
+                       onChange={e => setProfileName(e.target.value)}
+                       className={inputClass}
+                     />
+                   </div>
+                   <div>
+                     <label className={labelClass}>Username</label>
+                     <div className="relative">
+                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-burgundy/40 font-body text-sm select-none">@</span>
+                       <input
+                         type="text"
+                         value={profileUsername}
+                         onChange={e => {
+                           setProfileUsername(e.target.value);
+                           if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
+                         }}
+                         className={`${inputClass} pl-7`}
+                         spellCheck={false}
+                       />
+                     </div>
+                     {profileErrors.username && (
+                       <p className="mt-1 text-xs text-red-500">{profileErrors.username}</p>
+                     )}
+                   </div>
+                   <div className="md:col-span-2">
+                     <label className={labelClass}>Email address</label>
+                     <input
+                       type="email"
+                       value={user.email}
+                       readOnly
+                       className={`${inputClass} opacity-50 cursor-not-allowed`}
+                     />
+                   </div>
+                   <div className="md:col-span-2">
+                     <label className={labelClass}>Phone number</label>
+                     <PhoneInput
+                       value={profilePhone}
+                       onChange={v => {
+                         setProfilePhone(v);
+                         if (profileErrors.phone) setProfileErrors(prev => ({ ...prev, phone: undefined }));
+                       }}
+                       error={profileErrors.phone}
+                     />
+                   </div>
+                   <div className="md:col-span-2">
+                     <label className={labelClass}>Bio</label>
+                     <textarea
+                       value={profileBio}
+                       onChange={e => setProfileBio(e.target.value)}
+                       placeholder="Tell the community a little about yourself…"
+                       rows={4}
+                       className={`${inputClass} resize-none`}
+                     />
+                     <p className={`mt-1 text-xs text-right ${bioOverLimit ? 'text-red-500 font-bold' : 'text-brand-burgundy/40'}`}>
+                       {bioWords} / 200 words
+                     </p>
+                   </div>
+                 </div>
+                 <div className="mt-6 flex justify-end">
+                   <button
+                     type="submit"
+                     disabled={isSavingProfile || bioOverLimit}
+                     className="bg-brand-orange text-white font-heading px-8 py-3 rounded-xl hover:brightness-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                   >
+                     {isSavingProfile ? 'Saving…' : 'Save changes'}
+                   </button>
+                 </div>
+               </form>
             </section>
           </div>
         );
+      }
 
       case 'verification':
         return (

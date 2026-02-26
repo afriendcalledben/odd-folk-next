@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const protectedPaths = ['/dashboard', '/profile', '/list-item']
+  const protectedPaths = ['/dashboard', '/profile', '/list-item', '/welcome']
   const isProtectedPath = protectedPaths.some((p) => pathname.startsWith(p))
 
   if (!user && isProtectedPath) {

@@ -73,9 +73,9 @@ export async function signupAction(
     return { error: 'Could not create account. Please try again.' }
   }
 
-  // If email confirmation is disabled in Supabase, redirect to dashboard.
+  // If email confirmation is disabled in Supabase, redirect to welcome onboarding.
   // If enabled, the user will be in a limbo state — redirect to a check-email notice.
-  redirect('/dashboard')
+  redirect('/welcome')
 }
 
 export async function logoutAction() {

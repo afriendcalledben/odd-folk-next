@@ -57,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
                 >
                   <p className="font-body text-base font-bold text-white leading-none group-hover:text-brand-yellow transition-colors">{user.name}</p>
                   <div className={`w-11 h-11 rounded-full p-0.5 border-2 transition-colors ${isDropdownOpen ? 'border-brand-yellow' : 'border-white/20 group-hover:border-brand-yellow'}`}>
-                    <img src={user.avatarUrl || 'https://i.pravatar.cc/150'} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                    <img src={user.avatarUrl || '/avatar-placeholder.svg'} alt={user.name} className="w-full h-full rounded-full object-cover" />
                   </div>
                 </div>
                 {isDropdownOpen && (
@@ -80,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
           <div className="flex lg:hidden items-center gap-3">
             {user && (
               <div className="w-9 h-9 rounded-full border-2 border-white/30 overflow-hidden">
-                <img src={user.avatarUrl || 'https://i.pravatar.cc/150'} alt={user.name} className="w-full h-full object-cover" />
+                <img src={user.avatarUrl || '/avatar-placeholder.svg'} alt={user.name} className="w-full h-full object-cover" />
               </div>
             )}
             <button
