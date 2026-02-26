@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions } from '../services/api';
+import React, { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
+import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar } from '../services/api';
+import { useAuth } from '@/context/AuthContext';
+import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import Chat from './Chat';
 import BookingCalendar from './BookingCalendar';
 import type { Booking, BookingStatus, Product } from '../types';
 
 interface DashboardProps {
-    user: { id: string; name: string; avatarUrl?: string };
+    user: { id: string; name: string; avatarUrl?: string; username?: string; bio?: string; phone?: string; email?: string };
     activeTab?: string;
     onLogout: () => void;
 }
@@ -101,6 +104,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
 );
 
 const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onLogout }) => {
+    const { refreshUser } = useAuth();
     const [currentTab, setCurrentTab] = useState(activeTab);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [myProducts, setMyProducts] = useState<Product[]>([]);
@@ -112,6 +116,93 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     const [locations, setLocations] = useState<any[]>([]);
     const [walletBalance, setWalletBalance] = useState({ available: 0, pending: 0, escrow: 0 });
     const [transactions, setTransactions] = useState<any[]>([]);
+
+    // Profile form state
+    const [localAvatarUrl, setLocalAvatarUrl] = useState<string | undefined>(user.avatarUrl);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const [profileName, setProfileName] = useState(user.name || '');
+    const [profileUsername, setProfileUsername] = useState(user.username || '');
+    const [profileBio, setProfileBio] = useState(user.bio || '');
+    const [profilePhone, setProfilePhone] = useState(user.phone || '');
+    const [profileErrors, setProfileErrors] = useState<{ username?: string; phone?: string }>({});
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setLocalAvatarUrl(user.avatarUrl);
+        setProfileName(user.name || '');
+        setProfileUsername(user.username || '');
+        setProfileBio(user.bio || '');
+        setProfilePhone(user.phone || '');
+    }, [user.avatarUrl, user.name, user.username, user.bio, user.phone]);
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsUploadingAvatar(true);
+        try {
+            const newUrl = await uploadAvatar(file);
+            setLocalAvatarUrl(newUrl);
+            await refreshUser();
+            toast.success('Profile photo updated');
+        } catch {
+            toast.error('Upload failed. Please try again.');
+        } finally {
+            setIsUploadingAvatar(false);
+            if (avatarInputRef.current) avatarInputRef.current.value = '';
+        }
+    };
+
+    const handleRemoveAvatar = async () => {
+        setIsUploadingAvatar(true);
+        try {
+            await removeAvatar();
+            setLocalAvatarUrl(undefined);
+            await refreshUser();
+            toast.success('Profile photo removed');
+        } catch {
+            toast.error('Could not remove photo. Please try again.');
+        } finally {
+            setIsUploadingAvatar(false);
+        }
+    };
+
+    const handleSaveProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const newErrors: { username?: string; phone?: string } = {};
+        const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
+        if (profileUsername && !USERNAME_RE.test(profileUsername)) {
+            newErrors.username = 'Username must be 3–30 characters: letters, numbers, _ or -';
+        }
+        if (profilePhone && !validatePhone(profilePhone)) {
+            newErrors.phone = 'Enter a valid phone number';
+        }
+        if (Object.keys(newErrors).length > 0) {
+            setProfileErrors(newErrors);
+            return;
+        }
+        setProfileErrors({});
+        setIsSavingProfile(true);
+        try {
+            await updateUserProfile({
+                name: profileName || undefined,
+                username: profileUsername ? profileUsername.toLowerCase() : undefined,
+                bio: profileBio.trim() || undefined,
+                phone: profilePhone || undefined,
+            });
+            await refreshUser();
+            toast.success('Profile updated');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Could not save profile';
+            if (message.toLowerCase().includes('username')) {
+                setProfileErrors(prev => ({ ...prev, username: 'That username is already taken' }));
+            } else {
+                toast.error(message);
+            }
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
 
     useEffect(() => {
         setCurrentTab(activeTab);
@@ -396,71 +487,121 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                     </div>
                 );
 
-            case 'profile':
+            case 'profile': {
+                const bioWords = profileBio.trim() === '' ? 0 : profileBio.trim().split(/\s+/).length;
+                const bioOverLimit = bioWords > 200;
+                const fieldClass = 'w-full p-4 bg-brand-blue/5 border border-brand-grey rounded-2xl font-bold text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all';
+                const labelClass = 'text-[10px] uppercase font-bold text-brand-blue/40 tracking-widest ml-1';
                 return (
                     <div className="bg-white border border-brand-grey rounded-[2.5rem] p-10 shadow-xl">
                         <h2 className="font-heading text-3xl text-brand-blue mb-10">Your Profile Information</h2>
-                        <div className="space-y-12">
+                        <form onSubmit={handleSaveProfile} noValidate>
+                          <div className="space-y-12">
                             {/* Profile Photo Section */}
                             <div className="flex flex-col md:flex-row items-center gap-8 pb-8 border-b border-brand-grey">
                                 <div className="relative group">
                                     <img
-                                      src={user.avatarUrl || '/avatar-placeholder.svg'}
+                                      src={localAvatarUrl || '/avatar-placeholder.svg'}
                                       alt={user.name}
                                       className="w-32 h-32 rounded-full object-cover border-4 border-brand-blue/10 group-hover:border-brand-blue transition-all"
                                     />
                                     <label className="absolute bottom-0 right-0 bg-brand-blue text-white p-2 rounded-full cursor-pointer shadow-lg hover:scale-110 transition-transform">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
-                                        <input type="file" className="hidden" accept="image/*" />
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+                                        <input ref={avatarInputRef} type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isUploadingAvatar} />
                                     </label>
                                 </div>
                                 <div className="text-center md:text-left">
                                     <h4 className="font-heading text-xl text-brand-blue">Profile Photo</h4>
-                                    <p className="text-sm text-brand-blue/50 max-w-xs mt-1">Make a great first impression. We recommend a clear, friendly photo of yourself.</p>
-                                    <button className="mt-4 text-brand-blue font-bold text-sm hover:underline">Remove photo</button>
+                                    <p className="text-sm text-brand-blue/50 max-w-xs mt-1">{isUploadingAvatar ? 'Uploading…' : 'Make a great first impression. We recommend a clear, friendly photo of yourself.'}</p>
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveAvatar}
+                                        disabled={!localAvatarUrl || isUploadingAvatar}
+                                        className="mt-4 text-brand-blue font-bold text-sm hover:underline disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
+                                    >
+                                        Remove photo
+                                    </button>
                                 </div>
                             </div>
 
                             {/* Form Fields */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-brand-blue/40 tracking-widest ml-1">Username</label>
+                                    <label className={labelClass}>Username</label>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-blue/30 font-bold">@</span>
-                                        <input type="text" defaultValue="jamiefolk" className="w-full pl-9 pr-4 py-4 bg-brand-blue/5 border border-brand-grey rounded-2xl font-bold text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all" />
+                                        <input
+                                            type="text"
+                                            value={profileUsername}
+                                            onChange={e => {
+                                                setProfileUsername(e.target.value);
+                                                if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
+                                            }}
+                                            className={`${fieldClass} pl-9`}
+                                            spellCheck={false}
+                                        />
                                     </div>
+                                    {profileErrors.username && <p className="mt-1 text-xs text-red-500">{profileErrors.username}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-brand-blue/40 tracking-widest ml-1">Full Name</label>
-                                    <input type="text" defaultValue={user.name} className="w-full p-4 bg-brand-blue/5 border border-brand-grey rounded-2xl font-bold text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all" />
-                                </div>
-                                
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[10px] uppercase font-bold text-brand-blue/40 tracking-widest ml-1">Bio</label>
-                                    <textarea 
-                                        rows={4}
-                                        placeholder="Tell other folk a bit about yourself, your style, or what you collect..."
-                                        className="w-full p-4 bg-brand-blue/5 border border-brand-grey rounded-2xl font-bold text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all resize-none"
-                                        defaultValue="London-based stylist with a passion for mid-century modern furniture and rare 70s finds. I've been collecting props for 10 years and love seeing them come to life in new projects."
+                                    <label className={labelClass}>Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={profileName}
+                                        onChange={e => setProfileName(e.target.value)}
+                                        className={fieldClass}
                                     />
-                                    <p className="text-right text-[10px] text-brand-blue/30 font-bold uppercase tracking-tight">Max 300 characters</p>
+                                </div>
+
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className={labelClass}>Bio</label>
+                                    <textarea
+                                        rows={4}
+                                        value={profileBio}
+                                        onChange={e => setProfileBio(e.target.value)}
+                                        placeholder="Tell other folk a bit about yourself, your style, or what you collect..."
+                                        className={`${fieldClass} resize-none`}
+                                    />
+                                    <p className={`text-right text-[10px] font-bold uppercase tracking-tight ${bioOverLimit ? 'text-red-500' : 'text-brand-blue/30'}`}>
+                                        {bioWords} / 200 words
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] uppercase font-bold text-brand-blue/40 tracking-widest ml-1">Phone Number</label>
-                                    <input type="tel" defaultValue="+44 7700 900077" className="w-full p-4 bg-brand-blue/5 border border-brand-grey rounded-2xl font-bold text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all" />
+                                    <label className={labelClass}>Phone Number</label>
+                                    <PhoneInput
+                                        value={profilePhone}
+                                        onChange={v => {
+                                            setProfilePhone(v);
+                                            if (profileErrors.phone) setProfileErrors(prev => ({ ...prev, phone: undefined }));
+                                        }}
+                                        error={profileErrors.phone}
+                                    />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[10px] uppercase font-bold text-brand-blue/40 tracking-widest ml-1">Email Address</label>
-                                    <input type="email" defaultValue="jamie@oddfolk.co.uk" className="w-full p-4 bg-brand-blue/5 border border-brand-grey rounded-2xl font-bold text-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all" />
+                                    <label className={labelClass}>Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={user.email || ''}
+                                        readOnly
+                                        className={`${fieldClass} opacity-50 cursor-not-allowed`}
+                                    />
                                 </div>
                             </div>
                             <div className="pt-6 border-t border-brand-grey flex justify-end">
-                                <button className="bg-brand-blue text-white font-heading px-12 py-4 rounded-2xl hover:brightness-110 shadow-xl transition-all active:scale-95">Save Profile</button>
+                                <button
+                                    type="submit"
+                                    disabled={isSavingProfile || bioOverLimit}
+                                    className="bg-brand-blue text-white font-heading px-12 py-4 rounded-2xl hover:brightness-110 shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSavingProfile ? 'Saving…' : 'Save Profile'}
+                                </button>
                             </div>
-                        </div>
+                          </div>
+                        </form>
                     </div>
                 );
+            }
 
             case 'delete-account':
                 return (
