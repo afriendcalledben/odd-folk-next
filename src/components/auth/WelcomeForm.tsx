@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Logo from '@/components/Logo';
@@ -26,12 +26,41 @@ export default function WelcomeForm({ user }: { user: User }) {
   const [errors, setErrors] = useState<{ username?: string; phone?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken';
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // If user somehow already has a username, skip onboarding
   useEffect(() => {
     if (user.username) {
       router.replace('/dashboard');
     }
   }, [user.username, router]);
+
+  // Debounced username availability check
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!username || !USERNAME_RE.test(username)) {
+      setUsernameStatus('idle');
+      return;
+    }
+
+    setUsernameStatus('checking');
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(username.toLowerCase())}`);
+        const json = await res.json();
+        setUsernameStatus(json.data?.available ? 'available' : 'taken');
+      } catch {
+        setUsernameStatus('idle');
+      }
+    }, 400);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [username]);
 
   const bioWords = countWords(bio);
   const bioOverLimit = bioWords > 200;
@@ -50,6 +79,14 @@ export default function WelcomeForm({ user }: { user: User }) {
     }
 
     if (bioOverLimit) {
+      return false;
+    }
+
+    if (usernameStatus === 'taken') {
+      newErrors.username = 'That username is already taken';
+    }
+
+    if (usernameStatus === 'checking') {
       return false;
     }
 
@@ -112,7 +149,36 @@ export default function WelcomeForm({ user }: { user: User }) {
                 autoComplete="username"
                 spellCheck={false}
               />
-              <p className="mt-1 text-xs text-brand-burgundy/40">3–30 characters: letters, numbers, _ or -</p>
+              <div className="mt-1 h-4 flex items-center gap-1.5">
+                {usernameStatus === 'idle' && (
+                  <p className="text-xs text-brand-burgundy/40">3–30 characters: letters, numbers, _ or -</p>
+                )}
+                {usernameStatus === 'checking' && (
+                  <>
+                    <svg className="w-3.5 h-3.5 animate-spin text-brand-burgundy/40" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <span className="text-xs text-brand-burgundy/40">Checking…</span>
+                  </>
+                )}
+                {usernameStatus === 'available' && (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-xs text-green-600 font-medium">Username available!</span>
+                  </>
+                )}
+                {usernameStatus === 'taken' && (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span className="text-xs text-red-500 font-medium">Username taken.</span>
+                  </>
+                )}
+              </div>
             </div>
 
             <Textarea
@@ -145,7 +211,7 @@ export default function WelcomeForm({ user }: { user: User }) {
               fullWidth
               size="lg"
               isLoading={isSubmitting}
-              disabled={bioOverLimit}
+              disabled={bioOverLimit || usernameStatus === 'taken' || usernameStatus === 'checking'}
               className="mt-2"
             >
               {isSubmitting ? 'Saving…' : 'Get started'}
