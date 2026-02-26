@@ -66,7 +66,10 @@ export async function POST(req: NextRequest) {
       .from('avatars')
       .upload(path, buffer, { contentType: file.type, upsert: false });
 
-    if (uploadError) return errorResponse('Failed to upload image', 500);
+    if (uploadError) {
+      console.error('[avatar upload] Supabase storage error:', uploadError);
+      return errorResponse(`Failed to upload image: ${uploadError.message}`, 500);
+    }
 
     const { data: { publicUrl } } = admin.storage.from('avatars').getPublicUrl(path);
 

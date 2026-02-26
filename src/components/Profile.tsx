@@ -56,8 +56,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
       setLocalAvatarUrl(newUrl);
       await refreshUser();
       toast.success('Profile photo updated');
-    } catch {
-      toast.error('Upload failed. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Upload failed';
+      console.error('[avatar upload]', msg);
+      toast.error(msg);
     } finally {
       setIsUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
