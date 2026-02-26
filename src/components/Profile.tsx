@@ -40,6 +40,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
   const [profileErrors, setProfileErrors] = useState<{ username?: string; phone?: string }>({});
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
+  type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken';
+  const [profileUsernameStatus, setProfileUsernameStatus] = useState<UsernameStatus>('idle');
+  const profileUsernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Sync profile form fields when user prop updates
   useEffect(() => {
     setProfileName(user.name || '');
@@ -47,6 +51,33 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
     setProfileBio(user.bio || '');
     setProfilePhone(user.phone || '');
   }, [user.name, user.username, user.bio, user.phone]);
+
+  // Debounced username availability check (skip if unchanged from saved username)
+  const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
+  useEffect(() => {
+    if (profileUsernameDebounceRef.current) clearTimeout(profileUsernameDebounceRef.current);
+
+    const unchanged = profileUsername.toLowerCase() === (user.username || '').toLowerCase();
+    if (unchanged || !profileUsername || !USERNAME_RE.test(profileUsername)) {
+      setProfileUsernameStatus('idle');
+      return;
+    }
+
+    setProfileUsernameStatus('checking');
+    profileUsernameDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/users/check-username?username=${encodeURIComponent(profileUsername.toLowerCase())}`);
+        const json = await res.json();
+        setProfileUsernameStatus(json.data?.available ? 'available' : 'taken');
+      } catch {
+        setProfileUsernameStatus('idle');
+      }
+    }, 400);
+
+    return () => {
+      if (profileUsernameDebounceRef.current) clearTimeout(profileUsernameDebounceRef.current);
+    };
+  }, [profileUsername, user.username]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,10 +115,15 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { username?: string; phone?: string } = {};
-    const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
 
     if (profileUsername && !USERNAME_RE.test(profileUsername)) {
       newErrors.username = 'Username must be 3–30 characters: letters, numbers, _ or -';
+    }
+    if (profileUsernameStatus === 'taken') {
+      newErrors.username = 'That username is already taken';
+    }
+    if (profileUsernameStatus === 'checking') {
+      return;
     }
     if (profilePhone && !validatePhone(profilePhone)) {
       newErrors.phone = 'Enter a valid phone number';
@@ -191,18 +227,47 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
                      value={profileName}
                      onChange={e => setProfileName(e.target.value)}
                    />
-                   <Input
-                     label="Username"
-                     type="text"
-                     value={profileUsername}
-                     onChange={e => {
-                       setProfileUsername(e.target.value);
-                       if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
-                     }}
-                     prefix="@"
-                     error={profileErrors.username}
-                     spellCheck={false}
-                   />
+                   <div>
+                     <Input
+                       label="Username"
+                       type="text"
+                       value={profileUsername}
+                       onChange={e => {
+                         setProfileUsername(e.target.value);
+                         if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
+                       }}
+                       prefix="@"
+                       error={profileErrors.username}
+                       spellCheck={false}
+                     />
+                     <div className="mt-1 h-4 flex items-center gap-1.5">
+                       {profileUsernameStatus === 'checking' && (
+                         <>
+                           <svg className="w-3.5 h-3.5 animate-spin text-brand-burgundy/40" fill="none" viewBox="0 0 24 24">
+                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                           </svg>
+                           <span className="text-xs text-brand-burgundy/40">Checking…</span>
+                         </>
+                       )}
+                       {profileUsernameStatus === 'available' && (
+                         <>
+                           <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                           </svg>
+                           <span className="text-xs text-green-600 font-medium">Username available!</span>
+                         </>
+                       )}
+                       {profileUsernameStatus === 'taken' && (
+                         <>
+                           <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                           </svg>
+                           <span className="text-xs text-red-500 font-medium">Username taken.</span>
+                         </>
+                       )}
+                     </div>
+                   </div>
                    <div className="md:col-span-2">
                      <Input
                        label="Email address"
@@ -243,7 +308,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
                    <Button
                      type="submit"
                      isLoading={isSavingProfile}
-                     disabled={bioOverLimit}
+                     disabled={bioOverLimit || profileUsernameStatus === 'taken' || profileUsernameStatus === 'checking'}
                    >
                      {isSavingProfile ? 'Saving…' : 'Save changes'}
                    </Button>
