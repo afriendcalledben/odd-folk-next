@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Camera } from 'lucide-react';
+import toast from 'react-hot-toast';
 import BookingCalendar from './BookingCalendar';
 import VerificationSection from './VerificationSection';
 import { useAuth } from '@/context/AuthContext';
@@ -20,6 +21,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
   const [vacationMode, setVacationMode] = useState(false);
   const [blockedDates, setBlockedDates] = useState<Date[]>([]);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  // Local avatar URL so the UI updates immediately without waiting for prop re-render
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null | undefined>(user.avatarUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,8 +30,12 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
     if (!file) return;
     setIsUploadingAvatar(true);
     try {
-      await uploadAvatar(file);
+      const newUrl = await uploadAvatar(file);
+      setLocalAvatarUrl(newUrl);
       await refreshUser();
+      toast.success('Profile photo updated');
+    } catch {
+      toast.error('Upload failed. Please try again.');
     } finally {
       setIsUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -39,7 +46,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
     setIsUploadingAvatar(true);
     try {
       await removeAvatar();
+      setLocalAvatarUrl(null);
       await refreshUser();
+      toast.success('Profile photo removed');
+    } catch {
+      toast.error('Could not remove photo. Please try again.');
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -79,8 +90,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
                <div className="flex items-center gap-6 mb-8">
                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-brand-orange/20 bg-brand-blue flex items-center justify-center">
-                     {user.avatarUrl ? (
-                       <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                     {localAvatarUrl ? (
+                       <img src={localAvatarUrl} alt={user.name} className="w-full h-full object-cover" />
                      ) : (
                        <span className="font-heading text-3xl text-white">
                          {user.name?.charAt(0).toUpperCase()}
@@ -98,7 +109,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
                    </p>
                    <button
                      onClick={handleRemoveAvatar}
-                     disabled={!!user.isGoogleUser || !user.avatarUrl || isUploadingAvatar}
+                     disabled={!!user.isGoogleUser || !localAvatarUrl || isUploadingAvatar}
                      className="text-sm text-red-500 font-bold hover:underline disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
                    >
                      {user.isGoogleUser ? 'Managed by Google' : 'Remove photo'}
@@ -293,8 +304,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
             <div className="bg-brand-blue rounded-3xl shadow-xl border border-brand-white/10 overflow-hidden text-brand-white p-2">
                 <div className="p-6 border-b border-brand-white/10 mb-2">
                     <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveSection('personal-info')}>
-                        {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-brand-yellow" />
+                        {localAvatarUrl ? (
+                          <img src={localAvatarUrl} alt={user.name} className="w-12 h-12 rounded-full object-cover border-2 border-brand-yellow" />
                         ) : (
                           <div className="w-12 h-12 rounded-full border-2 border-brand-yellow bg-brand-orange flex items-center justify-center flex-shrink-0">
                             <span className="font-heading text-lg text-white">{user.name?.charAt(0).toUpperCase()}</span>
