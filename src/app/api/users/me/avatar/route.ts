@@ -1,25 +1,16 @@
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { createClient as createAdminClient } from '@supabase/supabase-js';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-function getAuthClient(req: NextRequest) {
+function getClient(req: NextRequest) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE!,
     { cookies: { getAll: () => req.cookies.getAll(), setAll() {} } }
-  );
-}
-
-function getAdminStorageClient() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
   );
 }
 
@@ -28,14 +19,13 @@ function isSupabaseStorageUrl(url: string) {
 }
 
 function getStoragePath(url: string) {
-  // Extract path after /object/public/avatars/
   const match = url.match(/\/object\/public\/avatars\/(.+)$/);
   return match ? match[1] : null;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = getAuthClient(req);
+    const supabase = getClient(req);
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return errorResponse('Unauthorized', 401);
 
@@ -49,20 +39,19 @@ export async function POST(req: NextRequest) {
     const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
     const path = `${authUser.id}/${Date.now()}.${ext}`;
 
-    // Delete old avatar from storage if it was uploaded there
+    // Delete old avatar if stored in Supabase
     const currentUser = await prisma.user.findUnique({
       where: { id: authUser.id },
       select: { avatarUrl: true },
     });
-    const admin = getAdminStorageClient();
     if (currentUser?.avatarUrl && isSupabaseStorageUrl(currentUser.avatarUrl)) {
       const oldPath = getStoragePath(currentUser.avatarUrl);
-      if (oldPath) await admin.storage.from('avatars').remove([oldPath]);
+      if (oldPath) await supabase.storage.from('avatars').remove([oldPath]);
     }
 
-    // Upload new file
+    // Upload using the user's own session (bucket RLS policies handle auth)
     const buffer = await file.arrayBuffer();
-    const { error: uploadError } = await admin.storage
+    const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(path, buffer, { contentType: file.type, upsert: false });
 
@@ -71,7 +60,7 @@ export async function POST(req: NextRequest) {
       return errorResponse(`Failed to upload image: ${uploadError.message}`, 500);
     }
 
-    const { data: { publicUrl } } = admin.storage.from('avatars').getPublicUrl(path);
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
 
     await prisma.user.update({
       where: { id: authUser.id },
@@ -87,7 +76,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const supabase = getAuthClient(req);
+    const supabase = getClient(req);
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return errorResponse('Unauthorized', 401);
 
@@ -96,13 +85,9 @@ export async function DELETE(req: NextRequest) {
       select: { avatarUrl: true },
     });
 
-    // Delete from storage if it's a Supabase-hosted file
     if (currentUser?.avatarUrl && isSupabaseStorageUrl(currentUser.avatarUrl)) {
       const path = getStoragePath(currentUser.avatarUrl);
-      if (path) {
-        const admin = getAdminStorageClient();
-        await admin.storage.from('avatars').remove([path]);
-      }
+      if (path) await supabase.storage.from('avatars').remove([path]);
     }
 
     await prisma.user.update({
