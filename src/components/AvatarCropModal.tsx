@@ -201,8 +201,6 @@ export default function AvatarCropModal({ file, onConfirm, onCancel }: AvatarCro
                   height: natH > 0 ? natH * scale : undefined,
                   transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`,
                   userSelect: 'none',
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  WebkitUserDrag: 'none' as any,
                   pointerEvents: 'none',
                 }}
               />
