@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Logo from './Logo';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeaderProps {
   onNavigate: (view: string) => void;
@@ -9,6 +10,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
+  const { isLoading, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -49,7 +51,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
 
           {/* Desktop Auth / User */}
           <div className="hidden lg:flex items-center">
-            {user ? (
+            {isLoading ? null : user ? (
               <div className="relative" ref={dropdownRef}>
                 <div
                   className="flex items-center space-x-3 cursor-pointer group"
@@ -65,6 +67,9 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
                     <button onClick={() => handleNavigate('dashboard-listings')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">📦 Listings</button>
                     <button onClick={() => handleNavigate('dashboard-bookings')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">📅 Bookings</button>
                     <button onClick={() => handleNavigate('dashboard-profile')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">👤 Profile Settings</button>
+                    <div className="border-t border-brand-grey/20 mt-2 pt-2">
+                      <button onClick={logout} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">🚪 Sign out</button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -109,18 +114,19 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
             <button onClick={() => handleNavigate('how-it-works')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">How it works</button>
             <button onClick={() => handleNavigate('faq')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">FAQs</button>
             <button onClick={() => handleNavigate('list-item')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">List an item</button>
-            {user ? (
+            {!isLoading && (user ? (
               <>
                 <button onClick={() => handleNavigate('dashboard-listings')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">📦 Listings</button>
                 <button onClick={() => handleNavigate('dashboard-bookings')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">📅 Bookings</button>
-                <button onClick={() => handleNavigate('dashboard-profile')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow transition-colors">👤 Profile Settings</button>
+                <button onClick={() => handleNavigate('dashboard-profile')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">👤 Profile Settings</button>
+                <button onClick={logout} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow transition-colors">🚪 Sign out</button>
               </>
             ) : (
               <div className="flex gap-3 pt-3">
                 <button onClick={() => handleNavigate('login')} className="flex-1 font-body font-bold text-white border border-white/30 rounded-full py-2.5 text-base hover:bg-white/10 transition-colors">Log in</button>
                 <button onClick={() => handleNavigate('signup')} className="flex-1 font-body font-bold text-brand-burgundy bg-brand-yellow rounded-full py-2.5 text-base hover:brightness-105 transition-all">Sign up</button>
               </div>
-            )}
+            ))}
           </div>
         </div>
       )}
