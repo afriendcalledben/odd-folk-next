@@ -211,7 +211,7 @@ export default function WelcomeForm({ user }: { user: User }) {
               fullWidth
               size="lg"
               isLoading={isSubmitting}
-              disabled={bioOverLimit || usernameStatus === 'taken' || usernameStatus === 'checking'}
+              disabled={bioOverLimit || username.length < 3 || usernameStatus === 'taken' || usernameStatus === 'checking'}
               className="mt-2"
             >
               {isSubmitting ? 'Saving…' : 'Get started'}

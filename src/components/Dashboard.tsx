@@ -647,7 +647,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                         error={profileErrors.phone}
                                     />
                                 </div>
-                                <div className="md:col-span-2">
+                                <div>
                                     <Input
                                         label="Email Address"
                                         type="email"
