@@ -199,6 +199,7 @@ export default function AvatarCropModal({ file, onConfirm, onCancel }: AvatarCro
                   top: '50%',
                   width: natW > 0 ? natW * scale : undefined,
                   height: natH > 0 ? natH * scale : undefined,
+                  maxWidth: 'none',
                   transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`,
                   userSelect: 'none',
                   pointerEvents: 'none',
