@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
+import { uploadFile, deleteFile, getKeyFromUrl, isMinIOUrl, BUCKET_AVATARS } from '@/lib/storage';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -12,15 +13,6 @@ function getClient(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE!,
     { cookies: { getAll: () => req.cookies.getAll(), setAll() {} } }
   );
-}
-
-function isSupabaseStorageUrl(url: string) {
-  return url.includes('supabase.co/storage');
-}
-
-function getStoragePath(url: string) {
-  const match = url.match(/\/object\/public\/avatars\/(.+)$/);
-  return match ? match[1] : null;
 }
 
 export async function POST(req: NextRequest) {
@@ -37,30 +29,20 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_SIZE) return errorResponse('File must be under 5MB', 400);
 
     const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
-    const path = `${authUser.id}/${Date.now()}.${ext}`;
+    const key = `${authUser.id}/${Date.now()}.${ext}`;
 
-    // Delete old avatar if stored in Supabase
+    // Delete old avatar from MinIO if it exists there
     const currentUser = await prisma.user.findUnique({
       where: { id: authUser.id },
       select: { avatarUrl: true },
     });
-    if (currentUser?.avatarUrl && isSupabaseStorageUrl(currentUser.avatarUrl)) {
-      const oldPath = getStoragePath(currentUser.avatarUrl);
-      if (oldPath) await supabase.storage.from('avatars').remove([oldPath]);
+    if (currentUser?.avatarUrl && isMinIOUrl(currentUser.avatarUrl)) {
+      const oldKey = getKeyFromUrl(currentUser.avatarUrl, BUCKET_AVATARS);
+      if (oldKey) await deleteFile(BUCKET_AVATARS, oldKey).catch(() => {});
     }
 
-    // Upload using the user's own session (bucket RLS policies handle auth)
-    const buffer = await file.arrayBuffer();
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(path, buffer, { contentType: file.type, upsert: false });
-
-    if (uploadError) {
-      console.error('[avatar upload] Supabase storage error:', uploadError);
-      return errorResponse(`Failed to upload image: ${uploadError.message}`, 500);
-    }
-
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const publicUrl = await uploadFile(BUCKET_AVATARS, key, buffer, file.type);
 
     await prisma.user.update({
       where: { id: authUser.id },
@@ -85,9 +67,9 @@ export async function DELETE(req: NextRequest) {
       select: { avatarUrl: true },
     });
 
-    if (currentUser?.avatarUrl && isSupabaseStorageUrl(currentUser.avatarUrl)) {
-      const path = getStoragePath(currentUser.avatarUrl);
-      if (path) await supabase.storage.from('avatars').remove([path]);
+    if (currentUser?.avatarUrl && isMinIOUrl(currentUser.avatarUrl)) {
+      const key = getKeyFromUrl(currentUser.avatarUrl, BUCKET_AVATARS);
+      if (key) await deleteFile(BUCKET_AVATARS, key).catch(() => {});
     }
 
     await prisma.user.update({
