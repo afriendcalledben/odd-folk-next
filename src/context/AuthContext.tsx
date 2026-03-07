@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { useSession, signOut } from '@/lib/auth-client';
 import { getUserFavoriteIds, toggleFavorite as apiToggleFavorite, getCurrentUserProfile } from '@/services/api';
 import type { User } from '@/services/api';
 
@@ -22,9 +22,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  const supabase = createClient();
+  const { data: session, isPending: sessionPending } = useSession();
 
   const loadFavorites = useCallback(async () => {
     try {
@@ -49,29 +49,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadFavorites]);
 
   useEffect(() => {
-    // Fetch initial session
-    refreshUser().finally(() => setIsLoading(false));
+    if (sessionPending) return;
 
-    // Listen for auth state changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        await refreshUser();
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setIsLoggedIn(false);
-        setFavoriteIds([]);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    if (session?.user) {
+      setProfileLoading(true);
+      refreshUser().finally(() => setProfileLoading(false));
+    } else {
+      setUser(null);
+      setIsLoggedIn(false);
+      setFavoriteIds([]);
+      setProfileLoading(false);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [session?.user?.id, sessionPending]);
 
   const logout = async () => {
     setUser(null);
     setIsLoggedIn(false);
     setFavoriteIds([]);
-    await supabase.auth.signOut();
+    await signOut();
   };
 
   const toggleFavorite = async (productId: string) => {
@@ -96,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshUser,
       loadFavorites,
       toggleFavorite,
-      isLoading,
+      isLoading: sessionPending || profileLoading,
     }}>
       {children}
     </AuthContext.Provider>

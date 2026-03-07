@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { getAuthUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { uploadFile, deleteFile, getKeyFromUrl, isMinIOUrl, BUCKET_AVATARS } from '@/lib/storage';
@@ -7,18 +7,9 @@ import { uploadFile, deleteFile, getKeyFromUrl, isMinIOUrl, BUCKET_AVATARS } fro
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-function getClient(req: NextRequest) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE!,
-    { cookies: { getAll: () => req.cookies.getAll(), setAll() {} } }
-  );
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const supabase = getClient(req);
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const authUser = await getAuthUser(req);
     if (!authUser) return errorResponse('Unauthorized', 401);
 
     const formData = await req.formData();
@@ -58,8 +49,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const supabase = getClient(req);
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const authUser = await getAuthUser(req);
     if (!authUser) return errorResponse('Unauthorized', 401);
 
     const currentUser = await prisma.user.findUnique({

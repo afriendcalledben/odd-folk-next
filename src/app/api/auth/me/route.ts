@@ -1,19 +1,17 @@
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { getAuthUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE!,
-      { cookies: { getAll: () => req.cookies.getAll(), setAll() {} } }
-    );
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const authUser = await getAuthUser(req);
     if (!authUser) return errorResponse('Unauthorized', 401);
 
-    const isGoogleUser = authUser.identities?.some(i => i.provider === 'google') ?? false;
+    const googleAccount = await prisma.account.findFirst({
+      where: { userId: authUser.id, providerId: 'google' },
+    });
+    const isGoogleUser = !!googleAccount;
 
     const user = await prisma.user.findUnique({
       where: { id: authUser.id },
