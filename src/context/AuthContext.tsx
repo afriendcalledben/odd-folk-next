@@ -68,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoggedIn(false);
     setFavoriteIds([]);
     await signOut();
+    window.location.href = '/';
   };
 
   const toggleFavorite = async (productId: string) => {

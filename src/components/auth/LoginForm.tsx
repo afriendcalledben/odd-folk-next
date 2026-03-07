@@ -62,7 +62,7 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
             disabled={pending}
             onClick={() => {
               setPending(true)
-              signIn.social({ provider: 'google', callbackURL: '/dashboard' })
+              signIn.social({ provider: 'google', callbackURL: `${window.location.origin}/dashboard` })
             }}
             className="w-full flex items-center justify-center px-4 py-3.5 border border-brand-white/20 rounded-xl font-body font-medium text-brand-white hover:bg-white/5 hover:border-brand-white/40 transition-all bg-brand-blue shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -80,7 +80,7 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
             disabled={pending}
             onClick={() => {
               setPending(true)
-              signIn.social({ provider: 'facebook', callbackURL: '/dashboard' })
+              signIn.social({ provider: 'facebook', callbackURL: `${window.location.origin}/dashboard` })
             }}
             className="w-full flex items-center justify-center px-4 py-3.5 border border-brand-white/20 rounded-xl font-body font-medium text-brand-white hover:bg-white/5 hover:border-brand-white/40 transition-all bg-brand-blue shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -125,7 +125,7 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
                   setPending(false)
                   return
                 }
-                const result = await signUp.email({ email, password, name, callbackURL: '/welcome' })
+                const result = await signUp.email({ email, password, name, callbackURL: `${window.location.origin}/welcome` })
                 if (result.error) {
                   const msg = result.error.message?.toLowerCase() ?? ''
                   if (msg.includes('already') || msg.includes('duplicate') || msg.includes('exist')) {
