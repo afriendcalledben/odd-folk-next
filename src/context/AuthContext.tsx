@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
 import { getUserFavoriteIds, toggleFavorite as apiToggleFavorite, getCurrentUserProfile } from '@/services/api';
 import type { User } from '@/services/api';
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [profileLoading, setProfileLoading] = useState(true);
 
+  const router = useRouter();
   const { data: session, isPending: sessionPending } = useSession();
 
   const loadFavorites = useCallback(async () => {
@@ -68,7 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoggedIn(false);
     setFavoriteIds([]);
     await signOut();
-    window.location.href = '/';
+    router.push('/');
+    router.refresh();
   };
 
   const toggleFavorite = async (productId: string) => {

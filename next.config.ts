@@ -1,17 +1,24 @@
 import type { NextConfig } from "next";
 
-const minioUrl = process.env.MINIO_ENDPOINT ? new URL(process.env.MINIO_ENDPOINT) : null;
+function urlToRemotePattern(rawUrl: string) {
+  const u = new URL(rawUrl);
+  return {
+    protocol: u.protocol.replace(':', '') as 'http' | 'https',
+    hostname: u.hostname,
+    ...(u.port ? { port: u.port } : {}),
+    pathname: '/**',
+  };
+}
+
+// Collect unique remote patterns from MINIO_ENDPOINT and MINIO_PUBLIC_URL
+const minioPatterns = Array.from(
+  new Set([process.env.MINIO_ENDPOINT, process.env.MINIO_PUBLIC_URL].filter(Boolean) as string[])
+).map(urlToRemotePattern);
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   images: {
-    remotePatterns: minioUrl ? [
-      {
-        protocol: minioUrl.protocol.replace(':', '') as 'http' | 'https',
-        hostname: minioUrl.hostname,
-        ...(minioUrl.port ? { port: minioUrl.port } : {}),
-        pathname: '/**',
-      },
-    ] : [],
+    remotePatterns: minioPatterns,
   },
 };
 

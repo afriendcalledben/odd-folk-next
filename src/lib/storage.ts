@@ -1,6 +1,11 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import https from 'https';
 
+// MINIO_ENDPOINT: internal S3 connection URL (may be HTTP for internal Docker network)
+// MINIO_PUBLIC_URL: public-facing base URL for file links (defaults to MINIO_ENDPOINT)
 const endpoint = process.env.MINIO_ENDPOINT!;
+const publicBase = (process.env.MINIO_PUBLIC_URL ?? endpoint).replace(/\/$/, '');
 
 const s3 = new S3Client({
   endpoint,
@@ -10,6 +15,10 @@ const s3 = new S3Client({
     secretAccessKey: process.env.MINIO_SECRET_KEY!,
   },
   forcePathStyle: true, // Required for MinIO — prevents virtual-hosted style URLs
+  // Allow self-signed certs for internal HTTPS endpoints (e.g. Coolify internal TLS)
+  requestHandler: new NodeHttpHandler({
+    httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+  }),
 });
 
 export const BUCKET_UPLOADS = process.env.MINIO_BUCKET_UPLOADS ?? 'uploads';
@@ -22,7 +31,7 @@ export async function uploadFile(
   contentType: string,
 ): Promise<string> {
   await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: contentType }));
-  return `${endpoint}/${bucket}/${key}`;
+  return `${publicBase}/${bucket}/${key}`;
 }
 
 export async function deleteFile(bucket: string, key: string): Promise<void> {
@@ -31,10 +40,10 @@ export async function deleteFile(bucket: string, key: string): Promise<void> {
 
 /** Extracts the object key from a MinIO public URL, or returns null if not a MinIO URL. */
 export function getKeyFromUrl(url: string, bucket: string): string | null {
-  const prefix = `${endpoint}/${bucket}/`;
+  const prefix = `${publicBase}/${bucket}/`;
   return url.startsWith(prefix) ? url.slice(prefix.length) : null;
 }
 
 export function isMinIOUrl(url: string): boolean {
-  return url.startsWith(endpoint);
+  return url.startsWith(publicBase);
 }
