@@ -16,7 +16,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const hasSession = !!request.cookies.get('better-auth.session_token')?.value
+  const hasSession =
+    !!request.cookies.get('better-auth.session_token')?.value ||
+    !!request.cookies.get('__Secure-better-auth.session_token')?.value
 
   if (!hasSession && isProtected) {
     const redirectUrl = request.nextUrl.clone()
