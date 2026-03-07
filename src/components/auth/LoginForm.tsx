@@ -62,7 +62,7 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
             disabled={pending}
             onClick={() => {
               setPending(true)
-              signIn.social({ provider: 'google', callbackURL: `${window.location.origin}/dashboard` })
+              signIn.social({ provider: 'google', callbackURL: `${window.location.origin}/auth/success` })
             }}
             className="w-full flex items-center justify-center px-4 py-3.5 border border-brand-white/20 rounded-xl font-body font-medium text-brand-white hover:bg-white/5 hover:border-brand-white/40 transition-all bg-brand-blue shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -80,7 +80,7 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
             disabled={pending}
             onClick={() => {
               setPending(true)
-              signIn.social({ provider: 'facebook', callbackURL: `${window.location.origin}/dashboard` })
+              signIn.social({ provider: 'facebook', callbackURL: `${window.location.origin}/auth/success` })
             }}
             className="w-full flex items-center justify-center px-4 py-3.5 border border-brand-white/20 rounded-xl font-body font-medium text-brand-white hover:bg-white/5 hover:border-brand-white/40 transition-all bg-brand-blue shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
