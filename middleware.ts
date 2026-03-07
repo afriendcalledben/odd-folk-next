@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
 
 const protectedPaths = ['/dashboard', '/profile', '/list-item', '/welcome']
 
-export async function middleware(request: NextRequest) {
+// Middleware runs in the Edge runtime which doesn't support Node.js crypto.
+// We check the Better Auth session cookie here for routing decisions only.
+// Full session validation happens in each API route and server component
+// via requireAuth/getAuthUser, which run in the Node.js runtime.
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p))
@@ -13,15 +16,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const session = await auth.api.getSession({ headers: request.headers })
+  const hasSession = !!request.cookies.get('better-auth.session_token')?.value
 
-  if (!session && isProtected) {
+  if (!hasSession && isProtected) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/login'
     return NextResponse.redirect(redirectUrl)
   }
 
-  if (session && isLoginPage) {
+  if (hasSession && isLoginPage) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/dashboard'
     return NextResponse.redirect(redirectUrl)
