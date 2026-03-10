@@ -140,6 +140,9 @@ const toFrontendProduct = (p: any): Product => ({
   price7Day: p.price7Day ?? null,
   imageUrl: (p.images && p.images[0]) || 'https://picsum.photos/seed/default/800/600',
   images: p.images || [],
+  tags: p.tags || [],
+  color: p.color || '',
+  locationId: p.locationId ?? null,
   location: p.location?.city || 'London',
   category: p.category,
   condition: p.condition,
@@ -227,9 +230,16 @@ export const createProduct = async (productData: {
 export const updateProduct = async (id: string | number, data: {
   title?: string;
   description?: string;
+  category?: string;
+  tags?: string[];
+  condition?: string;
+  color?: string;
+  quantity?: number;
   price1Day?: number;
   price3Day?: number | null;
   price7Day?: number | null;
+  images?: string[];
+  locationId?: string | null;
   status?: string;
 }): Promise<Product> => {
   const result = await api.put<unknown>(`/products/${id}`, data);
@@ -441,9 +451,15 @@ export const createLocation = async (location: {
   address: string;
   postcode: string;
   city: string;
+  lat?: number;
+  lng?: number;
   type?: string;
 }) => {
   return api.post('/locations', location);
+};
+
+export const deleteLocation = async (id: string): Promise<void> => {
+  await api.delete<unknown>(`/locations/${id}`);
 };
 
 // --- IMAGE UPLOAD ---

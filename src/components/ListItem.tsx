@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { createProduct, uploadImages, getLocations } from '../services/api';
+import { createProduct, updateProduct, uploadImages, getLocations } from '../services/api';
 import { Button } from '@/components/ui';
+import type { Product } from '@/types';
 
 const inputClass = 'w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors';
 const labelClass = 'block font-body text-sm font-bold text-brand-burgundy mb-1';
@@ -23,6 +24,8 @@ const FormStep: React.FC<{ number: number; title: string; children: React.ReactN
 
 interface ListItemProps {
   onNavigate: (view: string) => void;
+  initialData?: Product;
+  productId?: string | number;
 }
 
 interface LocationOption {
@@ -32,22 +35,24 @@ interface LocationOption {
   city: string;
 }
 
-const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [condition, setCondition] = useState<string>('');
-  const [color, setColor] = useState<string>('');
-  const [quantity, setQuantity] = useState<number>(1);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId }) => {
+  const isEditMode = !!productId;
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialData?.category || '');
+  const [condition, setCondition] = useState<string>(initialData?.condition || '');
+  const [color, setColor] = useState<string>(initialData?.color || '');
+  const [quantity, setQuantity] = useState<number>(initialData?.quantityAvailable || 1);
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || []);
   const [tagInput, setTagInput] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [price1Day, setPrice1Day] = useState('');
-  const [price3Day, setPrice3Day] = useState('');
-  const [price7Day, setPrice7Day] = useState('');
-  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const [title, setTitle] = useState(initialData?.name || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [price1Day, setPrice1Day] = useState(initialData?.pricePerDay ? String(initialData.pricePerDay) : '');
+  const [price3Day, setPrice3Day] = useState(initialData?.price3Day ? String(initialData.price3Day) : '');
+  const [price7Day, setPrice7Day] = useState(initialData?.price7Day ? String(initialData.price7Day) : '');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>(initialData?.locationId || '');
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.images || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -103,49 +108,97 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
     if (!condition) { setError('Please select the condition'); return; }
     if (!color) { setError('Please select a color'); return; }
     if (!price1Day || parseFloat(price1Day) <= 0) { setError('Please enter a valid price for 1 day'); return; }
-    if (imageFiles.filter(f => f).length < 1) { setError('Please upload at least one image'); return; }
+
+    const hasImages = isEditMode
+      ? imagePreviews.filter(Boolean).length > 0
+      : imageFiles.filter(f => f).length > 0;
+    if (!hasImages) { setError('Please upload at least one image'); return; }
 
     setIsSubmitting(true);
 
     try {
-      const validFiles = imageFiles.filter(f => f);
-      let imageUrls: string[] = [];
+      let imageUrls: string[];
 
-      if (validFiles.length > 0) {
+      if (isEditMode) {
+        // Build final image array: keep existing URLs, upload new files
+        const slotUrls: (string | null)[] = Array(8).fill(null);
+        for (let i = 0; i < 8; i++) {
+          if (!imageFiles[i] && imagePreviews[i]) {
+            slotUrls[i] = imagePreviews[i];
+          }
+        }
+        const newFiles = imageFiles.filter(f => f);
+        if (newFiles.length > 0) {
+          const newUrls = await uploadImages(newFiles);
+          let urlIdx = 0;
+          for (let i = 0; i < 8; i++) {
+            if (imageFiles[i]) slotUrls[i] = newUrls[urlIdx++];
+          }
+        }
+        imageUrls = slotUrls.filter(Boolean) as string[];
+
+        await updateProduct(productId!, {
+          title: title.trim(),
+          description: description.trim(),
+          category: selectedCategory,
+          tags: selectedTags,
+          condition,
+          color,
+          quantity,
+          price1Day: parseFloat(price1Day),
+          price3Day: price3Day ? parseFloat(price3Day) : null,
+          price7Day: price7Day ? parseFloat(price7Day) : null,
+          images: imageUrls,
+          locationId: selectedLocationId || null,
+        });
+      } else {
+        const validFiles = imageFiles.filter(f => f);
         imageUrls = await uploadImages(validFiles);
+
+        await createProduct({
+          title: title.trim(),
+          description: description.trim(),
+          category: selectedCategory,
+          tags: selectedTags,
+          condition,
+          color,
+          quantity,
+          price1Day: parseFloat(price1Day),
+          price3Day: price3Day ? parseFloat(price3Day) : undefined,
+          price7Day: price7Day ? parseFloat(price7Day) : undefined,
+          images: imageUrls,
+          locationId: selectedLocationId || undefined,
+        });
       }
 
-      await createProduct({
-        title: title.trim(),
-        description: description.trim(),
-        category: selectedCategory,
-        tags: selectedTags,
-        condition,
-        color,
-        quantity,
-        price1Day: parseFloat(price1Day),
-        price3Day: price3Day ? parseFloat(price3Day) : undefined,
-        price7Day: price7Day ? parseFloat(price7Day) : undefined,
-        images: imageUrls,
-        locationId: selectedLocationId || undefined,
-      });
-
       onNavigate('dashboard-listings');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create listing. Please try again.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isFormValid = title && selectedCategory && condition && color && price1Day && imageFiles.filter(f => f).length > 0;
+  const hasImages = isEditMode
+    ? imagePreviews.filter(Boolean).length > 0
+    : imageFiles.filter(f => f).length > 0;
+  const isFormValid = title && selectedCategory && condition && color && price1Day && hasImages;
 
   return (
     <div className="bg-brand-white min-h-screen py-12 md:py-20 animate-fade-in">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
         <div className="mb-12 text-center">
-            <h1 className="font-heading text-4xl md:text-5xl text-brand-orange mb-4">List a treasure</h1>
-            <p className="font-body text-brand-orange text-lg">Dust off that velvet chair. Share your oddities with the London creative community.</p>
+          {isEditMode ? (
+            <>
+              <h1 className="font-heading text-4xl md:text-5xl text-brand-orange mb-4">Edit your listing</h1>
+              <p className="font-body text-brand-orange text-lg">Update the details below and save your changes.</p>
+            </>
+          ) : (
+            <>
+              <h1 className="font-heading text-4xl md:text-5xl text-brand-orange mb-4">List a treasure</h1>
+              <p className="font-body text-brand-orange text-lg">Dust off that velvet chair. Share your oddities with the London creative community.</p>
+            </>
+          )}
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl border border-brand-grey p-8 md:p-12 space-y-16">
@@ -262,7 +315,9 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
           <FormStep number={4} title="Show it off">
             <div className="space-y-4">
               <p className="font-body text-sm text-brand-burgundy/60 leading-relaxed">
-                Upload at least 1 photo. First one on a plain background, please. Then let us see it in the wild.
+                {isEditMode
+                  ? 'Click any slot to replace an image. Existing images are kept unless you upload a new one.'
+                  : 'Upload at least 1 photo. First one on a plain background, please. Then let us see it in the wild.'}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -359,11 +414,15 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate }) => {
                 disabled={!isFormValid}
                 className="text-xl py-5 rounded-2xl hover:-translate-y-1 active:translate-y-0"
              >
-                {isSubmitting ? 'Publishing...' : 'Publish treasure'}
+                {isSubmitting
+                  ? (isEditMode ? 'Saving…' : 'Publishing...')
+                  : (isEditMode ? 'Save changes' : 'Publish treasure')}
              </Button>
-             <p className="text-center text-brand-burgundy/40 text-xs mt-6">
-                By publishing, you agree to Odd Folk's Terms of Service.
-             </p>
+             {!isEditMode && (
+               <p className="text-center text-brand-burgundy/40 text-xs mt-6">
+                 By publishing, you agree to Odd Folk's Terms of Service.
+               </p>
+             )}
           </div>
         </div>
       </div>

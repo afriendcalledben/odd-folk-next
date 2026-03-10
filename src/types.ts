@@ -9,11 +9,14 @@ export interface Product {
   price3Day?: number | null;
   price7Day?: number | null;
   imageUrl: string;
-  images?: string[]; 
+  images?: string[];
+  tags?: string[];
+  color?: string;
+  locationId?: string | null;
   location: string;
   category: string;
-  condition: Condition; // Updated to strict type
-  quantityAvailable: number; // Total stock
+  condition: Condition;
+  quantityAvailable: number;
   owner: {
     id: string;
     name: string;

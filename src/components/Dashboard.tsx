@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, updateProduct } from '../services/api';
+import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, deleteLocation } from '../services/api';
 import { useAuth } from '@/context/AuthContext';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import { Input, Textarea, Button } from '@/components/ui';
@@ -11,6 +12,8 @@ import Chat from './Chat';
 import AvatarCropModal from './AvatarCropModal';
 import BookingCalendar from './BookingCalendar';
 import type { Booking, BookingStatus, Product } from '../types';
+
+const LocationPicker = dynamic(() => import('./LocationPicker'), { ssr: false });
 
 interface DashboardProps {
     user: { id: string; name: string; avatarUrl?: string; username?: string; bio?: string; phone?: string; email?: string };
@@ -129,12 +132,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     const [profilePhone, setProfilePhone] = useState(user.phone || '');
     const [profileErrors, setProfileErrors] = useState<{ username?: string; phone?: string }>({});
 
-    // Listings — delete & edit state
+    // Listings — delete state
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [editProduct, setEditProduct] = useState<Product | null>(null);
-    const [editForm, setEditForm] = useState({ title: '', description: '', price1Day: '', price3Day: '', price7Day: '' });
-    const [isSavingEdit, setIsSavingEdit] = useState(false);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const [cropFile, setCropFile] = useState<File | null>(null);
@@ -303,37 +303,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
         }
     };
 
-    const openEdit = (p: Product) => {
-        setEditProduct(p);
-        setEditForm({
-            title: p.name,
-            description: p.description || '',
-            price1Day: String(p.pricePerDay),
-            price3Day: p.price3Day != null ? String(p.price3Day) : '',
-            price7Day: p.price7Day != null ? String(p.price7Day) : '',
-        });
-    };
 
-    const handleSaveEdit = async () => {
-        if (!editProduct) return;
-        setIsSavingEdit(true);
-        try {
-            const updated = await updateProduct(editProduct.id, {
-                title: editForm.title,
-                description: editForm.description,
-                price1Day: parseFloat(editForm.price1Day),
-                price3Day: editForm.price3Day ? parseFloat(editForm.price3Day) : null,
-                price7Day: editForm.price7Day ? parseFloat(editForm.price7Day) : null,
-            });
-            setMyProducts(prev => prev.map(p => String(p.id) === String(editProduct.id) ? updated : p));
-            toast.success('Listing updated');
-            setEditProduct(null);
-        } catch {
-            toast.error('Failed to update listing');
-        } finally {
-            setIsSavingEdit(false);
-        }
-    };
 
     const handleStatusChange = async (bookingId: string, newStatus: BookingStatus) => {
         await updateBookingStatus(bookingId, newStatus);
@@ -426,12 +396,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                         <p className="text-brand-orange font-bold text-lg">£{p.pricePerDay} / day</p>
                                     </div>
                                     <div className="flex gap-2 shrink-0">
-                                        <button
-                                            onClick={() => openEdit(p)}
+                                        <Link
+                                            href={`/list-item/edit/${p.id}`}
                                             className="bg-brand-blue/5 hover:bg-brand-blue/10 px-6 py-2 rounded-xl text-xs font-bold uppercase text-brand-blue transition-colors"
                                         >
                                             Edit
-                                        </button>
+                                        </Link>
                                         <button
                                             onClick={() => setDeleteId(String(p.id))}
                                             className="text-red-500 hover:bg-red-50 px-3 py-2 rounded-xl transition-colors"
@@ -469,80 +439,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                             </div>
                         )}
 
-                        {/* Edit modal */}
-                        {editProduct && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                                <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl">
-                                    <h3 className="font-heading text-xl text-brand-blue mb-6">Edit listing</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block font-body text-sm font-medium text-brand-blue mb-1">Title</label>
-                                            <input
-                                                value={editForm.title}
-                                                onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-                                                className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block font-body text-sm font-medium text-brand-blue mb-1">Description</label>
-                                            <textarea
-                                                value={editForm.description}
-                                                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                                                rows={3}
-                                                className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30 resize-none"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div>
-                                                <label className="block font-body text-sm font-medium text-brand-blue mb-1">1-day (£)</label>
-                                                <input
-                                                    type="number" min="0" step="0.01"
-                                                    value={editForm.price1Day}
-                                                    onChange={e => setEditForm(f => ({ ...f, price1Day: e.target.value }))}
-                                                    className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block font-body text-sm font-medium text-brand-blue mb-1">3-day (£)</label>
-                                                <input
-                                                    type="number" min="0" step="0.01"
-                                                    value={editForm.price3Day}
-                                                    onChange={e => setEditForm(f => ({ ...f, price3Day: e.target.value }))}
-                                                    placeholder="Optional"
-                                                    className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block font-body text-sm font-medium text-brand-blue mb-1">7-day (£)</label>
-                                                <input
-                                                    type="number" min="0" step="0.01"
-                                                    value={editForm.price7Day}
-                                                    onChange={e => setEditForm(f => ({ ...f, price7Day: e.target.value }))}
-                                                    placeholder="Optional"
-                                                    className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-3 mt-6">
-                                        <button
-                                            onClick={() => setEditProduct(null)}
-                                            disabled={isSavingEdit}
-                                            className="flex-1 px-4 py-2.5 rounded-xl border border-brand-grey font-body font-medium text-brand-blue hover:bg-brand-grey/30 transition-colors disabled:opacity-50"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleSaveEdit}
-                                            disabled={isSavingEdit || !editForm.title || !editForm.price1Day}
-                                            className="flex-1 px-4 py-2.5 rounded-xl bg-brand-orange text-white font-body font-medium hover:bg-brand-orange/90 transition-colors disabled:opacity-50"
-                                        >
-                                            {isSavingEdit ? 'Saving…' : 'Save changes'}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 );
 
@@ -559,10 +455,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
             case 'locations':
                 return (
                     <div className="space-y-6">
-                        <div className="flex justify-between items-center mb-8">
-                            <h2 className="font-heading text-3xl text-brand-blue">My Collection Points</h2>
-                            <button className="bg-brand-blue text-white font-heading px-6 py-2 rounded-xl text-sm hover:brightness-110 shadow-lg transition-all">+ Add New</button>
-                        </div>
+                        <h2 className="font-heading text-3xl text-brand-blue mb-8">My Collection Points</h2>
+                        <LocationPicker
+                            onSave={async (loc) => {
+                                const saved = await createLocation(loc) as any;
+                                setLocations(prev => [saved, ...prev]);
+                                toast.success('Collection point added!');
+                            }}
+                        />
                         <div className="grid gap-4">
                             {locations.length > 0 ? locations.map((loc: any) => (
                                 <div key={loc.id} className="bg-white border border-brand-grey rounded-3xl p-8 flex justify-between items-center shadow-md">
@@ -573,13 +473,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                         </div>
                                         <p className="text-brand-blue/60 text-lg font-body">{loc.address}, {loc.postcode} {loc.city}</p>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <button className="text-brand-blue font-bold hover:underline transition-all">Edit</button>
-                                        <button className="text-red-500 font-bold hover:underline transition-all">Remove</button>
-                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            await deleteLocation(loc.id);
+                                            setLocations(prev => prev.filter((l: any) => l.id !== loc.id));
+                                            toast.success('Collection point removed.');
+                                        }}
+                                        className="text-red-500 font-bold hover:underline transition-all"
+                                    >
+                                        Remove
+                                    </button>
                                 </div>
                             )) : (
-                                <p className="text-brand-blue/50 italic py-8 text-center">No collection points added yet. Add one to make it easier for hirers to collect items.</p>
+                                <p className="text-brand-blue/50 italic py-8 text-center">No collection points saved yet.</p>
                             )}
                         </div>
                     </div>
