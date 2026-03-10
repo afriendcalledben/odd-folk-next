@@ -136,6 +136,8 @@ const toFrontendProduct = (p: any): Product => ({
   name: p.title,
   description: p.description,
   pricePerDay: p.price1Day,
+  price3Day: p.price3Day ?? null,
+  price7Day: p.price7Day ?? null,
   imageUrl: (p.images && p.images[0]) || 'https://picsum.photos/seed/default/800/600',
   images: p.images || [],
   location: p.location?.city || 'London',
@@ -220,6 +222,22 @@ export const createProduct = async (productData: {
 }): Promise<Product> => {
   const result = await api.post<unknown>('/products', productData);
   return toFrontendProduct(result);
+};
+
+export const updateProduct = async (id: string | number, data: {
+  title?: string;
+  description?: string;
+  price1Day?: number;
+  price3Day?: number | null;
+  price7Day?: number | null;
+  status?: string;
+}): Promise<Product> => {
+  const result = await api.put<unknown>(`/products/${id}`, data);
+  return toFrontendProduct(result);
+};
+
+export const deleteProduct = async (id: string | number): Promise<void> => {
+  await api.delete<unknown>(`/products/${id}`);
 };
 
 // --- BOOKINGS ---

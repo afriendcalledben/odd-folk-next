@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar } from '../services/api';
+import Link from 'next/link';
+import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, updateProduct } from '../services/api';
 import { useAuth } from '@/context/AuthContext';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import { Input, Textarea, Button } from '@/components/ui';
@@ -127,6 +128,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     const [profileBio, setProfileBio] = useState(user.bio || '');
     const [profilePhone, setProfilePhone] = useState(user.phone || '');
     const [profileErrors, setProfileErrors] = useState<{ username?: string; phone?: string }>({});
+
+    // Listings — delete & edit state
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [editProduct, setEditProduct] = useState<Product | null>(null);
+    const [editForm, setEditForm] = useState({ title: '', description: '', price1Day: '', price3Day: '', price7Day: '' });
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const [cropFile, setCropFile] = useState<File | null>(null);
@@ -280,6 +288,53 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
         loadData();
     }, [currentUserId]);
 
+    const handleDeleteConfirm = async () => {
+        if (!deleteId) return;
+        setIsDeleting(true);
+        try {
+            await deleteProduct(deleteId);
+            setMyProducts(prev => prev.filter(p => String(p.id) !== deleteId));
+            toast.success('Listing removed');
+        } catch {
+            toast.error('Failed to remove listing');
+        } finally {
+            setIsDeleting(false);
+            setDeleteId(null);
+        }
+    };
+
+    const openEdit = (p: Product) => {
+        setEditProduct(p);
+        setEditForm({
+            title: p.name,
+            description: p.description || '',
+            price1Day: String(p.pricePerDay),
+            price3Day: p.price3Day != null ? String(p.price3Day) : '',
+            price7Day: p.price7Day != null ? String(p.price7Day) : '',
+        });
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editProduct) return;
+        setIsSavingEdit(true);
+        try {
+            const updated = await updateProduct(editProduct.id, {
+                title: editForm.title,
+                description: editForm.description,
+                price1Day: parseFloat(editForm.price1Day),
+                price3Day: editForm.price3Day ? parseFloat(editForm.price3Day) : null,
+                price7Day: editForm.price7Day ? parseFloat(editForm.price7Day) : null,
+            });
+            setMyProducts(prev => prev.map(p => String(p.id) === String(editProduct.id) ? updated : p));
+            toast.success('Listing updated');
+            setEditProduct(null);
+        } catch {
+            toast.error('Failed to update listing');
+        } finally {
+            setIsSavingEdit(false);
+        }
+    };
+
     const handleStatusChange = async (bookingId: string, newStatus: BookingStatus) => {
         await updateBookingStatus(bookingId, newStatus);
         const bookingsData = await getUserBookings(currentUserId);
@@ -361,20 +416,133 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                         <div className="grid gap-4">
                             {myProducts.map(p => (
                                 <div key={p.id} className="bg-white border border-brand-grey rounded-2xl p-6 flex gap-6 items-center shadow-md">
-                                    <img src={p.imageUrl} className="w-24 h-24 rounded-xl object-cover" />
-                                    <div className="flex-grow">
-                                        <h3 className="font-heading text-xl text-brand-blue">{p.name}</h3>
+                                    <Link href={`/products/${p.id}`} className="shrink-0">
+                                        <img src={p.imageUrl} className="w-24 h-24 rounded-xl object-cover hover:opacity-80 transition-opacity" />
+                                    </Link>
+                                    <div className="flex-grow min-w-0">
+                                        <Link href={`/products/${p.id}`} className="hover:underline">
+                                            <h3 className="font-heading text-xl text-brand-blue">{p.name}</h3>
+                                        </Link>
                                         <p className="text-brand-orange font-bold text-lg">£{p.pricePerDay} / day</p>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button className="bg-brand-blue/5 hover:bg-brand-blue/10 px-6 py-2 rounded-xl text-xs font-bold uppercase text-brand-blue transition-colors">Edit</button>
-                                        <button className="text-red-500 hover:bg-red-50 px-3 py-2 rounded-xl transition-colors">
+                                    <div className="flex gap-2 shrink-0">
+                                        <button
+                                            onClick={() => openEdit(p)}
+                                            className="bg-brand-blue/5 hover:bg-brand-blue/10 px-6 py-2 rounded-xl text-xs font-bold uppercase text-brand-blue transition-colors"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => setDeleteId(String(p.id))}
+                                            className="text-red-500 hover:bg-red-50 px-3 py-2 rounded-xl transition-colors"
+                                        >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </div>
                                 </div>
                             ))}
                         </div>
+
+                        {/* Delete confirmation modal */}
+                        {deleteId && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                                <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+                                    <h3 className="font-heading text-xl text-brand-blue mb-3">Remove listing?</h3>
+                                    <p className="font-body text-brand-blue/70 mb-6 text-sm">This listing will be removed and won&apos;t appear in search results. This can&apos;t be undone.</p>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => setDeleteId(null)}
+                                            disabled={isDeleting}
+                                            className="flex-1 px-4 py-2.5 rounded-xl border border-brand-grey font-body font-medium text-brand-blue hover:bg-brand-grey/30 transition-colors disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleDeleteConfirm}
+                                            disabled={isDeleting}
+                                            className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-body font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                                        >
+                                            {isDeleting ? 'Removing…' : 'Remove'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Edit modal */}
+                        {editProduct && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                                <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl">
+                                    <h3 className="font-heading text-xl text-brand-blue mb-6">Edit listing</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block font-body text-sm font-medium text-brand-blue mb-1">Title</label>
+                                            <input
+                                                value={editForm.title}
+                                                onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                                                className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block font-body text-sm font-medium text-brand-blue mb-1">Description</label>
+                                            <textarea
+                                                value={editForm.description}
+                                                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                                                rows={3}
+                                                className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30 resize-none"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div>
+                                                <label className="block font-body text-sm font-medium text-brand-blue mb-1">1-day (£)</label>
+                                                <input
+                                                    type="number" min="0" step="0.01"
+                                                    value={editForm.price1Day}
+                                                    onChange={e => setEditForm(f => ({ ...f, price1Day: e.target.value }))}
+                                                    className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block font-body text-sm font-medium text-brand-blue mb-1">3-day (£)</label>
+                                                <input
+                                                    type="number" min="0" step="0.01"
+                                                    value={editForm.price3Day}
+                                                    onChange={e => setEditForm(f => ({ ...f, price3Day: e.target.value }))}
+                                                    placeholder="Optional"
+                                                    className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block font-body text-sm font-medium text-brand-blue mb-1">7-day (£)</label>
+                                                <input
+                                                    type="number" min="0" step="0.01"
+                                                    value={editForm.price7Day}
+                                                    onChange={e => setEditForm(f => ({ ...f, price7Day: e.target.value }))}
+                                                    placeholder="Optional"
+                                                    className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3 mt-6">
+                                        <button
+                                            onClick={() => setEditProduct(null)}
+                                            disabled={isSavingEdit}
+                                            className="flex-1 px-4 py-2.5 rounded-xl border border-brand-grey font-body font-medium text-brand-blue hover:bg-brand-grey/30 transition-colors disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSaveEdit}
+                                            disabled={isSavingEdit || !editForm.title || !editForm.price1Day}
+                                            className="flex-1 px-4 py-2.5 rounded-xl bg-brand-orange text-white font-body font-medium hover:bg-brand-orange/90 transition-colors disabled:opacity-50"
+                                        >
+                                            {isSavingEdit ? 'Saving…' : 'Save changes'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
 

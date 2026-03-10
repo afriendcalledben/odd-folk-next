@@ -6,6 +6,8 @@ export interface Product {
   name: string;
   description: string;
   pricePerDay: number;
+  price3Day?: number | null;
+  price7Day?: number | null;
   imageUrl: string;
   images?: string[]; 
   location: string;
