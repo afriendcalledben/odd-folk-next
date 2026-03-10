@@ -458,6 +458,18 @@ export const createLocation = async (location: {
   return api.post('/locations', location);
 };
 
+export const updateLocation = async (id: string, location: {
+  name: string;
+  address: string;
+  postcode: string;
+  city: string;
+  lat?: number;
+  lng?: number;
+  type?: string;
+}) => {
+  return api.put(`/locations/${id}`, location);
+};
+
 export const deleteLocation = async (id: string): Promise<void> => {
   await api.delete<unknown>(`/locations/${id}`);
 };

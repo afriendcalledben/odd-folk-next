@@ -30,7 +30,7 @@ interface NominatimResult {
   };
 }
 
-interface LocationData {
+export interface LocationData {
   name: string;
   address: string;
   postcode: string;
@@ -40,8 +40,14 @@ interface LocationData {
   type: string;
 }
 
+export interface InitialLocationData extends LocationData {
+  id: string;
+}
+
 interface LocationPickerProps {
   onSave: (loc: LocationData) => Promise<void>;
+  initialData?: InitialLocationData;
+  onCancel?: () => void;
 }
 
 function DraggableMarker({
@@ -52,8 +58,8 @@ function DraggableMarker({
   onDragEnd: (lat: number, lng: number) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
-
   const map = useMap();
+
   useEffect(() => {
     map.setView(position, map.getZoom());
   }, [position, map]);
@@ -76,19 +82,21 @@ function DraggableMarker({
   );
 }
 
-export default function LocationPicker({ onSave }: LocationPickerProps) {
+export default function LocationPicker({ onSave, initialData, onCancel }: LocationPickerProps) {
+  const isEditing = !!initialData;
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [manualMode, setManualMode] = useState(false);
+  const [manualMode, setManualMode] = useState(isEditing);
   const [saving, setSaving] = useState(false);
 
-  const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
-  const [postcode, setPostcode] = useState('');
-  const [city, setCity] = useState('');
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
+  const [name, setName] = useState(initialData?.name ?? '');
+  const [address, setAddress] = useState(initialData?.address ?? '');
+  const [postcode, setPostcode] = useState(initialData?.postcode ?? '');
+  const [city, setCity] = useState(initialData?.city ?? '');
+  const [lat, setLat] = useState<number | null>(initialData?.lat ?? null);
+  const [lng, setLng] = useState<number | null>(initialData?.lng ?? null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -135,7 +143,6 @@ export default function LocationPicker({ onSave }: LocationPickerProps) {
     const a = result.address;
     const streetNumber = [a.house_number, a.road].filter(Boolean).join(' ');
     const resolvedCity = a.city || a.town || a.village || a.suburb || '';
-    setName(streetNumber || result.display_name.split(',')[0]);
     setAddress(streetNumber || result.display_name.split(',')[0]);
     setPostcode(a.postcode || '');
     setCity(resolvedCity);
@@ -180,15 +187,16 @@ export default function LocationPicker({ onSave }: LocationPickerProps) {
         lng: lng ?? -0.1278,
         type: 'OTHER',
       });
-      // Reset form
-      setQuery('');
-      setName('');
-      setAddress('');
-      setPostcode('');
-      setCity('');
-      setLat(null);
-      setLng(null);
-      setManualMode(false);
+      if (!isEditing) {
+        setQuery('');
+        setName('');
+        setAddress('');
+        setPostcode('');
+        setCity('');
+        setLat(null);
+        setLng(null);
+        setManualMode(false);
+      }
     } finally {
       setSaving(false);
     }
@@ -197,16 +205,29 @@ export default function LocationPicker({ onSave }: LocationPickerProps) {
   return (
     <div className="bg-white border border-brand-grey rounded-3xl p-8 shadow-md space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-heading text-xl text-brand-blue">Add a Collection Point</h3>
-        <button
-          type="button"
-          onClick={() => { setManualMode(!manualMode); setResults([]); setShowDropdown(false); }}
-          className="text-sm text-brand-orange underline font-body"
-        >
-          {manualMode ? 'Search address' : 'Enter manually'}
-        </button>
+        <h3 className="font-heading text-xl text-brand-blue">
+          {isEditing ? 'Edit Collection Point' : 'Add a Collection Point'}
+        </h3>
+        {!isEditing && (
+          <button
+            type="button"
+            onClick={() => { setManualMode(!manualMode); setResults([]); setShowDropdown(false); }}
+            className="text-sm text-brand-orange underline font-body"
+          >
+            {manualMode ? 'Search address' : 'Enter manually'}
+          </button>
+        )}
       </div>
 
+      {/* Name always at the top */}
+      <Input
+        label="Name / Label"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="e.g. Home, Studio, Warehouse"
+      />
+
+      {/* Address search or manual fields */}
       {!manualMode && (
         <div className="relative" ref={dropdownRef}>
           <Input
@@ -231,14 +252,9 @@ export default function LocationPicker({ onSave }: LocationPickerProps) {
         </div>
       )}
 
+      {/* Address detail fields — always shown in manual/edit mode, or after search selection */}
       {(manualMode || hasPin) && (
         <div className="space-y-4">
-          <Input
-            label="Name / Label"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="e.g. Home, Studio, Warehouse"
-          />
           <Input
             label="Address"
             value={address}
@@ -262,51 +278,37 @@ export default function LocationPicker({ onSave }: LocationPickerProps) {
         </div>
       )}
 
-      {!manualMode && !hasPin && (
-        <div className="space-y-4">
-          <Input
-            label="Name / Label"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="e.g. Home, Studio, Warehouse"
-          />
-        </div>
-      )}
-
+      {/* Map */}
       {hasPin && (
-        <div className="rounded-2xl overflow-hidden border border-brand-grey" style={{ height: 280 }}>
-          <MapContainer
-            center={[lat!, lng!]}
-            zoom={15}
-            style={{ height: '100%', width: '100%' }}
-            scrollWheelZoom={false}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <DraggableMarker
-              position={[lat!, lng!]}
-              onDragEnd={reverseGeocode}
-            />
-          </MapContainer>
-        </div>
+        <>
+          <div className="rounded-2xl overflow-hidden border border-brand-grey" style={{ height: 280 }}>
+            <MapContainer
+              center={[lat!, lng!]}
+              zoom={15}
+              style={{ height: '100%', width: '100%' }}
+              scrollWheelZoom={false}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <DraggableMarker position={[lat!, lng!]} onDragEnd={reverseGeocode} />
+            </MapContainer>
+          </div>
+          <p className="text-xs text-brand-blue/50 font-body">Drag the pin to fine-tune your location.</p>
+        </>
       )}
 
-      {hasPin && (
-        <p className="text-xs text-brand-blue/50 font-body">
-          Drag the pin to fine-tune your location.
-        </p>
-      )}
-
-      <Button
-        variant="primary"
-        fullWidth
-        onClick={handleSave}
-        disabled={!canSave || saving}
-      >
-        {saving ? 'Saving…' : 'Add Collection Point'}
-      </Button>
+      <div className="flex gap-3">
+        {isEditing && onCancel && (
+          <Button variant="outline" fullWidth onClick={onCancel} disabled={saving}>
+            Cancel
+          </Button>
+        )}
+        <Button variant="primary" fullWidth onClick={handleSave} disabled={!canSave || saving}>
+          {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Add Collection Point'}
+        </Button>
+      </div>
     </div>
   );
 }

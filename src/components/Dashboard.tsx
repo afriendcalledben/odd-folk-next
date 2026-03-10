@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, deleteLocation } from '../services/api';
+import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, updateLocation, deleteLocation } from '../services/api';
 import { useAuth } from '@/context/AuthContext';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import { Input, Textarea, Button } from '@/components/ui';
@@ -120,6 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     const currentUserId = user.id;
 
     const [locations, setLocations] = useState<any[]>([]);
+    const [editingLocation, setEditingLocation] = useState<any | null>(null);
     const [walletBalance, setWalletBalance] = useState({ available: 0, pending: 0, escrow: 0 });
     const [transactions, setTransactions] = useState<any[]>([]);
 
@@ -456,13 +457,26 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                 return (
                     <div className="space-y-6">
                         <h2 className="font-heading text-3xl text-brand-blue mb-8">My Collection Points</h2>
-                        <LocationPicker
-                            onSave={async (loc) => {
-                                const saved = await createLocation(loc) as any;
-                                setLocations(prev => [saved, ...prev]);
-                                toast.success('Collection point added!');
-                            }}
-                        />
+                        {editingLocation ? (
+                            <LocationPicker
+                                initialData={editingLocation}
+                                onSave={async (loc) => {
+                                    const updated = await updateLocation(editingLocation.id, loc) as any;
+                                    setLocations(prev => prev.map((l: any) => l.id === editingLocation.id ? updated : l));
+                                    setEditingLocation(null);
+                                    toast.success('Collection point updated!');
+                                }}
+                                onCancel={() => setEditingLocation(null)}
+                            />
+                        ) : (
+                            <LocationPicker
+                                onSave={async (loc) => {
+                                    const saved = await createLocation(loc) as any;
+                                    setLocations(prev => [saved, ...prev]);
+                                    toast.success('Collection point added!');
+                                }}
+                            />
+                        )}
                         <div className="grid gap-4">
                             {locations.length > 0 ? locations.map((loc: any) => (
                                 <div key={loc.id} className="bg-white border border-brand-grey rounded-3xl p-8 flex justify-between items-center shadow-md">
@@ -473,16 +487,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                         </div>
                                         <p className="text-brand-blue/60 text-lg font-body">{loc.address}, {loc.postcode} {loc.city}</p>
                                     </div>
-                                    <button
-                                        onClick={async () => {
-                                            await deleteLocation(loc.id);
-                                            setLocations(prev => prev.filter((l: any) => l.id !== loc.id));
-                                            toast.success('Collection point removed.');
-                                        }}
-                                        className="text-red-500 font-bold hover:underline transition-all"
-                                    >
-                                        Remove
-                                    </button>
+                                    <div className="flex gap-4">
+                                        <button
+                                            onClick={() => setEditingLocation(loc)}
+                                            className="text-brand-blue font-bold hover:underline transition-all"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                await deleteLocation(loc.id);
+                                                setLocations(prev => prev.filter((l: any) => l.id !== loc.id));
+                                                if (editingLocation?.id === loc.id) setEditingLocation(null);
+                                                toast.success('Collection point removed.');
+                                            }}
+                                            className="text-red-500 font-bold hover:underline transition-all"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
                             )) : (
                                 <p className="text-brand-blue/50 italic py-8 text-center">No collection points saved yet.</p>
