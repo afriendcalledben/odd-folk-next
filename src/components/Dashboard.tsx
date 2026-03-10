@@ -459,6 +459,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                         <h2 className="font-heading text-3xl text-brand-blue mb-8">My Collection Points</h2>
                         {editingLocation ? (
                             <LocationPicker
+                                key={editingLocation.id}
                                 initialData={editingLocation}
                                 onSave={async (loc) => {
                                     const updated = await updateLocation(editingLocation.id, loc) as any;
@@ -470,6 +471,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                             />
                         ) : (
                             <LocationPicker
+                                key="new"
                                 onSave={async (loc) => {
                                     const saved = await createLocation(loc) as any;
                                     setLocations(prev => [saved, ...prev]);

@@ -88,7 +88,7 @@ export default function LocationPicker({ onSave, initialData, onCancel }: Locati
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [manualMode, setManualMode] = useState(isEditing);
+  const [manualMode, setManualMode] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState(initialData?.name ?? '');
@@ -208,15 +208,13 @@ export default function LocationPicker({ onSave, initialData, onCancel }: Locati
         <h3 className="font-heading text-xl text-brand-blue">
           {isEditing ? 'Edit Collection Point' : 'Add a Collection Point'}
         </h3>
-        {!isEditing && (
-          <button
-            type="button"
-            onClick={() => { setManualMode(!manualMode); setResults([]); setShowDropdown(false); }}
-            className="text-sm text-brand-orange underline font-body"
-          >
-            {manualMode ? 'Search address' : 'Enter manually'}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => { setManualMode(!manualMode); setResults([]); setShowDropdown(false); }}
+          className="text-sm text-brand-orange underline font-body"
+        >
+          {manualMode ? 'Search address' : 'Enter manually'}
+        </button>
       </div>
 
       {/* Name always at the top */}
@@ -252,8 +250,8 @@ export default function LocationPicker({ onSave, initialData, onCancel }: Locati
         </div>
       )}
 
-      {/* Address detail fields — always shown in manual/edit mode, or after search selection */}
-      {(manualMode || hasPin) && (
+      {/* Address detail fields — always shown when editing, in manual mode, or after search selection */}
+      {(isEditing || manualMode || hasPin) && (
         <div className="space-y-4">
           <Input
             label="Address"
