@@ -161,6 +161,9 @@ export interface SearchParams {
   minPrice?: number;
   maxPrice?: number;
   condition?: string;
+  lat?: number;
+  lng?: number;
+  distance?: number; // miles
 }
 
 export const fetchProducts = async (params?: SearchParams): Promise<Product[]> => {
@@ -171,6 +174,9 @@ export const fetchProducts = async (params?: SearchParams): Promise<Product[]> =
     if (params?.minPrice) queryParts.push(`minPrice=${params.minPrice}`);
     if (params?.maxPrice) queryParts.push(`maxPrice=${params.maxPrice}`);
     if (params?.condition) queryParts.push(`condition=${encodeURIComponent(params.condition)}`);
+    if (params?.lat !== undefined) queryParts.push(`lat=${params.lat}`);
+    if (params?.lng !== undefined) queryParts.push(`lng=${params.lng}`);
+    if (params?.distance !== undefined) queryParts.push(`distance=${params.distance}`);
 
     const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
     const result = await api.get<{ items: unknown[] }>(`/products${queryString}`);

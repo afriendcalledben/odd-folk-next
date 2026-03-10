@@ -49,7 +49,12 @@ export default function HomePage() {
   const handleSearch = useCallback((filters: SearchFilters) => {
     setSearchFilters(filters);
     setSelectedCategory('All');
-    loadProducts({ search: filters.search || undefined });
+    loadProducts({
+      search: filters.search || undefined,
+      lat: filters.lat,
+      lng: filters.lng,
+      distance: filters.distance,
+    });
   }, [loadProducts]);
 
   const handleCategoryChange = useCallback((category: string) => {
@@ -57,8 +62,11 @@ export default function HomePage() {
     loadProducts({
       search: searchFilters.search || undefined,
       category: category !== 'All' ? category : undefined,
+      lat: searchFilters.lat,
+      lng: searchFilters.lng,
+      distance: searchFilters.distance,
     });
-  }, [loadProducts, searchFilters.search]);
+  }, [loadProducts, searchFilters]);
 
   return (
     <>

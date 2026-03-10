@@ -4,6 +4,14 @@ import { successResponse, errorResponse } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth';
 import { parseJsonField, serializeArray } from '@/lib/json-fields';
 
+function haversinemiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3958.8;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
 // GET /api/products - List products with pagination and filters
 export async function GET(req: NextRequest) {
   try {
@@ -15,9 +23,11 @@ export async function GET(req: NextRequest) {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const condition = searchParams.get('condition');
+    const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
+    const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
+    const distance = searchParams.get('distance') ? parseFloat(searchParams.get('distance')!) : null;
 
-    const skip = (page - 1) * pageSize;
-    const take = pageSize;
+    const filterByLocation = lat !== null && lng !== null && distance !== null;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
@@ -25,9 +35,7 @@ export async function GET(req: NextRequest) {
       owner: { vacationMode: false },
     };
 
-    if (category) {
-      where.category = category;
-    }
+    if (category) where.category = category;
 
     if (search) {
       where.OR = [
@@ -43,36 +51,25 @@ export async function GET(req: NextRequest) {
       if (maxPrice) where.price1Day.lte = parseFloat(maxPrice);
     }
 
-    if (condition) {
-      where.condition = condition;
-    }
+    if (condition) where.condition = condition;
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          owner: {
-            select: {
-              id: true,
-              name: true,
-              avatarUrl: true,
-            },
-          },
-          location: {
-            select: {
-              city: true,
-            },
-          },
-          _count: {
-            select: { reviews: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take,
-      }),
-      prisma.product.count({ where }),
-    ]);
+    // When filtering by location fetch all matching rows (no pagination limit) so we
+    // can apply the distance filter before slicing. Otherwise use normal pagination.
+    const fetchAll = filterByLocation;
+    const skip = fetchAll ? 0 : (page - 1) * pageSize;
+    const take = fetchAll ? undefined : pageSize;
+
+    const products = await prisma.product.findMany({
+      where,
+      include: {
+        owner: { select: { id: true, name: true, avatarUrl: true } },
+        location: { select: { city: true, lat: true, lng: true } },
+        _count: { select: { reviews: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    });
 
     // Calculate average ratings and parse JSON fields
     const productsWithRatings = await Promise.all(
@@ -91,12 +88,26 @@ export async function GET(req: NextRequest) {
       })
     );
 
+    // Apply distance filter in JS after fetching
+    const filtered = filterByLocation
+      ? productsWithRatings.filter(p => {
+          const plat = p.location?.lat;
+          const plng = p.location?.lng;
+          if (plat == null || plng == null) return false;
+          return haversinemiles(lat!, lng!, plat, plng) <= distance!;
+        })
+      : productsWithRatings;
+
+    // Paginate the distance-filtered results
+    const total = filtered.length;
+    const items = filterByLocation ? filtered.slice((page - 1) * pageSize, page * pageSize) : filtered;
+
     return successResponse({
-      items: productsWithRatings,
+      items,
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / take),
+      totalPages: Math.ceil(total / pageSize),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
