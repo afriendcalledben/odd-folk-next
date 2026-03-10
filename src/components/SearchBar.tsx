@@ -12,11 +12,21 @@ export interface SearchFilters {
   endDate: string;
 }
 
+const AREA_TYPES = new Set([
+  'postcode',
+  'city', 'town', 'village', 'hamlet',
+  'suburb', 'neighbourhood', 'quarter',
+  'county', 'state_district', 'administrative',
+  'municipality',
+]);
+
 interface NominatimResult {
   place_id: number;
   display_name: string;
   lat: string;
   lon: string;
+  type: string;
+  class: string;
 }
 
 interface SearchBarProps {
@@ -57,12 +67,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialFilters }) => {
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=5&countrycodes=gb`,
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&addressdetails=1&limit=8&countrycodes=gb&viewbox=-0.5103,51.6919,0.3340,51.2868&bounded=1`,
           { headers: { 'User-Agent': 'OddFolk/1.0 (contact@oddfolk.co.uk)', 'Accept-Language': 'en' } }
         );
         const data: NominatimResult[] = await res.json();
-        setSuggestions(data);
-        setShowSuggestions(data.length > 0);
+        const filtered = data.filter(r => AREA_TYPES.has(r.type) || r.class === 'boundary').slice(0, 5);
+        setSuggestions(filtered);
+        setShowSuggestions(filtered.length > 0);
       } catch {
         // silently fail
       }
