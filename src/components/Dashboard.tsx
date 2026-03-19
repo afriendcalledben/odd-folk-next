@@ -271,13 +271,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
             try {
                 const [bookingsData, allProducts, locsData, balanceData, txData] = await Promise.all([
                     getUserBookings(currentUserId),
-                    fetchProducts(),
+                    fetchProducts({ ownerId: currentUserId }),
                     getLocations().catch(() => []),
                     getWalletBalance().catch(() => ({ available: 0, pending: 0, escrow: 0 })),
                     getTransactions().catch(() => []),
                 ]);
                 setBookings(bookingsData);
-                setMyProducts(allProducts.filter(p => p.owner.id === currentUserId));
+                setMyProducts(allProducts);
                 setLocations(locsData || []);
                 setWalletBalance(balanceData);
                 setTransactions(txData || []);

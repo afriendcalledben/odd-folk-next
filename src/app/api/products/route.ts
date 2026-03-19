@@ -26,14 +26,14 @@ export async function GET(req: NextRequest) {
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
     const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
     const distance = searchParams.get('distance') ? parseFloat(searchParams.get('distance')!) : null;
+    const ownerIdParam = searchParams.get('ownerId');
 
     const filterByLocation = lat !== null && lng !== null && distance !== null;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {
-      status: 'ACTIVE',
-      owner: { vacationMode: false },
-    };
+    const where: any = ownerIdParam
+      ? { ownerId: ownerIdParam }
+      : { status: 'ACTIVE', owner: { vacationMode: false } };
 
     if (category) where.category = category;
 

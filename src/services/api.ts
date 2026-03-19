@@ -164,6 +164,7 @@ export interface SearchParams {
   lat?: number;
   lng?: number;
   distance?: number; // miles
+  ownerId?: string;
 }
 
 export const fetchProducts = async (params?: SearchParams): Promise<Product[]> => {
@@ -177,6 +178,7 @@ export const fetchProducts = async (params?: SearchParams): Promise<Product[]> =
     if (params?.lat !== undefined) queryParts.push(`lat=${params.lat}`);
     if (params?.lng !== undefined) queryParts.push(`lng=${params.lng}`);
     if (params?.distance !== undefined) queryParts.push(`distance=${params.distance}`);
+    if (params?.ownerId) queryParts.push(`ownerId=${encodeURIComponent(params.ownerId)}`);
 
     const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
     const result = await api.get<{ items: unknown[] }>(`/products${queryString}`);
