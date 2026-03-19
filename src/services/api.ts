@@ -161,6 +161,7 @@ export interface SearchParams {
   minPrice?: number;
   maxPrice?: number;
   condition?: string;
+  colors?: string[]; // multi-select
   lat?: number;
   lng?: number;
   distance?: number; // miles
@@ -175,6 +176,7 @@ export const fetchProducts = async (params?: SearchParams): Promise<Product[]> =
     if (params?.minPrice) queryParts.push(`minPrice=${params.minPrice}`);
     if (params?.maxPrice) queryParts.push(`maxPrice=${params.maxPrice}`);
     if (params?.condition) queryParts.push(`condition=${encodeURIComponent(params.condition)}`);
+    if (params?.colors?.length) queryParts.push(`colors=${encodeURIComponent(params.colors.join(','))}`);
     if (params?.lat !== undefined) queryParts.push(`lat=${params.lat}`);
     if (params?.lng !== undefined) queryParts.push(`lng=${params.lng}`);
     if (params?.distance !== undefined) queryParts.push(`distance=${params.distance}`);

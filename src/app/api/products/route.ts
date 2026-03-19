@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const condition = searchParams.get('condition');
+    const colorsParam = searchParams.get('colors');
+    const colors = colorsParam ? colorsParam.split(',').map(c => c.trim()).filter(Boolean) : null;
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
     const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
     const distance = searchParams.get('distance') ? parseFloat(searchParams.get('distance')!) : null;
@@ -52,6 +54,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (condition) where.condition = condition;
+    if (colors?.length) where.color = { in: colors };
 
     // When filtering by location fetch all matching rows (no pagination limit) so we
     // can apply the distance filter before slicing. Otherwise use normal pagination.
