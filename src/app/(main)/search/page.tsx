@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchProducts } from '@/services/api';
 import type { Product } from '@/types';
@@ -38,7 +38,7 @@ function searchParamsToFilters(params: URLSearchParams): FilterState {
   };
 }
 
-export default function SearchPage() {
+function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -136,5 +136,13 @@ export default function SearchPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SearchPageWrapper() {
+  return (
+    <Suspense>
+      <SearchPage />
+    </Suspense>
   );
 }
