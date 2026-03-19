@@ -129,7 +129,7 @@ export default function LocationPicker({ onSave, initialData, onCancel }: Locati
           { headers: { 'User-Agent': 'OddFolk/1.0 (contact@oddfolk.co.uk)', 'Accept-Language': 'en' } }
         );
         const data: NominatimResult[] = await res.json();
-        const filtered = data.filter(r => AREA_TYPES.has(r.type) || r.class === 'boundary').slice(0, 5);
+        const filtered = data.slice(0, 5);
         setResults(filtered);
         setShowDropdown(filtered.length > 0);
       } catch {
