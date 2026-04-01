@@ -70,12 +70,13 @@ export default function HomePage() {
 
   return (
     <>
-      <Hero />
-      <div className="bg-brand-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
+      <div style={{ backgroundColor: '#d3fe8a' }}>
+        <Hero />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-10 relative z-20">
           <SearchBar onSearch={handleSearch} initialFilters={searchFilters} />
         </div>
-
+      </div>
+      <div className="bg-brand-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {searchFilters.search ? (
             <div className="text-center mb-12">
