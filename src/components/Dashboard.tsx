@@ -544,13 +544,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                         const cur = new Date(start + 'T00:00:00');
                         const fin = new Date(end + 'T00:00:00');
                         while (cur <= fin) {
-                            dates.push(cur.toISOString().split('T')[0]);
+                            dates.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`);
                             cur.setDate(cur.getDate() + 1);
                         }
                     });
                     return dates;
                 };
-                const toDateStr = (d: Date) => d.toISOString().split('T')[0];
+                const toDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 return (
                     <div className="space-y-8">
                         <h2 className="font-heading text-3xl text-brand-blue">Block Days & Vacation</h2>
