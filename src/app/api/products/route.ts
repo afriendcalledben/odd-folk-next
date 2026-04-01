@@ -29,6 +29,9 @@ export async function GET(req: NextRequest) {
     const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
     const distance = searchParams.get('distance') ? parseFloat(searchParams.get('distance')!) : null;
     const ownerIdParam = searchParams.get('ownerId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const filterByDates = !!(startDate && endDate);
 
     const filterByLocation = lat !== null && lng !== null && distance !== null;
 
@@ -56,16 +59,30 @@ export async function GET(req: NextRequest) {
     if (condition) where.condition = condition;
     if (colors?.length) where.color = { in: colors };
 
+    // Exclude products with overlapping bookings when date filtering
+    if (filterByDates) {
+      const bookedProductIds = await prisma.booking.findMany({
+        where: {
+          startDate: { lte: new Date(endDate!) },
+          endDate: { gte: new Date(startDate!) },
+          status: { in: ['PENDING', 'APPROVED', 'PAID', 'COLLECTED'] },
+        },
+        select: { productId: true },
+      });
+      const bookedIds = [...new Set(bookedProductIds.map(b => b.productId))];
+      if (bookedIds.length) where.id = { notIn: bookedIds };
+    }
+
     // When filtering by location fetch all matching rows (no pagination limit) so we
     // can apply the distance filter before slicing. Otherwise use normal pagination.
-    const fetchAll = filterByLocation;
+    const fetchAll = filterByLocation || filterByDates;
     const skip = fetchAll ? 0 : (page - 1) * pageSize;
     const take = fetchAll ? undefined : pageSize;
 
     const products = await prisma.product.findMany({
       where,
       include: {
-        owner: { select: { id: true, name: true, avatarUrl: true } },
+        owner: { select: { id: true, name: true, avatarUrl: true, blockedDates: filterByDates } },
         location: { select: { city: true, lat: true, lng: true } },
         _count: { select: { reviews: true } },
       },
@@ -91,15 +108,29 @@ export async function GET(req: NextRequest) {
       })
     );
 
+    // Post-filter by owner blocked dates when date filtering is active
+    const afterDateFilter = filterByDates
+      ? productsWithRatings.filter(p => {
+          const owner = p.owner as typeof p.owner & { blockedDates?: string };
+          if (!owner.blockedDates) return true;
+          try {
+            const ranges: { start: string; end: string }[] = JSON.parse(owner.blockedDates);
+            const qStart = new Date(startDate!);
+            const qEnd = new Date(endDate!);
+            return !ranges.some(r => new Date(r.start) <= qEnd && new Date(r.end) >= qStart);
+          } catch { return true; }
+        })
+      : productsWithRatings;
+
     // Apply distance filter in JS after fetching
     const filtered = filterByLocation
-      ? productsWithRatings.filter(p => {
+      ? afterDateFilter.filter(p => {
           const plat = p.location?.lat;
           const plng = p.location?.lng;
           if (plat == null || plng == null) return false;
           return haversinemiles(lat!, lng!, plat, plng) <= distance!;
         })
-      : productsWithRatings;
+      : afterDateFilter;
 
     // Paginate the distance-filtered results
     const total = filtered.length;

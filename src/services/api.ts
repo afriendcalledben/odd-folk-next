@@ -166,6 +166,8 @@ export interface SearchParams {
   lng?: number;
   distance?: number; // miles
   ownerId?: string;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string;   // YYYY-MM-DD
 }
 
 export const fetchProducts = async (params?: SearchParams): Promise<Product[]> => {
@@ -181,6 +183,8 @@ export const fetchProducts = async (params?: SearchParams): Promise<Product[]> =
     if (params?.lng !== undefined) queryParts.push(`lng=${params.lng}`);
     if (params?.distance !== undefined) queryParts.push(`distance=${params.distance}`);
     if (params?.ownerId) queryParts.push(`ownerId=${encodeURIComponent(params.ownerId)}`);
+    if (params?.startDate) queryParts.push(`startDate=${params.startDate}`);
+    if (params?.endDate) queryParts.push(`endDate=${params.endDate}`);
 
     const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
     const result = await api.get<{ items: unknown[] }>(`/products${queryString}`);

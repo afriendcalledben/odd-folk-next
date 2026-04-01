@@ -43,6 +43,8 @@ export interface FilterState {
   lat: number | null;
   lng: number | null;
   distance: number | null;
+  startDate: string;
+  endDate: string;
 }
 
 export const defaultFilters: FilterState = {
@@ -56,6 +58,8 @@ export const defaultFilters: FilterState = {
   lat: null,
   lng: null,
   distance: 3,
+  startDate: '',
+  endDate: '',
 };
 
 interface NominatimResult {
@@ -273,7 +277,39 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
       </FilterSection>
 
       <FilterSection title="Availability" defaultOpen={false}>
-        <p className="text-xs text-brand-burgundy/40 font-body italic">Coming soon — date-based availability filtering.</p>
+        <div className="space-y-2">
+          <div>
+            <label className="text-xs text-brand-burgundy/60 font-body mb-1 block">From</label>
+            <input
+              type="date"
+              value={filters.startDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e => {
+                const val = e.target.value;
+                onChange({ ...filters, startDate: val, endDate: filters.endDate && filters.endDate < val ? '' : filters.endDate });
+              }}
+              className="w-full p-2 bg-brand-white border border-brand-grey rounded-xl font-body text-sm text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-brand-burgundy/60 font-body mb-1 block">To</label>
+            <input
+              type="date"
+              value={filters.endDate}
+              min={filters.startDate || new Date().toISOString().split('T')[0]}
+              onChange={e => onChange({ ...filters, endDate: e.target.value })}
+              className="w-full p-2 bg-brand-white border border-brand-grey rounded-xl font-body text-sm text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
+            />
+          </div>
+          {(filters.startDate || filters.endDate) && (
+            <button
+              onClick={() => onChange({ ...filters, startDate: '', endDate: '' })}
+              className="text-xs text-brand-burgundy/50 hover:text-brand-burgundy transition-colors"
+            >
+              Clear dates
+            </button>
+          )}
+        </div>
       </FilterSection>
     </div>
   );

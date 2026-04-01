@@ -223,6 +223,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                             onChange={(s, e) => { setPickupDate(s); setDropoffDate(e); }}
                             unavailableDates={unavailableDates}
                         />
+                        {unavailableDates.length > 0 && (
+                            <p className="text-xs text-brand-burgundy/50 mt-2 text-center">Red dates are unavailable — select from the remaining dates.</p>
+                        )}
                     </div>
 
                     {/* Quantity Selector */}
@@ -254,13 +257,31 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                              </p>
                            </div>
                          )}
-                         <button
-                            onClick={handleRequestBook}
-                            disabled={product.quantityAvailable === 0 || !pickupDate || !dropoffDate}
-                            className="w-full bg-brand-orange text-white font-heading text-lg py-3 rounded-full hover:brightness-90 shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
-                         >
-                             {product.quantityAvailable > 0 ? 'Send request' : 'Out of stock'}
-                         </button>
+                         {(() => {
+                           const datesUnavailable = pickupDate && dropoffDate && (() => {
+                             const cur = new Date(pickupDate); cur.setHours(0,0,0,0);
+                             const end = new Date(dropoffDate); end.setHours(0,0,0,0);
+                             while (cur <= end) {
+                               if (unavailableDates.includes(cur.toISOString().split('T')[0])) return true;
+                               cur.setDate(cur.getDate() + 1);
+                             }
+                             return false;
+                           })();
+                           return (
+                             <>
+                               {datesUnavailable && (
+                                 <p className="text-sm text-red-500 text-center font-body">This item is not available for your selected dates.</p>
+                               )}
+                               <button
+                                 onClick={handleRequestBook}
+                                 disabled={product.quantityAvailable === 0 || !pickupDate || !dropoffDate || !!datesUnavailable}
+                                 className="w-full bg-brand-orange text-white font-heading text-lg py-3 rounded-full hover:brightness-90 shadow-sm disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
+                               >
+                                 {product.quantityAvailable > 0 ? 'Send request' : 'Out of stock'}
+                               </button>
+                             </>
+                           );
+                         })()}
                     </div>
                 </div>
              </div>

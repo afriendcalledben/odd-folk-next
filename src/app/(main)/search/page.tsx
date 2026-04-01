@@ -20,6 +20,8 @@ function filtersToSearchParams(filters: FilterState): URLSearchParams {
   if (filters.lat !== null) p.set('lat', String(filters.lat));
   if (filters.lng !== null) p.set('lng', String(filters.lng));
   if (filters.distance !== null) p.set('distance', String(filters.distance));
+  if (filters.startDate) p.set('startDate', filters.startDate);
+  if (filters.endDate) p.set('endDate', filters.endDate);
   return p;
 }
 
@@ -35,6 +37,8 @@ function searchParamsToFilters(params: URLSearchParams): FilterState {
     lat: params.get('lat') ? parseFloat(params.get('lat')!) : null,
     lng: params.get('lng') ? parseFloat(params.get('lng')!) : null,
     distance: params.get('distance') ? parseFloat(params.get('distance')!) : 3,
+    startDate: params.get('startDate') || '',
+    endDate: params.get('endDate') || '',
   };
 }
 
@@ -61,6 +65,8 @@ function SearchPage() {
       lat: f.lat ?? undefined,
       lng: f.lng ?? undefined,
       distance: f.lat !== null ? (f.distance ?? 3) : undefined,
+      startDate: f.startDate || undefined,
+      endDate: f.endDate || undefined,
     };
     const results = await fetchProducts(params);
 
