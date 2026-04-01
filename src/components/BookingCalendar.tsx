@@ -9,6 +9,7 @@ interface BookingCalendarProps {
     unavailableDates?: string[]; // Array of date strings in YYYY-MM-DD format
     minDate?: Date;
     onBlockedDateClick?: (dateStr: string) => void; // When set, blocked dates become clickable
+    vacationModeActive?: boolean; // When true, all non-past dates show as crossed out
 }
 
 const BookingCalendar: React.FC<BookingCalendarProps> = ({
@@ -18,6 +19,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     unavailableDates = [],
     minDate,
     onBlockedDateClick,
+    vacationModeActive = false,
 }) => {
     const [currentMonth, setCurrentMonth] = useState(initialStart || new Date());
 
@@ -177,16 +179,24 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             </div>
 
             {/* Legend */}
-            {unavailableDates.length > 0 && (
-                <div className="flex items-center gap-4 mb-3 px-2 text-xs">
+            {(unavailableDates.length > 0 || vacationModeActive) && (
+                <div className="flex flex-wrap items-center gap-4 mb-3 px-2 text-xs">
                     <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 bg-brand-orange rounded-full"></div>
                         <span className="text-brand-burgundy/60">Selected</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 bg-red-100 rounded-full border border-red-200"></div>
-                        <span className="text-brand-burgundy/60">{onBlockedDateClick ? 'Blocked (click to remove)' : 'Unavailable'}</span>
-                    </div>
+                    {unavailableDates.length > 0 && (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-red-100 rounded-full border border-red-200"></div>
+                            <span className="text-brand-burgundy/60">{onBlockedDateClick ? 'Blocked (click to remove)' : 'Unavailable'}</span>
+                        </div>
+                    )}
+                    {vacationModeActive && (
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-brand-burgundy/10 rounded-full"></div>
+                            <span className="text-brand-burgundy/60">Vacation mode</span>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -208,9 +218,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                         const inRange = isDateInRange(day);
                         const start = isStart(day);
                         const end = isEnd(day);
+                        const isManaged = unavailable && onBlockedDateClick && !past;
+                        const isVacation = vacationModeActive && !past && !unavailable;
 
-                        let containerClass = "h-8 flex items-center justify-center relative";
-                        let buttonClass = "w-8 h-8 flex items-center justify-center rounded-full text-sm font-body transition-all relative z-10";
+                        let containerClass = "h-10 flex items-center justify-center relative";
+                        let buttonClass = "w-8 h-10 flex flex-col items-center justify-center rounded-lg text-sm font-body transition-all relative z-10 leading-none gap-0";
 
                         if (inRange || start || end) {
                             containerClass += " bg-brand-orange/10";
@@ -223,33 +235,34 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                             containerClass += " rounded-r-full";
                         }
 
-                        if (disabled) {
+                        if (isManaged) {
+                            buttonClass += " bg-red-100 text-red-500 cursor-pointer hover:bg-red-200";
+                        } else if (isVacation) {
+                            buttonClass += " text-brand-burgundy/30 cursor-not-allowed line-through";
+                        } else if (disabled) {
                             if (unavailable) {
-                                if (onBlockedDateClick && !past) {
-                                    buttonClass += " bg-red-100 text-red-400 cursor-pointer hover:bg-red-200";
-                                } else {
-                                    buttonClass += " bg-red-50 text-red-300 cursor-not-allowed line-through";
-                                }
+                                buttonClass += " bg-red-50 text-red-300 cursor-not-allowed line-through";
                             } else {
                                 buttonClass += " text-brand-burgundy/20 cursor-not-allowed";
                             }
                         } else if (selected) {
-                            buttonClass += " bg-brand-orange text-white font-bold shadow-sm";
+                            buttonClass += " bg-brand-orange text-white font-bold shadow-sm rounded-full";
                         } else if (inRange) {
                             buttonClass += " text-brand-burgundy font-medium";
                         } else {
-                            buttonClass += " text-brand-burgundy hover:bg-brand-grey/10";
+                            buttonClass += " text-brand-burgundy hover:bg-brand-grey/10 rounded-full";
                         }
 
                         return (
-                            <div key={idx} className={inRange || (start && initialEnd) || (end && initialStart) ? containerClass : "h-8 flex items-center justify-center"}>
+                            <div key={idx} className={inRange || (start && initialEnd) || (end && initialStart) ? containerClass : "h-10 flex items-center justify-center"}>
                                 <button
                                     onClick={() => handleDateClick(day)}
-                                    disabled={disabled && !(unavailable && onBlockedDateClick && !past)}
+                                    disabled={(disabled || isVacation) && !isManaged}
                                     className={buttonClass}
-                                    title={unavailable && onBlockedDateClick && !past ? 'Click to remove block' : unavailable ? 'This date is unavailable' : past ? 'Past date' : undefined}
+                                    title={isManaged ? 'Click to remove block' : unavailable ? 'This date is unavailable' : isVacation ? 'Vacation mode active' : past ? 'Past date' : undefined}
                                 >
-                                    {unavailable && onBlockedDateClick && !past ? '×' : day}
+                                    <span>{day}</span>
+                                    {isManaged && <span className="text-[9px] font-bold leading-none">×</span>}
                                 </button>
                             </div>
                         );

@@ -624,6 +624,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                     initialEnd={rangeEnd}
                                     onChange={(s, e) => { setRangeStart(s); setRangeEnd(e); }}
                                     unavailableDates={expandRanges(blockedRanges)}
+                                    vacationModeActive={vacationMode}
                                     onBlockedDateClick={(dateStr) => {
                                         const target = blockedRanges.find(r => {
                                             const cur = new Date(r.start + 'T00:00:00');
