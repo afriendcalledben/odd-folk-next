@@ -42,6 +42,20 @@ export async function GET(
     // Combine blocked dates
     const unavailableDates: string[] = [];
 
+    // Add product-level blocked dates
+    const productBlockedDates = parseJsonField(product.blockedDates);
+    productBlockedDates.forEach((entry: unknown) => {
+      if (entry && typeof entry === 'object' && 'start' in entry && 'end' in entry) {
+        const range = entry as { start: string; end: string };
+        const cur = new Date(range.start);
+        const end = new Date(range.end);
+        while (cur <= end) {
+          unavailableDates.push(cur.toISOString().split('T')[0]);
+          cur.setDate(cur.getDate() + 1);
+        }
+      }
+    });
+
     // Add owner's blocked dates — supports both range format [{start,end}] and legacy flat string[]
     const ownerBlockedDates = parseJsonField(product.owner.blockedDates);
     ownerBlockedDates.forEach((entry: unknown) => {

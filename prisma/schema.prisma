@@ -68,9 +68,10 @@ model Product {
   price1Day   Float    @map("price_1_day")
   price3Day   Float?   @map("price_3_day")
   price7Day   Float?   @map("price_7_day")
-  images      String   @default("[]") // JSON array of image URLs
-  locationId  String?  @map("location_id")
-  status      String   @default("ACTIVE") // ACTIVE, PAUSED, DELETED
+  images        String   @default("[]") // JSON array of image URLs
+  blockedDates  String   @default("[]") @map("blocked_dates") // JSON array of {start,end} ranges
+  locationId    String?  @map("location_id")
+  status        String   @default("ACTIVE") // ACTIVE, PAUSED, DELETED
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

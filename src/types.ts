@@ -14,6 +14,7 @@ export interface Product {
   color?: string;
   locationId?: string | null;
   location: string;
+  blockedDates?: Array<{ start: string; end: string }>;
   category: string;
   condition: Condition;
   quantityAvailable: number;

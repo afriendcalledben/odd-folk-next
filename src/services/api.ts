@@ -147,6 +147,7 @@ const toFrontendProduct = (p: any): Product => ({
   category: p.category,
   condition: p.condition,
   quantityAvailable: p.quantity || 1,
+  blockedDates: Array.isArray(p.blockedDates) ? p.blockedDates : (p.blockedDates ? JSON.parse(p.blockedDates) : []),
   owner: {
     id: p.owner?.id || p.ownerId,
     name: p.owner?.name || 'Unknown',
@@ -255,6 +256,7 @@ export const updateProduct = async (id: string | number, data: {
   images?: string[];
   locationId?: string | null;
   status?: string;
+  blockedDates?: Array<{ start: string; end: string }>;
 }): Promise<Product> => {
   const result = await api.put<unknown>(`/products/${id}`, data);
   return toFrontendProduct(result);

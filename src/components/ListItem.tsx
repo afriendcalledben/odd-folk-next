@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { createProduct, updateProduct, uploadImages, getLocations } from '../services/api';
+import type { BlockedRange } from '../services/api';
 import { Button } from '@/components/ui';
 import type { Product } from '@/types';
+import BookingCalendar from './BookingCalendar';
 
 const inputClass = 'w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors';
 const labelClass = 'block font-body text-sm font-bold text-brand-burgundy mb-1';
@@ -55,6 +57,11 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.images || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [itemBlockedRanges, setItemBlockedRanges] = useState<BlockedRange[]>(
+    (initialData?.blockedDates as BlockedRange[] | undefined) || []
+  );
+  const [itemRangeStart, setItemRangeStart] = useState<Date | null>(null);
+  const [itemRangeEnd, setItemRangeEnd] = useState<Date | null>(null);
 
   const categories = [
     "Furniture", "Lighting", "Decor", "Tableware",
@@ -73,6 +80,34 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
       setLocations([]);
     });
   }, []);
+
+  const toDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const expandRanges = (ranges: BlockedRange[]): string[] => {
+    const dates: string[] = [];
+    ranges.forEach(({ start, end }) => {
+      const cur = new Date(start);
+      const endDate = new Date(end);
+      while (cur <= endDate) {
+        dates.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`);
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    return dates;
+  };
+
+  const handleAddItemRange = () => {
+    if (!itemRangeStart) return;
+    const end = itemRangeEnd || itemRangeStart;
+    setItemBlockedRanges(prev => [...prev, { start: toDateStr(itemRangeStart), end: toDateStr(end) }]);
+    setItemRangeStart(null);
+    setItemRangeEnd(null);
+  };
+
+  const handleRemoveItemRange = (index: number) => {
+    setItemBlockedRanges(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleAddTag = (e: React.KeyboardEvent | React.MouseEvent) => {
     if (e.type === 'keydown' && (e as React.KeyboardEvent).key !== 'Enter') return;
@@ -150,6 +185,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           price7Day: price7Day ? parseFloat(price7Day) : null,
           images: imageUrls,
           locationId: selectedLocationId || null,
+          blockedDates: itemBlockedRanges,
         });
       } else {
         const validFiles = imageFiles.filter(f => f);
@@ -401,6 +437,60 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
                 </div>
               ) : (
                 <p className="text-brand-burgundy/50 italic">No locations saved yet. You can add one from your profile.</p>
+              )}
+            </div>
+          </FormStep>
+
+          {/* Step 7: Block dates for this item */}
+          <FormStep number={7} title="Block specific dates">
+            <div className="space-y-4">
+              <p className="font-body text-sm text-brand-burgundy/60">
+                Block dates when this item is unavailable — e.g. already booked elsewhere. This is separate from your account-wide block dates.
+              </p>
+              <BookingCalendar
+                initialStart={itemRangeStart}
+                initialEnd={itemRangeEnd}
+                onChange={(s, e) => { setItemRangeStart(s); setItemRangeEnd(e); }}
+                unavailableDates={expandRanges(itemBlockedRanges)}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleAddItemRange}
+                disabled={!itemRangeStart}
+              >
+                Add blocked range
+              </Button>
+              {itemBlockedRanges.length > 0 && (
+                <div className="border border-brand-grey rounded-xl overflow-hidden">
+                  <table className="w-full text-sm font-body">
+                    <thead className="bg-brand-grey/20">
+                      <tr>
+                        <th className="text-left px-4 py-2 text-brand-burgundy/60 font-semibold">From</th>
+                        <th className="text-left px-4 py-2 text-brand-burgundy/60 font-semibold">To</th>
+                        <th className="px-4 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {itemBlockedRanges.map((r, i) => (
+                        <tr key={i} className="border-t border-brand-grey/30">
+                          <td className="px-4 py-2 text-brand-burgundy">{r.start}</td>
+                          <td className="px-4 py-2 text-brand-burgundy">{r.end}</td>
+                          <td className="px-4 py-2 text-right">
+                            <button
+                              onClick={() => handleRemoveItemRange(i)}
+                              className="text-brand-burgundy/40 hover:text-red-500 transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </FormStep>

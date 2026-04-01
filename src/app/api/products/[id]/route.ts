@@ -80,6 +80,7 @@ export async function GET(
       ...product,
       tags: parseJsonField(product.tags),
       images: parseJsonField(product.images),
+      blockedDates: parseJsonField(product.blockedDates),
       avgRating: avgRating._avg.rating,
       reviewCount: product._count.reviews,
       isFavorited,
@@ -127,6 +128,11 @@ export async function PUT(
         Array.isArray(updateData.images) ? updateData.images : JSON.parse(updateData.images)
       );
     }
+    if (updateData.blockedDates !== undefined) {
+      updateData.blockedDates = Array.isArray(updateData.blockedDates)
+        ? JSON.stringify(updateData.blockedDates)
+        : updateData.blockedDates;
+    }
 
     const updated = await prisma.product.update({
       where: { id },
@@ -147,6 +153,7 @@ export async function PUT(
       ...updated,
       tags: parseJsonField(updated.tags),
       images: parseJsonField(updated.images),
+      blockedDates: parseJsonField(updated.blockedDates),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
