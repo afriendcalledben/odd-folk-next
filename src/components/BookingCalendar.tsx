@@ -8,6 +8,7 @@ interface BookingCalendarProps {
     onChange: (start: Date | null, end: Date | null) => void;
     unavailableDates?: string[]; // Array of date strings in YYYY-MM-DD format
     minDate?: Date;
+    onBlockedDateClick?: (dateStr: string) => void; // When set, blocked dates become clickable
 }
 
 const BookingCalendar: React.FC<BookingCalendarProps> = ({
@@ -16,6 +17,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     onChange,
     unavailableDates = [],
     minDate,
+    onBlockedDateClick,
 }) => {
     const [currentMonth, setCurrentMonth] = useState(initialStart || new Date());
 
@@ -102,6 +104,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     };
 
     const handleDateClick = (day: number) => {
+        const dateStr = formatDateString(new Date(year, month, day));
+        if (isDateUnavailable(day) && onBlockedDateClick && !isDatePast(day)) {
+            onBlockedDateClick(dateStr);
+            return;
+        }
         if (isDateDisabled(day)) return;
 
         const clickedDate = new Date(year, month, day);
@@ -178,7 +185,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 bg-red-100 rounded-full border border-red-200"></div>
-                        <span className="text-brand-burgundy/60">Unavailable</span>
+                        <span className="text-brand-burgundy/60">{onBlockedDateClick ? 'Blocked (click to remove)' : 'Unavailable'}</span>
                     </div>
                 </div>
             )}
@@ -218,7 +225,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
                         if (disabled) {
                             if (unavailable) {
-                                buttonClass += " bg-red-50 text-red-300 cursor-not-allowed line-through";
+                                if (onBlockedDateClick && !past) {
+                                    buttonClass += " bg-red-100 text-red-400 cursor-pointer hover:bg-red-200";
+                                } else {
+                                    buttonClass += " bg-red-50 text-red-300 cursor-not-allowed line-through";
+                                }
                             } else {
                                 buttonClass += " text-brand-burgundy/20 cursor-not-allowed";
                             }
@@ -234,11 +245,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                             <div key={idx} className={inRange || (start && initialEnd) || (end && initialStart) ? containerClass : "h-8 flex items-center justify-center"}>
                                 <button
                                     onClick={() => handleDateClick(day)}
-                                    disabled={disabled}
+                                    disabled={disabled && !(unavailable && onBlockedDateClick && !past)}
                                     className={buttonClass}
-                                    title={unavailable ? 'This date is unavailable' : past ? 'Past date' : undefined}
+                                    title={unavailable && onBlockedDateClick && !past ? 'Click to remove block' : unavailable ? 'This date is unavailable' : past ? 'Past date' : undefined}
                                 >
-                                    {day}
+                                    {unavailable && onBlockedDateClick && !past ? '×' : day}
                                 </button>
                             </div>
                         );

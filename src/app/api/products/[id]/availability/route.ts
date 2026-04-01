@@ -42,11 +42,23 @@ export async function GET(
     // Combine blocked dates
     const unavailableDates: string[] = [];
 
-    // Add owner's blocked dates (stored as JSON string)
+    // Add owner's blocked dates — supports both range format [{start,end}] and legacy flat string[]
     const ownerBlockedDates = parseJsonField(product.owner.blockedDates);
-    ownerBlockedDates.forEach((dateStr) => {
-      const date = new Date(dateStr);
-      unavailableDates.push(date.toISOString().split('T')[0]);
+    ownerBlockedDates.forEach((entry: unknown) => {
+      if (entry && typeof entry === 'object' && 'start' in entry && 'end' in entry) {
+        // Range format { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' }
+        const range = entry as { start: string; end: string };
+        const cur = new Date(range.start);
+        const end = new Date(range.end);
+        while (cur <= end) {
+          unavailableDates.push(cur.toISOString().split('T')[0]);
+          cur.setDate(cur.getDate() + 1);
+        }
+      } else {
+        // Legacy: plain date string
+        const date = new Date(entry as string);
+        unavailableDates.push(date.toISOString().split('T')[0]);
+      }
     });
 
     // Add booking dates

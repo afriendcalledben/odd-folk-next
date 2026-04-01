@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, updateLocation, deleteLocation } from '../services/api';
+import { getUserBookings, updateBookingStatus, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, updateLocation, deleteLocation, getUserFavorites, updateVacationMode, updateBlockedDates, getBlockedDates, type BlockedRange } from '../services/api';
+import ProductGrid from './ProductGrid';
 import { useAuth } from '@/context/AuthContext';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import { Input, Textarea, Button } from '@/components/ui';
@@ -110,13 +111,21 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
 );
 
 const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onLogout }) => {
-    const { refreshUser } = useAuth();
+    const { refreshUser, favoriteIds, toggleFavorite, isLoggedIn } = useAuth();
     const [currentTab, setCurrentTab] = useState(activeTab);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [myProducts, setMyProducts] = useState<Product[]>([]);
+    const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+    const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [vacationMode, setVacationMode] = useState(false);
-    const [blockedDates, setBlockedDates] = useState<Date[]>([]);
+    const [blockedRanges, setBlockedRanges] = useState<BlockedRange[]>([]);
+    const [rangeStart, setRangeStart] = useState<Date | null>(null);
+    const [rangeEnd, setRangeEnd] = useState<Date | null>(null);
+    const [isSavingDates, setIsSavingDates] = useState(false);
+    const [showVacationModal, setShowVacationModal] = useState(false);
+    const [showRemoveModal, setShowRemoveModal] = useState(false);
+    const [removeTarget, setRemoveTarget] = useState<BlockedRange | null>(null);
     const currentUserId = user.id;
 
     const [locations, setLocations] = useState<any[]>([]);
@@ -264,6 +273,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     useEffect(() => {
         setCurrentTab(activeTab);
     }, [activeTab]);
+
+    useEffect(() => {
+        if (currentTab !== 'favorites') return;
+        setFavoritesLoading(true);
+        getUserFavorites().then(setFavoriteProducts).finally(() => setFavoritesLoading(false));
+    }, [currentTab]);
+
+    useEffect(() => {
+        if (currentTab !== 'block-days') return;
+        getBlockedDates().then(setBlockedRanges).catch(() => setBlockedRanges([]));
+    }, [currentTab]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -516,53 +536,178 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                     </div>
                 );
 
-            case 'block-days':
+            case 'block-days': {
+                const fmt = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                const expandRanges = (ranges: BlockedRange[]) => {
+                    const dates: string[] = [];
+                    ranges.forEach(({ start, end }) => {
+                        const cur = new Date(start + 'T00:00:00');
+                        const fin = new Date(end + 'T00:00:00');
+                        while (cur <= fin) {
+                            dates.push(cur.toISOString().split('T')[0]);
+                            cur.setDate(cur.getDate() + 1);
+                        }
+                    });
+                    return dates;
+                };
+                const toDateStr = (d: Date) => d.toISOString().split('T')[0];
                 return (
                     <div className="space-y-8">
                         <h2 className="font-heading text-3xl text-brand-blue">Block Days & Vacation</h2>
-                        
+
+                        {/* Vacation Mode modal */}
+                        {showVacationModal && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                                    <h3 className="font-heading text-2xl text-brand-blue mb-3">{vacationMode ? 'Disable Vacation Mode?' : 'Enable Vacation Mode?'}</h3>
+                                    <p className="text-brand-blue/70 mb-6">{vacationMode ? 'Your listings will become visible in search again.' : 'Your listings will be hidden from search while vacation mode is on. Any accepted bookings must still be honoured.'}</p>
+                                    <div className="flex gap-3">
+                                        <button onClick={async () => {
+                                            const next = !vacationMode;
+                                            await updateVacationMode(next);
+                                            setVacationMode(next);
+                                            setShowVacationModal(false);
+                                            toast.success(next ? 'Vacation mode enabled' : 'Vacation mode disabled');
+                                        }} className="flex-1 bg-brand-blue text-white py-3 rounded-2xl font-heading hover:brightness-110 transition-all">
+                                            {vacationMode ? 'Disable' : 'Enable'}
+                                        </button>
+                                        <button onClick={() => setShowVacationModal(false)} className="flex-1 border border-brand-grey text-brand-blue py-3 rounded-2xl font-heading hover:bg-brand-grey/10 transition-all">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Remove blocked range modal */}
+                        {showRemoveModal && removeTarget && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                                    <h3 className="font-heading text-2xl text-brand-blue mb-3">Remove blocked period?</h3>
+                                    <p className="text-brand-blue/70 mb-2">
+                                        {removeTarget.start === removeTarget.end
+                                            ? fmt(removeTarget.start)
+                                            : `${fmt(removeTarget.start)} – ${fmt(removeTarget.end)}`}
+                                    </p>
+                                    <p className="text-sm text-brand-blue/50 mb-6">Existing booking requests for these dates may still proceed.</p>
+                                    <div className="flex gap-3">
+                                        <button onClick={() => {
+                                            setBlockedRanges(prev => prev.filter(r => r.start !== removeTarget.start || r.end !== removeTarget.end));
+                                            setShowRemoveModal(false);
+                                            setRemoveTarget(null);
+                                        }} className="flex-1 bg-red-500 text-white py-3 rounded-2xl font-heading hover:brightness-110 transition-all">Remove</button>
+                                        <button onClick={() => { setShowRemoveModal(false); setRemoveTarget(null); }} className="flex-1 border border-brand-grey text-brand-blue py-3 rounded-2xl font-heading hover:bg-brand-grey/10 transition-all">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Vacation Mode toggle */}
                         <div className="bg-brand-blue text-white rounded-3xl p-10 flex items-center justify-between shadow-2xl">
                             <div className="max-w-md">
                                 <h3 className="font-heading text-2xl mb-2">Vacation Mode</h3>
                                 <p className="text-white/70 leading-relaxed">Instantly hide all your listings from search and disable booking requests while you're away.</p>
                             </div>
-                            <button 
-                                onClick={() => setVacationMode(!vacationMode)}
+                            <button
+                                onClick={() => setShowVacationModal(true)}
                                 className={`w-20 h-10 rounded-full transition-all relative ${vacationMode ? 'bg-brand-yellow' : 'bg-white/20'}`}
                             >
                                 <div className={`absolute top-1 w-8 h-8 rounded-full bg-brand-blue transition-all ${vacationMode ? 'left-11' : 'left-1'}`} />
                             </button>
                         </div>
 
+                        {/* Block Specific Dates */}
                         <div className="bg-white border border-brand-grey rounded-[2.5rem] p-10 shadow-xl">
-                            <h3 className="font-heading text-2xl text-brand-blue mb-4">Block Specific Dates</h3>
-                            <p className="text-brand-blue/60 mb-10">Select dates to mark them as unavailable for rentals without hiding your entire collection.</p>
-                            <div className="max-w-md mx-auto scale-110 mb-12">
-                                <BookingCalendar 
-                                    initialStart={null} 
-                                    initialEnd={null} 
-                                    onChange={(s) => {
-                                        if (s) setBlockedDates([...blockedDates, s]);
-                                    }} 
+                            <h3 className="font-heading text-2xl text-brand-blue mb-2">Block Specific Dates</h3>
+                            <p className="text-brand-blue/60 mb-8">Select a date or range to mark as unavailable. Blocked dates show as <span className="text-red-400 font-medium">×</span> — click them to remove.</p>
+                            <div className="max-w-md mx-auto mb-8">
+                                <BookingCalendar
+                                    initialStart={rangeStart}
+                                    initialEnd={rangeEnd}
+                                    onChange={(s, e) => { setRangeStart(s); setRangeEnd(e); }}
+                                    unavailableDates={expandRanges(blockedRanges)}
+                                    onBlockedDateClick={(dateStr) => {
+                                        const target = blockedRanges.find(r => {
+                                            const cur = new Date(r.start + 'T00:00:00');
+                                            const fin = new Date(r.end + 'T00:00:00');
+                                            const d = new Date(dateStr + 'T00:00:00');
+                                            return d >= cur && d <= fin;
+                                        });
+                                        if (target) { setRemoveTarget(target); setShowRemoveModal(true); }
+                                    }}
                                 />
                             </div>
-                            <div className="flex flex-wrap gap-2 pt-6 border-t border-brand-grey">
-                                {blockedDates.length > 0 ? (
-                                    blockedDates.map((d, i) => (
-                                        <span key={i} className="bg-brand-blue text-white text-xs px-4 py-2 rounded-full flex items-center gap-2 shadow-sm">
-                                            {d.toLocaleDateString('en-GB')}
-                                            <button onClick={() => setBlockedDates(blockedDates.filter((_, idx) => idx !== i))} className="hover:text-brand-yellow transition-colors">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                            </button>
-                                        </span>
-                                    ))
-                                ) : (
-                                    <p className="text-sm italic text-brand-blue/40">No individual dates blocked.</p>
+                            <div className="flex gap-3 mb-8">
+                                <button
+                                    disabled={!rangeStart}
+                                    onClick={() => {
+                                        if (!rangeStart) return;
+                                        const start = toDateStr(rangeStart);
+                                        const end = rangeEnd ? toDateStr(rangeEnd) : start;
+                                        setBlockedRanges(prev => [...prev, { start, end }]);
+                                        setRangeStart(null);
+                                        setRangeEnd(null);
+                                    }}
+                                    className="px-6 py-3 bg-brand-blue text-white rounded-2xl font-heading disabled:opacity-40 hover:brightness-110 transition-all"
+                                >
+                                    {rangeStart && rangeEnd ? 'Add range' : 'Add date'}
+                                </button>
+                                {(rangeStart || rangeEnd) && (
+                                    <button onClick={() => { setRangeStart(null); setRangeEnd(null); }} className="px-6 py-3 border border-brand-grey text-brand-blue rounded-2xl font-heading hover:bg-brand-grey/10 transition-all">Clear</button>
                                 )}
                             </div>
+
+                            {/* Blocked ranges table */}
+                            {blockedRanges.length > 0 ? (
+                                <div className="border border-brand-grey rounded-2xl overflow-hidden mb-6">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-brand-grey/10">
+                                            <tr>
+                                                <th className="text-left px-5 py-3 text-brand-blue/60 font-body font-semibold">Start</th>
+                                                <th className="text-left px-5 py-3 text-brand-blue/60 font-body font-semibold">End</th>
+                                                <th className="text-left px-5 py-3 text-brand-blue/60 font-body font-semibold">Type</th>
+                                                <th className="px-5 py-3" />
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {blockedRanges.map((r, i) => (
+                                                <tr key={i} className="border-t border-brand-grey/50">
+                                                    <td className="px-5 py-3 text-brand-blue font-body">{fmt(r.start)}</td>
+                                                    <td className="px-5 py-3 text-brand-blue font-body">{fmt(r.end)}</td>
+                                                    <td className="px-5 py-3 text-brand-blue/60 font-body">{r.start === r.end ? 'Single day' : 'Range'}</td>
+                                                    <td className="px-5 py-3 text-right">
+                                                        <button onClick={() => { setRemoveTarget(r); setShowRemoveModal(true); }} className="text-red-400 hover:text-red-600 transition-colors">
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <p className="text-sm italic text-brand-blue/40 mb-6">No dates blocked yet.</p>
+                            )}
+
+                            <button
+                                disabled={isSavingDates}
+                                onClick={async () => {
+                                    setIsSavingDates(true);
+                                    try {
+                                        await updateBlockedDates(blockedRanges);
+                                        toast.success('Blocked dates saved');
+                                    } catch {
+                                        toast.error('Failed to save blocked dates');
+                                    } finally {
+                                        setIsSavingDates(false);
+                                    }
+                                }}
+                                className="px-8 py-3 bg-brand-orange text-white rounded-2xl font-heading disabled:opacity-50 hover:brightness-110 transition-all"
+                            >
+                                {isSavingDates ? 'Saving…' : 'Save changes'}
+                            </button>
                         </div>
                     </div>
                 );
+            }
 
             case 'wallet':
                 return (
@@ -624,13 +769,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                 return (
                     <div className="space-y-6">
                         <h2 className="font-heading text-3xl text-brand-blue mb-8">Your Favourites</h2>
-                        <div className="bg-white border border-brand-grey rounded-[2.5rem] p-12 shadow-xl text-center">
-                            <svg className="w-16 h-16 text-brand-blue/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                            <p className="font-heading text-xl text-brand-blue/50">Items you heart will appear here</p>
-                            <p className="text-sm text-brand-blue/40 mt-2">Browse the marketplace and tap the heart icon on any item to save it.</p>
-                        </div>
+                        {favoritesLoading ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {[...Array(4)].map((_, i) => (
+                                    <div key={i} className="bg-brand-grey/20 rounded-2xl h-64 animate-pulse" />
+                                ))}
+                            </div>
+                        ) : favoriteProducts.length === 0 ? (
+                            <div className="bg-white border border-brand-grey rounded-[2.5rem] p-12 shadow-xl text-center">
+                                <svg className="w-16 h-16 text-brand-blue/20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <p className="font-heading text-xl text-brand-blue/50">Items you heart will appear here</p>
+                                <p className="text-sm text-brand-blue/40 mt-2">Browse the marketplace and tap the heart icon on any item to save it.</p>
+                            </div>
+                        ) : (
+                            <ProductGrid
+                                products={favoriteProducts}
+                                onSelectProduct={p => window.location.href = `/products/${p.id}`}
+                                favoriteIds={favoriteIds}
+                                onToggleFavorite={id => {
+                                    toggleFavorite(id);
+                                    setFavoriteProducts(prev => prev.filter(p => p.id.toString() !== id));
+                                }}
+                                isLoggedIn={isLoggedIn}
+                            />
+                        )}
                     </div>
                 );
 

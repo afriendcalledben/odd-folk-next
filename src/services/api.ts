@@ -498,6 +498,22 @@ export const getTransactions = async () => {
   return api.get<unknown[]>('/wallet/transactions');
 };
 
+// --- VACATION MODE & BLOCKED DATES ---
+export const updateVacationMode = async (enabled: boolean): Promise<void> => {
+  await api.put<unknown>('/users/me/vacation-mode', { enabled });
+};
+
+export type BlockedRange = { start: string; end: string };
+
+export const updateBlockedDates = async (ranges: BlockedRange[]): Promise<void> => {
+  await api.put<unknown>('/users/me/blocked-dates', { ranges });
+};
+
+export const getBlockedDates = async (): Promise<BlockedRange[]> => {
+  const result = await api.get<{ ranges: BlockedRange[] }>('/users/me/blocked-dates');
+  return result.ranges || [];
+};
+
 // --- FAVORITES ---
 export const toggleFavorite = async (productId: string): Promise<boolean> => {
   const result = await api.post<{ isFavorited: boolean }>(`/products/${productId}/favorite`);

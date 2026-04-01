@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
         phone: true,
         bio: true,
         vacationMode: true,
+        blockedDates: true,
         idVerified: true,
         addressVerified: true,
         phoneVerified: true,
