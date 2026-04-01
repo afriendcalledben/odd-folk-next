@@ -57,7 +57,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div
-      className="bg-brand-blue rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group border border-brand-white/10"
+      className="bg-brand-blue rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group border border-brand-white/10"
       onClick={() => onSelect(product)}
     >
       <div className="relative overflow-hidden aspect-[4/3]">
