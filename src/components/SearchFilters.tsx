@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Input, Button } from '@/components/ui';
 import { SlidersHorizontal, X } from 'lucide-react';
 
@@ -24,13 +24,6 @@ const COLOUR_HEX: Record<string, string> = {
   Cream: '#fef3c7', 'Multi-colour': 'conic-gradient(red, yellow, green, blue, red)',
 };
 
-const DISTANCES = [
-  { label: '+ 0.5 miles', value: 0.5 },
-  { label: '+ 1 mile', value: 1 },
-  { label: '+ 3 miles', value: 3 },
-  { label: '+ 5 miles', value: 5 },
-  { label: '+ 10 miles', value: 10 },
-];
 
 export interface FilterState {
   search: string;
@@ -62,13 +55,6 @@ export const defaultFilters: FilterState = {
   endDate: '',
 };
 
-interface NominatimResult {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-}
-
 interface SearchFiltersProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
@@ -93,10 +79,6 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
 
 export default function SearchFilters({ filters, onChange }: SearchFiltersProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [locationResults, setLocationResults] = useState<NominatimResult[]>([]);
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const locationDropdownRef = useRef<HTMLDivElement>(null);
 
   const update = (partial: Partial<FilterState>) => onChange({ ...filters, ...partial });
 
@@ -107,35 +89,7 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
 
   const hasActiveFilters =
     filters.categories.length > 0 || filters.conditions.length > 0 || filters.colors.length > 0 ||
-    filters.minPrice || filters.maxPrice || filters.lat !== null;
-
-  // Nominatim location search
-  useEffect(() => {
-    if (filters.locationQuery.length < 3) { setLocationResults([]); setShowLocationDropdown(false); return; }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(filters.locationQuery)}&format=json&limit=5&countrycodes=gb&viewbox=-0.5103,51.6919,0.3340,51.2868&bounded=1`,
-          { headers: { 'User-Agent': 'OddFolk/1.0 (contact@oddfolk.co.uk)', 'Accept-Language': 'en' } }
-        );
-        const data: NominatimResult[] = await res.json();
-        setLocationResults(data.slice(0, 5));
-        setShowLocationDropdown(data.length > 0);
-      } catch { /* silent */ }
-    }, 300);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [filters.locationQuery]);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (locationDropdownRef.current && !locationDropdownRef.current.contains(e.target as Node)) {
-        setShowLocationDropdown(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+    filters.minPrice || filters.maxPrice;
 
   const clearAll = () => onChange({ ...defaultFilters });
 
@@ -150,53 +104,6 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
           <X size={12} /> Clear all filters
         </button>
       )}
-
-      <FilterSection title="Search">
-        <Input
-          placeholder="Keywords, tags…"
-          value={filters.search}
-          onChange={e => update({ search: e.target.value })}
-        />
-      </FilterSection>
-
-      <FilterSection title="Location">
-        <div className="space-y-3">
-          <div className="relative" ref={locationDropdownRef}>
-            <Input
-              placeholder="Postcode or area…"
-              value={filters.locationQuery}
-              onChange={e => update({ locationQuery: e.target.value, lat: null, lng: null })}
-            />
-            {showLocationDropdown && (
-              <ul className="absolute z-50 w-full bg-white border border-brand-grey rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
-                {locationResults.map(r => (
-                  <li
-                    key={r.place_id}
-                    className="px-3 py-2.5 hover:bg-brand-orange/10 cursor-pointer font-body text-brand-burgundy text-xs border-b border-brand-grey/30 last:border-0"
-                    onMouseDown={() => {
-                      update({ locationQuery: r.display_name, lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
-                      setShowLocationDropdown(false);
-                    }}
-                  >
-                    {r.display_name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          {filters.lat !== null && (
-            <select
-              className="w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-sm text-brand-burgundy focus:outline-none"
-              value={filters.distance ?? 3}
-              onChange={e => update({ distance: parseFloat(e.target.value) })}
-            >
-              {DISTANCES.map(d => (
-                <option key={d.value} value={d.value}>{d.label}</option>
-              ))}
-            </select>
-          )}
-        </div>
-      </FilterSection>
 
       <FilterSection title="Price per day (£)">
         <div className="flex items-center gap-2">
@@ -276,41 +183,6 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
         )}
       </FilterSection>
 
-      <FilterSection title="Availability" defaultOpen={false}>
-        <div className="space-y-2">
-          <div>
-            <label className="text-xs text-brand-burgundy/60 font-body mb-1 block">From</label>
-            <input
-              type="date"
-              value={filters.startDate}
-              min={new Date().toISOString().split('T')[0]}
-              onChange={e => {
-                const val = e.target.value;
-                onChange({ ...filters, startDate: val, endDate: filters.endDate && filters.endDate < val ? '' : filters.endDate });
-              }}
-              className="w-full p-2 bg-brand-white border border-brand-grey rounded-xl font-body text-sm text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-brand-burgundy/60 font-body mb-1 block">To</label>
-            <input
-              type="date"
-              value={filters.endDate}
-              min={filters.startDate || new Date().toISOString().split('T')[0]}
-              onChange={e => onChange({ ...filters, endDate: e.target.value })}
-              className="w-full p-2 bg-brand-white border border-brand-grey rounded-xl font-body text-sm text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
-            />
-          </div>
-          {(filters.startDate || filters.endDate) && (
-            <button
-              onClick={() => onChange({ ...filters, startDate: '', endDate: '' })}
-              className="text-xs text-brand-burgundy/50 hover:text-brand-burgundy transition-colors"
-            >
-              Clear dates
-            </button>
-          )}
-        </div>
-      </FilterSection>
     </div>
   );
 
