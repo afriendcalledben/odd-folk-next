@@ -66,7 +66,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
             {/* Newsletter Section */}
             <div className="mt-10">
-              <h4 className="font-heading text-lg text-brand-yellow mb-4">Join the folk</h4>
+              <h4 className="font-heading text-lg text-brand-yellow mb-4">Sign up for Odd Folk updates</h4>
               {subscribed ? (
                 <div className="bg-brand-yellow/20 border border-brand-yellow/30 p-3 rounded-xl animate-fade-in">
                   <p className="font-body text-sm text-brand-yellow font-bold">Welcome to the club!</p>

@@ -89,9 +89,6 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="text-center mb-12">
-              <h2 className="font-heading text-3xl md:text-5xl text-brand-orange leading-tight">
-                Be the <span className="line-through decoration-brand-burgundy decoration-4">enemy</span> of beige.
-              </h2>
               <p className="font-body text-xl text-brand-burgundy/80 mt-4 max-w-2xl mx-auto leading-relaxed">
                 Find extraordinary pieces from local collectors for your next experience. No warehouses. No cliches. Just props with personality.
               </p>
