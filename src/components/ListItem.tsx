@@ -226,13 +226,13 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
         <div className="mb-12 text-center">
           {isEditMode ? (
             <>
-              <h1 className="font-heading text-4xl md:text-5xl text-brand-orange mb-4">Edit your listing</h1>
+              <h1 className="font-heading text-4xl md:text-5xl text-brand-orange mb-4">Edit your item</h1>
               <p className="font-body text-brand-orange text-lg">Update the details below and save your changes.</p>
             </>
           ) : (
             <>
-              <h1 className="font-heading text-4xl md:text-5xl text-brand-orange mb-4">List a treasure</h1>
-              <p className="font-body text-brand-orange text-lg">Dust off that velvet chair. Share your oddities with the London creative community.</p>
+              <h1 className="font-heading text-4xl md:text-5xl text-brand-orange mb-4">List an item</h1>
+              <p className="font-body text-brand-orange text-lg">Hire out your props with personality to London’s creative community.</p>
             </>
           )}
         </div>
@@ -252,44 +252,16 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              <option value="" disabled>Select where it fits</option>
+              <option value="" disabled>Select which fits best</option>
               {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
           </FormStep>
 
-          {/* Step 2: Tags */}
-          <FormStep number={2} title="Help them find it">
-              <p className="font-body text-brand-burgundy/60 mb-4 text-sm -mt-2">Keywords matter. Think 'vintage', 'boho', '70s', 'neon'.</p>
-              <div className="flex gap-2 mb-4">
-                  <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleAddTag}
-                      placeholder="e.g. velvet..."
-                      className={inputClass}
-                  />
-                  <Button variant="secondary" size="sm" onClick={handleAddTag} className="flex-shrink-0">
-                    Add
-                  </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                  {selectedTags.map(tag => (
-                      <span key={tag} className="px-4 py-2 rounded-full text-sm bg-brand-orange/10 text-brand-burgundy border border-brand-orange/20 flex items-center gap-2 group">
-                          {tag}
-                          <button onClick={() => removeTag(tag)} className="text-brand-burgundy/40 hover:text-brand-orange transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                      </span>
-                  ))}
-              </div>
-          </FormStep>
-
-          {/* Step 3: Item Details */}
-          <FormStep number={3} title="The gritty details">
+          {/* Step 2: Item Details */}
+          <FormStep number={2} title="Your Item">
             <div className="space-y-6">
               <div>
-                <label className={labelClass}>Give it a name</label>
+                <label className={labelClass}>Title</label>
                 <input
                     type="text"
                     value={title}
@@ -335,25 +307,53 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
               </div>
 
               <div>
-                <label className={labelClass}>Tell its story</label>
+                <label className={labelClass}>Add a description</label>
                 <textarea
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className={`${inputClass} resize-none`}
-                    placeholder="Describe the style, history, dimensions, and any unique features. Sell the dream."
+                    placeholder="Describe the style, history, dimensions, and any unique features."
                 />
               </div>
             </div>
           </FormStep>
 
+          {/* Step 3: Tags */}
+          <FormStep number={3} title="Help them find it">
+              <p className="font-body text-brand-burgundy/60 mb-4 text-sm -mt-2">Keywords matter. Think &apos;vintage&apos;, &apos;boho&apos;, &apos;70s&apos;, &apos;neon&apos;.</p>
+              <div className="flex gap-2 mb-4">
+                  <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleAddTag}
+                      placeholder="e.g. velvet..."
+                      className={inputClass}
+                  />
+                  <Button variant="secondary" size="sm" onClick={handleAddTag} className="flex-shrink-0">
+                    Add
+                  </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                  {selectedTags.map(tag => (
+                      <span key={tag} className="px-4 py-2 rounded-full text-sm bg-brand-orange/10 text-brand-burgundy border border-brand-orange/20 flex items-center gap-2 group">
+                          {tag}
+                          <button onClick={() => removeTag(tag)} className="text-brand-burgundy/40 hover:text-brand-orange transition-colors">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                      </span>
+                  ))}
+              </div>
+          </FormStep>
+
           {/* Step 4: Pictures */}
-          <FormStep number={4} title="Show it off">
+          <FormStep number={4} title="Add photos">
             <div className="space-y-4">
               <p className="font-body text-sm text-brand-burgundy/60 leading-relaxed">
                 {isEditMode
                   ? 'Click any slot to replace an image. Existing images are kept unless you upload a new one.'
-                  : 'Upload at least 1 photo. First one on a plain background, please. Then let us see it in the wild.'}
+                  : 'Upload at least 1 photo. Make sure you include multiple angles and any damage/marks where necessary.'}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -411,7 +411,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           </FormStep>
 
           {/* Step 6: Location */}
-          <FormStep number={6} title="Where does it live?">
+          <FormStep number={6} title="Location">
             <div className="space-y-6">
               <p className="font-body text-sm text-brand-burgundy/60">
                 We won't share the exact address until a booking is confirmed and paid for.
@@ -436,7 +436,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
                   ))}
                 </div>
               ) : (
-                <p className="text-brand-burgundy/50 italic">No locations saved yet. You can add one from your profile.</p>
+                <p className="text-brand-burgundy/50 italic">No locations saved yet. You must add one to your profile first.</p>
               )}
             </div>
           </FormStep>
@@ -506,7 +506,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
              >
                 {isSubmitting
                   ? (isEditMode ? 'Saving…' : 'Publishing...')
-                  : (isEditMode ? 'Save changes' : 'Publish treasure')}
+                  : (isEditMode ? 'Save changes' : 'Publish Item')}
              </Button>
              {!isEditMode && (
                <p className="text-center text-brand-burgundy/40 text-xs mt-6">
