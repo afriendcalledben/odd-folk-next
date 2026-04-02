@@ -220,7 +220,7 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="Where do you operate?"
-                        a="London only for now. Search by postcode or neighborhood to find pieces near you."
+                        a="London only for now. Search by postcode or area to find pieces near you."
                     />
                     <Question
                         q="How is Odd Folk different?"
@@ -228,7 +228,7 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="Can businesses use Odd Folk?"
-                        a="Yes. Event planners, photographers, stylists, and businesses are welcome."
+                        a="Yes. Prop houses, event planners, photographers, stylists, and businesses are welcome."
                     />
                     <Question
                         q="Can I sell items as well as rent?"
@@ -255,11 +255,11 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="How should I photograph items?"
-                        a="Clear, well-lit photos from multiple angles. Primary image: item on plain background. Additional shots: in use, details, any imperfections. Good photos = more bookings."
+                        a="Clear, well-lit photos from multiple angles. Additional shots: in use, details, any imperfections. Good photos = more bookings."
                     />
                     <Question
                         q="When do I get paid?"
-                        a="Payment releases 24 hours after hirer confirms return, plus 48 hours for you to inspect. Usually 3 days after return, then 2-3 business days to your account."
+                        a="Payment releases after both parties confirm a safe return. This can take longer if disputes are made known. It can take 2-3 business days once released to clear in your account."
                     />
                     <Question
                         q="Do I have to approve every booking?"
@@ -275,7 +275,7 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="What if someone damages my item?"
-                        a="Document with photos. Message the hirer first. Can't agree? Request mediation at hello@oddfolk.co.uk within 48 hours of return."
+                        a="Document with photos. Message the hirer first to discuss covering the fix or replacement fee. Can't agree? Request mediation at <a href='mailto:hello@oddfolk.co.uk'>hello@oddfolk.co.uk</a> within 48 hours of return."
                     />
                     <Question
                         q="Do I handle delivery?"
@@ -339,7 +339,7 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="Are my items insured?"
-                        a="Currently you'll need to insure your own items and make claims with your insurers if needed. We're adding platform-wide insurance very soon!"
+                        a="Currently you'll need to insure your own items and make claims with your insurers if needed."
                     />
                     <Question
                         q="What if the item isn't as described?"
