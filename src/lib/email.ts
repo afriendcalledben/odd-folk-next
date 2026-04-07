@@ -3,8 +3,6 @@ import { createElement } from 'react';
 import BookingRequestEmail from '@/emails/BookingRequestEmail';
 import BookingStatusEmail from '@/emails/BookingStatusEmail';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM = 'Odd Folk <bookings@oddfolk.co.uk>';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://oddfolk.co.uk';
 const DASHBOARD_BOOKINGS = `${SITE_URL}/dashboard?tab=bookings`;
@@ -25,7 +23,12 @@ function fmt(date: Date) {
 }
 
 async function send(to: string, subject: string, element: React.ReactElement) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY not set — skipping email:', subject);
+    return;
+  }
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({ from: FROM, to, subject, react: element });
   } catch (err) {
     console.error('[email] Failed to send:', subject, err);
