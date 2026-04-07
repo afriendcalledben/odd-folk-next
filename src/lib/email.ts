@@ -4,7 +4,7 @@ import BookingRequestEmail from '@/emails/BookingRequestEmail';
 import BookingStatusEmail from '@/emails/BookingStatusEmail';
 
 const FROM = 'Odd Folk <bookings@oddfolk.co.uk>';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://oddfolk.co.uk';
+const SITE_URL = process.env.BETTER_AUTH_URL || 'https://oddfolk.co.uk';
 const DASHBOARD_BOOKINGS = `${SITE_URL}/dashboard?tab=bookings`;
 
 export interface BookingEmailData {

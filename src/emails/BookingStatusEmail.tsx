@@ -3,7 +3,7 @@ import {
   Preview, Section, Text,
 } from '@react-email/components';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://oddfolk.co.uk';
+const SITE_URL = process.env.BETTER_AUTH_URL || 'https://oddfolk.co.uk';
 
 interface BookingStatusEmailProps {
   recipientName: string;
