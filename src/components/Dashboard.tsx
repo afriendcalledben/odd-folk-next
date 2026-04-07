@@ -45,6 +45,9 @@ interface BookingCardProps {
     currentUserId: string;
 }
 
+const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
 const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusChange, currentUserId }) => (
     <div className="bg-white border border-brand-grey rounded-3xl p-6 shadow-xl mb-6 text-brand-blue">
         <div className="flex flex-col md:flex-row gap-6">
@@ -59,7 +62,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
                 </div>
                 
                 <div className="text-sm font-body text-brand-blue/70 mb-4">
-                    <p>{booking.startDate} — {booking.endDate}</p>
+                    <p>{fmtDate(booking.startDate)} — {fmtDate(booking.endDate)}</p>
                     <p className="font-bold text-brand-orange mt-1 text-lg">
                         Total: £{isLister ? booking.listerPayout.toFixed(2) : booking.totalHirerCost.toFixed(2)}
                     </p>

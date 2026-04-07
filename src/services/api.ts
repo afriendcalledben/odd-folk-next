@@ -323,7 +323,7 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
       id: b.id,
       productId: b.productId,
       productName: b.product?.title || 'Unknown Product',
-      productImage: b.product?.images?.[0] || 'https://picsum.photos/seed/default/800/600',
+      productImage: (() => { try { const imgs = typeof b.product?.images === 'string' ? JSON.parse(b.product.images) : b.product?.images; return imgs?.[0] || 'https://picsum.photos/seed/default/800/600'; } catch { return 'https://picsum.photos/seed/default/800/600'; } })(),
       hirerId: b.hirerId,
       listerId: b.listerId,
       startDate: b.startDate,
