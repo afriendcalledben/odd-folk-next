@@ -113,6 +113,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
 const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onLogout }) => {
     const { refreshUser, favoriteIds, toggleFavorite, isLoggedIn } = useAuth();
     const [currentTab, setCurrentTab] = useState(activeTab);
+    const [bookingSubTab, setBookingSubTab] = useState<'made' | 'received'>('made');
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [myProducts, setMyProducts] = useState<Product[]>([]);
     const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
@@ -463,15 +464,53 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                     </div>
                 );
 
-            case 'bookings':
+            case 'bookings': {
+                const madeBookings = bookings.filter(b => b.hirerId === currentUserId);
+                const receivedBookings = bookings.filter(b => b.listerId === currentUserId);
+                const pendingCount = receivedBookings.filter(b => b.status === 'pending').length;
                 return (
                     <>
-                        <h2 className="font-heading text-3xl text-brand-blue mb-8">Your Bookings</h2>
-                        {bookings.filter(b => b.hirerId === currentUserId).map(b => (
-                            <BookingCard key={b.id} booking={b} isLister={false} onStatusChange={handleStatusChange} currentUserId={currentUserId} />
-                        ))}
+                        <h2 className="font-heading text-3xl text-brand-blue mb-6">Bookings</h2>
+                        {/* Sub-tabs */}
+                        <div className="flex gap-2 mb-8">
+                            <button
+                                onClick={() => setBookingSubTab('made')}
+                                className={`px-5 py-2 rounded-full font-body text-sm font-bold transition-colors ${bookingSubTab === 'made' ? 'bg-brand-blue text-white' : 'bg-brand-grey/20 text-brand-burgundy hover:bg-brand-grey/40'}`}
+                            >
+                                My Requests
+                            </button>
+                            <button
+                                onClick={() => setBookingSubTab('received')}
+                                className={`px-5 py-2 rounded-full font-body text-sm font-bold transition-colors flex items-center gap-2 ${bookingSubTab === 'received' ? 'bg-brand-blue text-white' : 'bg-brand-grey/20 text-brand-burgundy hover:bg-brand-grey/40'}`}
+                            >
+                                Received
+                                {pendingCount > 0 && (
+                                    <span className="bg-brand-orange text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                        {pendingCount}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                        {bookingSubTab === 'made' ? (
+                            madeBookings.length === 0 ? (
+                                <p className="font-body text-brand-burgundy/60 text-center py-12">You haven&apos;t made any booking requests yet.</p>
+                            ) : (
+                                madeBookings.map(b => (
+                                    <BookingCard key={b.id} booking={b} isLister={false} onStatusChange={handleStatusChange} currentUserId={currentUserId} />
+                                ))
+                            )
+                        ) : (
+                            receivedBookings.length === 0 ? (
+                                <p className="font-body text-brand-burgundy/60 text-center py-12">No booking requests for your listings yet.</p>
+                            ) : (
+                                receivedBookings.map(b => (
+                                    <BookingCard key={b.id} booking={b} isLister={true} onStatusChange={handleStatusChange} currentUserId={currentUserId} />
+                                ))
+                            )
+                        )}
                     </>
                 );
+            }
 
             case 'locations':
                 return (

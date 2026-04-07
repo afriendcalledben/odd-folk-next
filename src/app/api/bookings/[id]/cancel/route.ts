@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
+import { sendBookingCancelledEmail } from '@/lib/email';
 
 export async function POST(
   req: NextRequest,
@@ -12,7 +13,14 @@ export async function POST(
     const { id: bookingId } = await params;
     const { reason } = await req.json();
 
-    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        product: { select: { title: true } },
+        hirer: { select: { name: true, email: true } },
+        lister: { select: { name: true, email: true } },
+      },
+    });
     if (!booking) return errorResponse('Booking not found', 404);
     if (booking.hirerId !== user.id && booking.listerId !== user.id) {
       return errorResponse('Not authorized', 403);
@@ -34,6 +42,18 @@ export async function POST(
         type: 'SYSTEM',
       },
     });
+
+    const cancelledByRole = booking.hirerId === user.id ? 'hirer' : 'lister';
+    sendBookingCancelledEmail({
+      id: bookingId,
+      productTitle: booking.product.title,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      listerPayout: booking.listerPayout,
+      totalHirerCost: booking.totalHirerCost,
+      hirer: { name: booking.hirer.name, email: booking.hirer.email },
+      lister: { name: booking.lister.name, email: booking.lister.email },
+    }, cancelledByRole);
 
     return successResponse(updated);
   } catch (error: unknown) {

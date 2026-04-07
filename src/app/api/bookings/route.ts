@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth';
+import { sendBookingRequestEmail } from '@/lib/email';
 
 const PLATFORM_FEE_PERCENT = 0.15;
 
@@ -113,12 +114,24 @@ export async function POST(req: NextRequest) {
           select: { id: true, title: true, images: true },
         },
         hirer: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, name: true, avatarUrl: true, email: true },
         },
         lister: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, name: true, avatarUrl: true, email: true },
         },
       },
+    });
+
+    // Notify lister of new booking request
+    sendBookingRequestEmail({
+      id: booking.id,
+      productTitle: booking.product.title,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      listerPayout: booking.listerPayout,
+      totalHirerCost: booking.totalHirerCost,
+      hirer: { name: booking.hirer.name, email: booking.hirer.email },
+      lister: { name: booking.lister.name, email: booking.lister.email },
     });
 
     // Create initial user message if provided

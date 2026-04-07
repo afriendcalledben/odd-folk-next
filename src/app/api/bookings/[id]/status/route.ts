@@ -2,6 +2,13 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth';
+import {
+  sendBookingApprovedEmail,
+  sendBookingDeclinedEmail,
+  sendPaymentReceivedEmail,
+  sendBookingCompletedEmail,
+  type BookingEmailData,
+} from '@/lib/email';
 
 // Valid status transitions: { from: { to: allowedRole } }
 const STATUS_TRANSITIONS: Record<string, Record<string, 'hirer' | 'lister' | 'both'>> = {
@@ -86,10 +93,10 @@ export async function PUT(
           select: { id: true, title: true, images: true },
         },
         hirer: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, name: true, avatarUrl: true, email: true },
         },
         lister: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, name: true, avatarUrl: true, email: true },
         },
       },
     });
@@ -129,6 +136,22 @@ export async function PUT(
         },
       });
     }
+
+    // Send email notifications
+    const emailData: BookingEmailData = {
+      id: updatedBooking.id,
+      productTitle: updatedBooking.product.title,
+      startDate: updatedBooking.startDate,
+      endDate: updatedBooking.endDate,
+      listerPayout: updatedBooking.listerPayout,
+      totalHirerCost: updatedBooking.totalHirerCost,
+      hirer: { name: updatedBooking.hirer.name, email: updatedBooking.hirer.email },
+      lister: { name: updatedBooking.lister.name, email: updatedBooking.lister.email },
+    };
+    if (newStatus === 'APPROVED') sendBookingApprovedEmail(emailData);
+    if (newStatus === 'DECLINED') sendBookingDeclinedEmail(emailData);
+    if (newStatus === 'PAID') sendPaymentReceivedEmail(emailData);
+    if (newStatus === 'COMPLETED') sendBookingCompletedEmail(emailData);
 
     return successResponse(updatedBooking);
   } catch (error: unknown) {
