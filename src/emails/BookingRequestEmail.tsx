@@ -1,7 +1,9 @@
 import {
-  Body, Button, Container, Head, Heading, Hr, Html,
+  Body, Button, Container, Head, Heading, Hr, Html, Img,
   Preview, Section, Text,
 } from '@react-email/components';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://oddfolk.co.uk';
 
 interface BookingRequestEmailProps {
   listerName: string;
@@ -29,10 +31,13 @@ export default function BookingRequestEmail({
       <Body style={{ backgroundColor: '#f5f5f0', fontFamily: 'Inter, sans-serif', margin: 0 }}>
         <Container style={{ maxWidth: '560px', margin: '40px auto', backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e5e5e0' }}>
           {/* Header */}
-          <Section style={{ backgroundColor: '#3b4fd8', padding: '32px 40px' }}>
-            <Heading style={{ color: '#ffffff', fontSize: '28px', margin: 0, fontWeight: '900' }}>
-              Odd Folk
-            </Heading>
+          <Section style={{ backgroundColor: '#3b4fd8', padding: '24px 40px' }}>
+            <Img
+              src={`${SITE_URL}/oddfolk_logo_email.png`}
+              alt="Odd Folk"
+              height={48}
+              style={{ display: 'block' }}
+            />
           </Section>
 
           {/* Body */}
