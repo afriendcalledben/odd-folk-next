@@ -22,6 +22,8 @@ export interface Product {
     id: string;
     name: string;
     avatarUrl: string;
+    avgRating?: number | null;
+    reviewCount?: number;
   };
 }
 
@@ -56,6 +58,10 @@ export interface Booking {
   totalHirerCost: number;
   listerFee: number;
   listerPayout: number;
+
+  hasReviewed?: boolean;
+  hirer?: { id: string; name: string; avatarUrl?: string };
+  lister?: { id: string; name: string; avatarUrl?: string };
 }
 
 export interface Message {

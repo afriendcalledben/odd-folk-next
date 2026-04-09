@@ -28,11 +28,19 @@ export async function GET(req: NextRequest) {
         lister: {
           select: { id: true, name: true, avatarUrl: true },
         },
+        reviews: {
+          select: { reviewerId: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return successResponse(bookings);
+    const result = bookings.map(b => ({
+      ...b,
+      hasReviewed: b.reviews.some(r => r.reviewerId === user.id),
+    }));
+
+    return successResponse(result);
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Internal server error';

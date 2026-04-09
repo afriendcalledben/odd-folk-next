@@ -114,15 +114,52 @@ export async function sendPaymentReceivedEmail(b: BookingEmailData) {
 }
 
 export async function sendBookingCompletedEmail(b: BookingEmailData) {
+  // Notify hirer
   await send(
     b.hirer.email,
     `How was your rental of ${b.productTitle}?`,
     createElement(BookingStatusEmail, {
       recipientName: b.hirer.name,
       heading: 'Leave a review',
-      body: `Your rental of ${b.productTitle} is complete — we hope it was perfect for your event! It only takes a minute to leave a review and help the Odd Folk community.`,
+      body: `Your rental of ${b.productTitle} is complete — we hope it was perfect for your event! Leave a review for ${b.lister.name} to help the Odd Folk community.`,
       ctaText: 'Leave a review',
       ctaUrl: DASHBOARD_BOOKINGS,
+    })
+  );
+  // Notify lister
+  await send(
+    b.lister.email,
+    `Rental of ${b.productTitle} is complete`,
+    createElement(BookingStatusEmail, {
+      recipientName: b.lister.name,
+      heading: 'Rental complete',
+      body: `${b.hirer.name} has completed their rental of ${b.productTitle}. Your funds have been released. Take a moment to leave a review for ${b.hirer.name}.`,
+      detail: `Payout: £${b.listerPayout.toFixed(2)}`,
+      ctaText: 'Leave a review',
+      ctaUrl: DASHBOARD_BOOKINGS,
+    })
+  );
+}
+
+export async function sendReviewReceivedEmail(data: {
+  reviewee: { name: string; email: string };
+  reviewer: { name: string };
+  rating: number;
+  comment: string | null;
+  productTitle: string;
+}) {
+  const stars = '★'.repeat(data.rating) + '☆'.repeat(5 - data.rating);
+  await send(
+    data.reviewee.email,
+    `${data.reviewer.name} left you a ${data.rating}-star review`,
+    createElement(BookingStatusEmail, {
+      recipientName: data.reviewee.name,
+      heading: `${stars} New review`,
+      body: data.comment
+        ? `${data.reviewer.name} reviewed your rental of ${data.productTitle}: "${data.comment}"`
+        : `${data.reviewer.name} left a ${data.rating}-star review for your rental of ${data.productTitle}.`,
+      ctaText: 'View your profile',
+      ctaUrl: `${SITE_URL}/dashboard`,
     })
   );
 }

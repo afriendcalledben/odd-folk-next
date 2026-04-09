@@ -12,6 +12,7 @@ import { Input, Textarea, Button } from '@/components/ui';
 import Chat from './Chat';
 import AvatarCropModal from './AvatarCropModal';
 import BookingCalendar from './BookingCalendar';
+import ReviewModal from './ReviewModal';
 import type { Booking, BookingStatus, Product } from '../types';
 
 const LocationPicker = dynamic(() => import('./LocationPicker'), { ssr: false });
@@ -42,13 +43,14 @@ interface BookingCardProps {
     booking: Booking;
     isLister: boolean;
     onStatusChange: (bookingId: string, newStatus: BookingStatus) => void;
+    onReview: (booking: Booking) => void;
     currentUserId: string;
 }
 
 const fmtDate = (d: string) =>
     new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusChange, currentUserId }) => (
+const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusChange, onReview, currentUserId }) => (
     <div className="bg-white border border-brand-grey rounded-3xl p-6 shadow-xl mb-6 text-brand-blue">
         <div className="flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-48 flex-shrink-0">
@@ -88,12 +90,27 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
                     )}
 
                     {isLister && booking.status === 'pending' && (
-                        <button 
+                        <button
                             onClick={() => onStatusChange(booking.id, 'approved')}
                             className="bg-brand-yellow text-brand-burgundy px-6 py-2 rounded-xl font-body font-bold hover:brightness-110 shadow-md"
                         >
                             Approve
                         </button>
+                    )}
+
+                    {booking.status === 'completed' && (
+                        booking.hasReviewed ? (
+                            <span className="flex items-center gap-1.5 text-sm font-body text-brand-burgundy/50">
+                                <span className="text-brand-orange">★</span> Review submitted
+                            </span>
+                        ) : (
+                            <button
+                                onClick={() => onReview(booking)}
+                                className="bg-brand-orange/10 text-brand-orange border border-brand-orange/30 px-6 py-2 rounded-xl font-body font-bold hover:bg-brand-orange/20 transition-colors"
+                            >
+                                ★ Leave a review
+                            </button>
+                        )
                     )}
                 </div>
             </div>
@@ -149,6 +166,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     // Listings — delete state
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Review modal state
+    const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const [cropFile, setCropFile] = useState<File | null>(null);
@@ -499,7 +519,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                 <p className="font-body text-brand-burgundy/60 text-center py-12">You haven&apos;t made any booking requests yet.</p>
                             ) : (
                                 madeBookings.map(b => (
-                                    <BookingCard key={b.id} booking={b} isLister={false} onStatusChange={handleStatusChange} currentUserId={currentUserId} />
+                                    <BookingCard key={b.id} booking={b} isLister={false} onStatusChange={handleStatusChange} onReview={setReviewTarget} currentUserId={currentUserId} />
                                 ))
                             )
                         ) : (
@@ -507,7 +527,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                 <p className="font-body text-brand-burgundy/60 text-center py-12">No booking requests for your listings yet.</p>
                             ) : (
                                 receivedBookings.map(b => (
-                                    <BookingCard key={b.id} booking={b} isLister={true} onStatusChange={handleStatusChange} currentUserId={currentUserId} />
+                                    <BookingCard key={b.id} booking={b} isLister={true} onStatusChange={handleStatusChange} onReview={setReviewTarget} currentUserId={currentUserId} />
                                 ))
                             )
                         )}
@@ -1019,6 +1039,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                     file={cropFile}
                     onConfirm={handleCropConfirm}
                     onCancel={handleCropCancel}
+                />
+            )}
+
+            {reviewTarget && (
+                <ReviewModal
+                    bookingId={reviewTarget.id}
+                    otherPartyName={
+                        reviewTarget.hirerId === currentUserId
+                            ? (reviewTarget.lister?.name ?? 'the other party')
+                            : (reviewTarget.hirer?.name ?? 'the other party')
+                    }
+                    onClose={() => setReviewTarget(null)}
+                    onSuccess={() => {
+                        setBookings(prev => prev.map(b =>
+                            b.id === reviewTarget.id ? { ...b, hasReviewed: true } : b
+                        ));
+                    }}
                 />
             )}
         </div>

@@ -24,6 +24,8 @@ export async function GET(
             avatarUrl: true,
             bio: true,
             createdAt: true,
+            reviewsReceived: { select: { rating: true } },
+            _count: { select: { reviewsReceived: true } },
           },
         },
         location: {
@@ -76,6 +78,11 @@ export async function GET(
       isFavorited = !!favorite;
     }
 
+    const ownerRatings = product.owner.reviewsReceived.map(r => r.rating);
+    const ownerAvgRating = ownerRatings.length > 0
+      ? ownerRatings.reduce((a, b) => a + b, 0) / ownerRatings.length
+      : null;
+
     return successResponse({
       ...product,
       tags: parseJsonField(product.tags),
@@ -84,6 +91,16 @@ export async function GET(
       avgRating: avgRating._avg.rating,
       reviewCount: product._count.reviews,
       isFavorited,
+      owner: {
+        id: product.owner.id,
+        name: product.owner.name,
+        username: product.owner.username,
+        avatarUrl: product.owner.avatarUrl,
+        bio: product.owner.bio,
+        createdAt: product.owner.createdAt,
+        avgRating: ownerAvgRating,
+        reviewCount: product.owner._count.reviewsReceived,
+      },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';

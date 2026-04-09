@@ -152,6 +152,8 @@ const toFrontendProduct = (p: any): Product => ({
     id: p.owner?.id || p.ownerId,
     name: p.owner?.name || 'Unknown',
     avatarUrl: p.owner?.avatarUrl || '/avatar-placeholder.svg',
+    avgRating: p.owner?.avgRating ?? null,
+    reviewCount: p.owner?.reviewCount ?? 0,
   },
 });
 
@@ -339,10 +341,21 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
       totalHirerCost: b.totalHirerCost,
       listerFee: b.platformFee,
       listerPayout: b.listerPayout,
+      hasReviewed: b.hasReviewed ?? false,
+      hirer: b.hirer,
+      lister: b.lister,
     }));
   } catch {
     return [];
   }
+};
+
+export const submitBookingReview = async (
+  bookingId: string,
+  rating: number,
+  comment?: string
+): Promise<Review> => {
+  return api.post<Review>(`/bookings/${bookingId}/review`, { rating, comment });
 };
 
 export const updateBookingStatus = async (bookingId: string, status: BookingStatus): Promise<Booking> => {

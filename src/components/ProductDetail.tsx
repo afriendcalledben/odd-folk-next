@@ -209,6 +209,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                         <div>
                             <p className="text-xs text-brand-burgundy/60 uppercase">Listed by</p>
                             <p className="font-bold text-brand-burgundy text-sm">{product.owner.name}</p>
+                            {product.owner.avgRating != null && (
+                                <p className="flex items-center gap-1 text-xs text-brand-burgundy/60 mt-0.5">
+                                    <span className="text-brand-orange">★</span>
+                                    <span>{product.owner.avgRating.toFixed(1)}</span>
+                                    <span>({product.owner.reviewCount} review{product.owner.reviewCount !== 1 ? 's' : ''})</span>
+                                </p>
+                            )}
                         </div>
                     </div>
 

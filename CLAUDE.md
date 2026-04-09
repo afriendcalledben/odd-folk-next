@@ -8,8 +8,9 @@ A peer-to-peer rental marketplace for event furniture and decorative props in Lo
 - **Language:** TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4 with custom brand theme in `globals.css`
 - **Database:** PostgreSQL via Supabase, using Prisma 7 ORM
-- **Auth:** Supabase Auth (`@supabase/ssr` + `@supabase/supabase-js`), session via cookies
+- **Auth:** Better Auth (self-hosted, sessions in PostgreSQL) — NOT Supabase Auth
 - **Payments:** Stripe (two-sided marketplace with Connect)
+- **Email:** Resend + React Email (`src/lib/email.ts`, `src/emails/`)
 - **Package manager:** npm
 - **Icons:** Lucide React
 - **Notifications:** react-hot-toast
@@ -23,15 +24,14 @@ src/
 │   │   ├── (auth)/         # Protected routes (dashboard, list-item, welcome)
 │   │   └── ...             # Public routes (products, users, faq, etc.)
 │   ├── api/                # API route handlers
-│   ├── auth/callback/      # Supabase OAuth PKCE callback
 │   └── login/              # Login page + server actions
 ├── components/             # React components (organised by feature)
 │   ├── auth/               # LoginForm, WelcomeForm
 │   └── ui/                 # Input, Textarea, Select, Button (exported via index.ts)
 ├── context/                # React Context providers (AuthContext)
+├── emails/                 # React Email templates (BookingRequestEmail, BookingStatusEmail)
 ├── services/               # API client (services/api.ts)
-├── lib/                    # Server utilities (prisma, auth, api-response)
-├── utils/supabase/         # Supabase clients: client.ts (browser), server.ts (server)
+├── lib/                    # Server utilities (prisma, auth, api-response, email)
 └── types.ts                # Shared TypeScript type definitions
 ```
 
@@ -73,11 +73,14 @@ Key variables in `.env.local`:
 
 - `DATABASE_URL` — Supabase pooled connection string
 - `DIRECT_URL` — Direct PostgreSQL connection (for migrations)
-- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key (browser-safe)
-- `SUPABASE_SECRET_KEY` — Supabase secret key (server-only, for admin actions)
-- `NEXT_PUBLIC_SITE_URL` — Full site URL for OAuth redirect
+- `BETTER_AUTH_SECRET` — Random 32+ char string for session signing
+- `BETTER_AUTH_URL` — Full site URL (e.g. `https://oddfolk.co.uk`) — used by Better Auth for callbacks and by email templates for links/logo
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth
+- `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` — Facebook OAuth
+- `RESEND_API_KEY` — Resend transactional email API key (emails silently skipped if absent)
 - `UPLOAD_DIR` — File upload directory
+
+**Do NOT set `NEXT_PUBLIC_SITE_URL`** — conflicts with Better Auth client baseURL config.
 
 ## Git
 
@@ -85,7 +88,7 @@ Do not create git commits unless explicitly asked.
 
 ## Key Patterns
 
-- **Auth flow:** Login/signup via server actions in `src/app/login/actions.ts` (Supabase Auth). Session stored in cookies, refreshed by `middleware.ts`. API routes authenticate via `requireAuth(req)` in `lib/auth.ts` which reads the Supabase session from cookies.
+- **Auth flow:** Login/signup via Better Auth. `src/components/auth/LoginForm.tsx` calls `signIn`/`signUp` from `lib/auth-client.ts` directly. Sessions stored in PostgreSQL, cookie-based. API routes authenticate via `requireAuth(req)` in `lib/auth.ts`.
 - **Protected routes:** Wrapped in the `(auth)` layout group. Middleware at `middleware.ts` handles session refresh and redirects.
 - **State management:** React Context (`AuthContext`) for auth state and user favourites. No external state library.
 - **Database IDs:** UUIDs throughout.

@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     const products = await prisma.product.findMany({
       where,
       include: {
-        owner: { select: { id: true, name: true, avatarUrl: true, blockedDates: filterByDates } },
+        owner: { select: { id: true, name: true, avatarUrl: true, blockedDates: filterByDates, reviewsReceived: { select: { rating: true } } } },
         location: { select: { city: true, lat: true, lng: true } },
         _count: { select: { reviews: true } },
       },
@@ -98,28 +98,47 @@ export async function GET(req: NextRequest) {
           where: { productId: product.id },
           _avg: { rating: true },
         });
+        const ownerRatings = product.owner.reviewsReceived?.map(r => r.rating) ?? [];
+        const ownerAvgRating = ownerRatings.length > 0
+          ? ownerRatings.reduce((a: number, b: number) => a + b, 0) / ownerRatings.length
+          : null;
         return {
           ...product,
           tags: parseJsonField(product.tags),
           images: parseJsonField(product.images),
           avgRating: avgRating._avg.rating,
           reviewCount: product._count.reviews,
+          owner: {
+            id: product.owner.id,
+            name: product.owner.name,
+            avatarUrl: product.owner.avatarUrl,
+            avgRating: ownerAvgRating,
+            reviewCount: ownerRatings.length,
+          },
         };
       })
     );
 
-    // Post-filter by owner blocked dates when date filtering is active
-    const afterDateFilter = filterByDates
-      ? productsWithRatings.filter(p => {
-          const owner = p.owner as typeof p.owner & { blockedDates?: string };
-          if (!owner.blockedDates) return true;
-          try {
-            const ranges: { start: string; end: string }[] = JSON.parse(owner.blockedDates);
-            const qStart = new Date(startDate!);
-            const qEnd = new Date(endDate!);
-            return !ranges.some(r => new Date(r.start) <= qEnd && new Date(r.end) >= qStart);
-          } catch { return true; }
-        })
+    // Post-filter by owner blocked dates when date filtering is active (use raw products before mapping)
+    const blockedDatesFilter = filterByDates
+      ? new Set(
+          products
+            .filter(p => {
+              const owner = p.owner as typeof p.owner & { blockedDates?: string };
+              if (!owner.blockedDates) return false;
+              try {
+                const ranges: { start: string; end: string }[] = JSON.parse(owner.blockedDates);
+                const qStart = new Date(startDate!);
+                const qEnd = new Date(endDate!);
+                return ranges.some(r => new Date(r.start) <= qEnd && new Date(r.end) >= qStart);
+              } catch { return false; }
+            })
+            .map(p => p.id)
+        )
+      : null;
+
+    const afterDateFilter = blockedDatesFilter
+      ? productsWithRatings.filter(p => !blockedDatesFilter.has(p.id))
       : productsWithRatings;
 
     // Apply distance filter in JS after fetching

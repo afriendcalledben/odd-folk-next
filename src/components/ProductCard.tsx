@@ -110,8 +110,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <span className="font-bold text-xl text-brand-yellow">£{product.pricePerDay}</span>
             <span className="text-brand-white/60 text-sm"> /day</span>
           </p>
-          <div className="flex items-center">
-             <img src={product.owner.avatarUrl} alt={product.owner.name} className="w-8 h-8 rounded-full object-cover border border-brand-white/20" />
+          <div className="flex items-center gap-2">
+            {product.owner.avgRating != null && (
+              <span className="flex items-center gap-0.5 text-xs text-brand-white/60 font-body">
+                <span className="text-brand-orange">★</span>
+                {product.owner.avgRating.toFixed(1)}
+              </span>
+            )}
+            <img src={product.owner.avatarUrl} alt={product.owner.name} className="w-8 h-8 rounded-full object-cover border border-brand-white/20" />
           </div>
         </div>
       </div>
