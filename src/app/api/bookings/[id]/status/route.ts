@@ -9,6 +9,12 @@ import {
   sendBookingCompletedEmail,
   type BookingEmailData,
 } from '@/lib/email';
+import {
+  notifyBookingApproved,
+  notifyBookingDeclined,
+  notifyPaymentReceived,
+  notifyBookingCompleted,
+} from '@/lib/notifications';
 
 // Valid status transitions: { from: { to: allowedRole } }
 const STATUS_TRANSITIONS: Record<string, Record<string, 'hirer' | 'lister' | 'both'>> = {
@@ -148,10 +154,24 @@ export async function PUT(
       hirer: { name: updatedBooking.hirer.name, email: updatedBooking.hirer.email },
       lister: { name: updatedBooking.lister.name, email: updatedBooking.lister.email },
     };
-    if (newStatus === 'APPROVED') sendBookingApprovedEmail(emailData);
-    if (newStatus === 'DECLINED') sendBookingDeclinedEmail(emailData);
-    if (newStatus === 'PAID') sendPaymentReceivedEmail(emailData);
-    if (newStatus === 'COMPLETED') sendBookingCompletedEmail(emailData);
+    const productTitle = updatedBooking.product.title;
+    if (newStatus === 'APPROVED') {
+      sendBookingApprovedEmail(emailData);
+      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.name, productTitle);
+    }
+    if (newStatus === 'DECLINED') {
+      sendBookingDeclinedEmail(emailData);
+      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.name, productTitle);
+    }
+    if (newStatus === 'PAID') {
+      sendPaymentReceivedEmail(emailData);
+      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.name, productTitle);
+    }
+    if (newStatus === 'COMPLETED') {
+      sendBookingCompletedEmail(emailData);
+      notifyBookingCompleted(updatedBooking.hirerId, productTitle);
+      notifyBookingCompleted(updatedBooking.listerId, productTitle);
+    }
 
     return successResponse(updatedBooking);
   } catch (error: unknown) {

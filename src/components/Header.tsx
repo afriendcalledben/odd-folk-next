@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
+import NotificationBell from './NotificationBell';
+import MessageInbox from './MessageInbox';
 
 interface HeaderProps {
   onNavigate: (view: string) => void;
@@ -51,7 +53,13 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
           </nav>
 
           {/* Desktop Auth / User */}
-          <div className="hidden lg:flex items-center">
+          <div className="hidden lg:flex items-center gap-2">
+            {!isLoading && user && (
+              <>
+                <MessageInbox />
+                <NotificationBell />
+              </>
+            )}
             {isLoading ? null : user ? (
               <div className="relative" ref={dropdownRef}>
                 <div

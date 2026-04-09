@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth';
 import { sendBookingRequestEmail } from '@/lib/email';
+import { notifyBookingRequest } from '@/lib/notifications';
 
 const PLATFORM_FEE_PERCENT = 0.15;
 
@@ -130,7 +131,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Notify lister of new booking request
+    // Notify lister of new booking request (email + in-app)
+    notifyBookingRequest(booking.listerId, booking.hirer.name, booking.product.title);
     sendBookingRequestEmail({
       id: booking.id,
       productTitle: booking.product.title,

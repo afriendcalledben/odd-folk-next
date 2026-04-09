@@ -42,12 +42,14 @@ model User {
   bookingsAsHirer   Booking[]  @relation("HirerBookings")
   bookingsAsLister  Booking[]  @relation("ListerBookings")
   sentMessages      Message[]
-  reviewsGiven      Review[]   @relation("ReviewerReviews")
-  reviewsReceived   Review[]   @relation("RevieweeReviews")
+  reviewsGiven      Review[]            @relation("ReviewerReviews")
+  reviewsReceived   Review[]            @relation("RevieweeReviews")
   transactions      Transaction[]
   favorites         Favorite[]
-  reports           Report[]   @relation("ReporterReports")
-  reportsReceived   Report[]   @relation("ReportedUserReports")
+  reports           Report[]            @relation("ReporterReports")
+  reportsReceived   Report[]            @relation("ReportedUserReports")
+  notifications     Notification[]
+  conversationReads ConversationRead[]
 
   @@map("users")
 }
@@ -136,9 +138,10 @@ model Booking {
   product         Product       @relation(fields: [productId], references: [id])
   hirer           User          @relation("HirerBookings", fields: [hirerId], references: [id])
   lister          User          @relation("ListerBookings", fields: [listerId], references: [id])
-  messages        Message[]
-  reviews         Review[]
-  transactions    Transaction[]
+  messages          Message[]
+  reviews           Review[]
+  transactions      Transaction[]
+  conversationReads ConversationRead[]
 
   @@index([productId])
   @@index([hirerId])
@@ -245,6 +248,40 @@ model ContactInquiry {
 
   @@index([status])
   @@map("contact_inquiries")
+}
+
+// ============================================
+// NOTIFICATION
+// ============================================
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String   // BOOKING_REQUEST | BOOKING_APPROVED | BOOKING_DECLINED | BOOKING_CANCELLED | PAYMENT_RECEIVED | BOOKING_COMPLETED | REVIEW_RECEIVED
+  title     String
+  body      String
+  linkUrl   String?  @map("link_url")
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ============================================
+// CONVERSATION READ (message inbox read tracking)
+// ============================================
+model ConversationRead {
+  userId    String   @map("user_id")
+  bookingId String   @map("booking_id")
+  readAt    DateTime @default(now()) @map("read_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookingId])
+  @@map("conversation_reads")
 }
 
 // ============================================

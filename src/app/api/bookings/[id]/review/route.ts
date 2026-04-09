@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { sendReviewReceivedEmail } from '@/lib/email';
+import { notifyReviewReceived } from '@/lib/notifications';
 
 export async function GET(
   req: NextRequest,
@@ -83,6 +84,7 @@ export async function POST(
       },
     });
 
+    notifyReviewReceived(revieweeId, reviewer.name, rating, booking.product.title);
     sendReviewReceivedEmail({
       reviewee: { name: reviewee.name, email: reviewee.email },
       reviewer: { name: reviewer.name },

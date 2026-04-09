@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { sendBookingCancelledEmail } from '@/lib/email';
+import { notifyBookingCancelled } from '@/lib/notifications';
 
 export async function POST(
   req: NextRequest,
@@ -44,6 +45,9 @@ export async function POST(
     });
 
     const cancelledByRole = booking.hirerId === user.id ? 'hirer' : 'lister';
+    const recipientId = cancelledByRole === 'hirer' ? booking.listerId : booking.hirerId;
+    const cancellerName = cancelledByRole === 'hirer' ? booking.hirer.name : booking.lister.name;
+    notifyBookingCancelled(recipientId, cancellerName, booking.product.title);
     sendBookingCancelledEmail({
       id: bookingId,
       productTitle: booking.product.title,
