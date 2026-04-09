@@ -33,9 +33,9 @@ export default function MessageInbox() {
     try {
       const res = await fetch('/api/messages/inbox', { credentials: 'include' });
       if (!res.ok) return;
-      const data = await res.json();
-      setConversations(data.conversations ?? []);
-      setTotalUnread(data.totalUnread ?? 0);
+      const json = await res.json();
+      setConversations(json.data?.conversations ?? []);
+      setTotalUnread(json.data?.totalUnread ?? 0);
     } catch {}
   }, []);
 

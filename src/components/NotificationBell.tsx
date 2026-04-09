@@ -45,9 +45,9 @@ export default function NotificationBell() {
     try {
       const res = await fetch('/api/notifications', { credentials: 'include' });
       if (!res.ok) return;
-      const data = await res.json();
-      setNotifications(data.notifications ?? []);
-      setUnreadCount(data.unreadCount ?? 0);
+      const json = await res.json();
+      setNotifications(json.data?.notifications ?? []);
+      setUnreadCount(json.data?.unreadCount ?? 0);
     } catch {}
   }, []);
 
