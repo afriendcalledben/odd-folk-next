@@ -21,6 +21,7 @@ export default function WelcomeForm({ user }: { user: User }) {
   const { refreshUser } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(1);
+  const skipRedirect = useRef(false);
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
@@ -31,9 +32,9 @@ export default function WelcomeForm({ user }: { user: User }) {
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // If user somehow already has a username, skip onboarding
+  // If user already has a username, skip onboarding (unless we're mid-flow)
   useEffect(() => {
-    if (user.username) {
+    if (user.username && !skipRedirect.current) {
       router.replace('/dashboard');
     }
   }, [user.username, router]);
@@ -106,6 +107,7 @@ export default function WelcomeForm({ user }: { user: User }) {
         bio: bio.trim() || undefined,
         phone: phone || undefined,
       });
+      skipRedirect.current = true;
       await refreshUser();
       setStep(2);
     } catch (err: unknown) {
