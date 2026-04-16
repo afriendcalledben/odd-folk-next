@@ -29,6 +29,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
   const { isLoggedIn, user } = useAuth();
   const router = useRouter();
   const isOwner = !!user && user.id === product.owner.id;
+  const [messagingLoading, setMessagingLoading] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [localIsFavorite, setLocalIsFavorite] = useState(isFavorited);
@@ -97,6 +98,33 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
 
   const incrementQty = () => setSelectedQuantity(prev => Math.min(prev + 1, product.quantityAvailable));
   const decrementQty = () => setSelectedQuantity(prev => Math.max(prev - 1, 1));
+
+  const handleMessageSeller = async () => {
+    if (!isLoggedIn) {
+      router.push(`/login?redirect=/products/${product.id}`);
+      return;
+    }
+    setMessagingLoading(true);
+    try {
+      const res = await fetch('/api/threads', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id.toString() }),
+      });
+      const json = await res.json();
+      const threadId = json.data?.threadId;
+      if (threadId) {
+        router.push(`/inbox?t=${threadId}`);
+      } else {
+        toast.error('Could not open conversation');
+      }
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setMessagingLoading(false);
+    }
+  };
 
   // Determine Condition Badge Color
   const getConditionColor = (cond: string) => {
@@ -231,6 +259,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                 </div>
 
                 <p className="text-brand-burgundy/80 leading-relaxed">{product.description}</p>
+
+                {/* Message seller button — shown to logged-in non-owners */}
+                {!isOwner && (
+                  <button
+                    onClick={handleMessageSeller}
+                    disabled={messagingLoading}
+                    className="w-full flex items-center justify-center gap-2 border border-brand-grey text-brand-burgundy font-body font-medium py-2.5 rounded-xl hover:bg-brand-grey/10 transition-colors disabled:opacity-50 text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    {messagingLoading ? 'Opening…' : 'Message seller'}
+                  </button>
+                )}
 
                 {/* Booking Widget */}
                 <div className="bg-white border border-brand-grey/50 rounded-xl shadow-xl overflow-hidden">

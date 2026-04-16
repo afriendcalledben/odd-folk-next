@@ -41,6 +41,8 @@ model User {
   locations         Location[]
   bookingsAsHirer   Booking[]  @relation("HirerBookings")
   bookingsAsLister  Booking[]  @relation("ListerBookings")
+  threadsAsHirer    Thread[]   @relation("HirerThreads")
+  threadsAsLister   Thread[]   @relation("ListerThreads")
   sentMessages      Message[]
   reviewsGiven      Review[]            @relation("ReviewerReviews")
   reviewsReceived   Review[]            @relation("RevieweeReviews")
@@ -81,6 +83,7 @@ model Product {
   owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   location    Location? @relation(fields: [locationId], references: [id])
   bookings    Booking[]
+  threads     Thread[]
   reviews     Review[]
   favorites   Favorite[]
   reports     Report[]
@@ -135,6 +138,7 @@ model Booking {
   reminder24Sent     Boolean   @default(false) @map("reminder_24_sent")
   reminder12Sent     Boolean   @default(false) @map("reminder_12_sent")
   reminder3Sent      Boolean   @default(false) @map("reminder_3_sent")
+  threadId           String?   @map("thread_id")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -142,10 +146,9 @@ model Booking {
   product         Product       @relation(fields: [productId], references: [id])
   hirer           User          @relation("HirerBookings", fields: [hirerId], references: [id])
   lister          User          @relation("ListerBookings", fields: [listerId], references: [id])
-  messages          Message[]
+  thread          Thread?       @relation(fields: [threadId], references: [id])
   reviews           Review[]
   transactions      Transaction[]
-  conversationReads ConversationRead[]
 
   @@index([productId])
   @@index([hirerId])
@@ -155,21 +158,48 @@ model Booking {
 }
 
 // ============================================
+// THREAD (conversation between hirer and lister about a product)
+// ============================================
+model Thread {
+  id                   String    @id @default(uuid())
+  productId            String    @map("product_id")
+  hirerId              String    @map("hirer_id")
+  listerId             String    @map("lister_id")
+  hirerLastMsgEmailAt  DateTime? @map("hirer_last_msg_email_at")
+  listerLastMsgEmailAt DateTime? @map("lister_last_msg_email_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  product           Product           @relation(fields: [productId], references: [id])
+  hirer             User              @relation("HirerThreads", fields: [hirerId], references: [id])
+  lister            User              @relation("ListerThreads", fields: [listerId], references: [id])
+  messages          Message[]
+  bookings          Booking[]
+  conversationReads ConversationRead[]
+
+  @@unique([productId, hirerId])
+  @@index([hirerId])
+  @@index([listerId])
+  @@map("threads")
+}
+
+// ============================================
 // MESSAGE
 // ============================================
 model Message {
   id        String   @id @default(uuid())
-  bookingId String   @map("booking_id")
+  threadId  String   @map("thread_id")
   senderId  String   @map("sender_id")
   text      String
   type      String   @default("USER") // USER, SYSTEM
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
   sender    User     @relation(fields: [senderId], references: [id])
 
-  @@index([bookingId])
+  @@index([threadId])
   @@map("messages")
 }
 
@@ -277,14 +307,14 @@ model Notification {
 // CONVERSATION READ (message inbox read tracking)
 // ============================================
 model ConversationRead {
-  userId    String   @map("user_id")
-  bookingId String   @map("booking_id")
-  readAt    DateTime @default(now()) @map("read_at")
+  userId   String   @map("user_id")
+  threadId String   @map("thread_id")
+  readAt   DateTime @default(now()) @map("read_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread   Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, bookingId])
+  @@unique([userId, threadId])
   @@map("conversation_reads")
 }
 

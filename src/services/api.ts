@@ -1,5 +1,5 @@
 
-import type { Product, Booking, BookingStatus, Message, Review, Dispute, Report } from '../types';
+import type { Product, Booking, BookingStatus, Review, Dispute, Report } from '../types';
 
 // --- CONFIGURATION ---
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -441,42 +441,6 @@ export const reportUser = async (
   };
 };
 
-// --- MESSAGING ---
-export const getMessagesForBooking = async (bookingId: string): Promise<Message[]> => {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messages = await api.get<any[]>(`/bookings/${bookingId}/messages`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (messages || []).map((m: any) => ({
-      id: m.id,
-      bookingId: m.bookingId,
-      senderId: m.senderId,
-      receiverId: m.sender?.id === m.senderId ? 'other' : m.senderId,
-      text: m.text,
-      timestamp: new Date(m.createdAt).getTime(),
-    }));
-  } catch {
-    return [];
-  }
-};
-
-export const sendMessage = async (
-  bookingId: string,
-  text: string,
-  _senderId: string
-): Promise<Message> => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = await api.post<any>(`/bookings/${bookingId}/messages`, { text });
-
-  return {
-    id: result.id,
-    bookingId: result.bookingId,
-    senderId: result.senderId,
-    receiverId: 'other',
-    text: result.text,
-    timestamp: new Date(result.createdAt).getTime(),
-  };
-};
 
 // --- LOCATIONS ---
 export const getLocations = async () => {

@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { sendBookingCancelledEmail } from '@/lib/email';
 import { notifyBookingCancelled } from '@/lib/notifications';
+import { postSystemMessage } from '@/lib/threads';
 
 export async function POST(
   req: NextRequest,
@@ -35,19 +36,19 @@ export async function POST(
       data: { status: 'CANCELLED', cancelReason: reason },
     });
 
-    await prisma.message.create({
-      data: {
-        bookingId,
-        senderId: user.id,
-        text: `Booking cancelled${reason ? `: ${reason}` : ''}`,
-        type: 'SYSTEM',
-      },
-    });
+    if (booking.threadId) {
+      await postSystemMessage(
+        booking.threadId,
+        user.id,
+        `Booking cancelled${reason ? `: ${reason}` : ''}`
+      );
+      await prisma.thread.update({ where: { id: booking.threadId }, data: { updatedAt: new Date() } });
+    }
 
     const cancelledByRole = booking.hirerId === user.id ? 'hirer' : 'lister';
     const recipientId = cancelledByRole === 'hirer' ? booking.listerId : booking.hirerId;
     const cancellerName = cancelledByRole === 'hirer' ? booking.hirer.name : booking.lister.name;
-    notifyBookingCancelled(recipientId, cancellerName, booking.product.title);
+    notifyBookingCancelled(recipientId, cancellerName, booking.product.title, booking.threadId ?? undefined);
     sendBookingCancelledEmail({
       id: bookingId,
       productTitle: booking.product.title,
@@ -57,6 +58,7 @@ export async function POST(
       totalHirerCost: booking.totalHirerCost,
       hirer: { name: booking.hirer.name, email: booking.hirer.email },
       lister: { name: booking.lister.name, email: booking.lister.email },
+      threadId: booking.threadId,
     }, cancelledByRole);
 
     return successResponse(updated);

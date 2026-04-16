@@ -62,6 +62,7 @@ export interface Booking {
 
   responseDeadlineAt?: string;
   hasReviewed?: boolean;
+  threadId?: string | null;
   hirer?: { id: string; name: string; avatarUrl?: string };
   lister?: { id: string; name: string; avatarUrl?: string };
 }

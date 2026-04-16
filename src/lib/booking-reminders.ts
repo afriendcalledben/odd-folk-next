@@ -8,6 +8,7 @@ import {
   notifyBookingReminder,
   notifyBookingAutoDeclined,
 } from '@/lib/notifications';
+import { postSystemMessage } from '@/lib/threads';
 
 export async function runBookingReminders() {
   const now = new Date();
@@ -43,6 +44,7 @@ export async function runBookingReminders() {
       totalHirerCost: booking.totalHirerCost,
       hirer: { name: booking.hirer.name, email: booking.hirer.email },
       lister: { name: booking.lister.name, email: booking.lister.email },
+      threadId: booking.threadId,
     };
 
     if (msRemaining <= 0) {
@@ -50,31 +52,31 @@ export async function runBookingReminders() {
         where: { id: booking.id },
         data: { status: 'AUTO_DECLINED' },
       });
-      await prisma.message.create({
-        data: {
-          bookingId: booking.id,
-          senderId: booking.listerId,
-          text: 'This booking request was not responded to within 48 hours and has been automatically declined.',
-          type: 'SYSTEM',
-        },
-      });
-      notifyBookingAutoDeclined(booking.listerId, booking.product.title, true);
-      notifyBookingAutoDeclined(booking.hirerId, booking.product.title, false);
+      if (booking.threadId) {
+        await postSystemMessage(
+          booking.threadId,
+          booking.listerId,
+          'This booking request was not responded to within 48 hours and has been automatically declined.'
+        );
+        await prisma.thread.update({ where: { id: booking.threadId }, data: { updatedAt: now } });
+      }
+      notifyBookingAutoDeclined(booking.listerId, booking.product.title, true, booking.threadId ?? undefined);
+      notifyBookingAutoDeclined(booking.hirerId, booking.product.title, false, booking.threadId ?? undefined);
       sendBookingAutoDeclinedEmail(emailData);
       autoDeclined++;
     } else if (hoursRemaining <= 3 && !booking.reminder3Sent) {
       await prisma.booking.update({ where: { id: booking.id }, data: { reminder3Sent: true } });
-      notifyBookingReminder(booking.listerId, booking.hirer.name, booking.product.title, 3);
+      notifyBookingReminder(booking.listerId, booking.hirer.name, booking.product.title, 3, booking.threadId ?? undefined);
       sendBookingReminderEmail(emailData, 3);
       reminders3h++;
     } else if (hoursRemaining <= 12 && !booking.reminder12Sent) {
       await prisma.booking.update({ where: { id: booking.id }, data: { reminder12Sent: true } });
-      notifyBookingReminder(booking.listerId, booking.hirer.name, booking.product.title, 12);
+      notifyBookingReminder(booking.listerId, booking.hirer.name, booking.product.title, 12, booking.threadId ?? undefined);
       sendBookingReminderEmail(emailData, 12);
       reminders12h++;
     } else if (hoursRemaining <= 24 && !booking.reminder24Sent) {
       await prisma.booking.update({ where: { id: booking.id }, data: { reminder24Sent: true } });
-      notifyBookingReminder(booking.listerId, booking.hirer.name, booking.product.title, 24);
+      notifyBookingReminder(booking.listerId, booking.hirer.name, booking.product.title, 24, booking.threadId ?? undefined);
       sendBookingReminderEmail(emailData, 24);
       reminders24h++;
     }

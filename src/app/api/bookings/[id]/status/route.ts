@@ -15,6 +15,7 @@ import {
   notifyPaymentReceived,
   notifyBookingCompleted,
 } from '@/lib/notifications';
+import { postSystemMessage } from '@/lib/threads';
 
 // Valid status transitions: { from: { to: allowedRole } }
 const STATUS_TRANSITIONS: Record<string, Record<string, 'hirer' | 'lister' | 'both'>> = {
@@ -110,23 +111,28 @@ export async function PUT(
       },
     });
 
-    // Create system message about the status change
-    let systemText = `Booking status updated to ${newStatus}.`;
-    if (newStatus === 'APPROVED') {
-      systemText = 'Your booking request has been approved.';
-    } else if (newStatus === 'DECLINED') {
-      systemText = reason
-        ? `Your booking request has been declined. Reason: ${reason}`
-        : 'Your booking request has been declined.';
+    // Post system message to thread
+    if (updatedBooking.threadId) {
+      let systemText = `Booking status updated to ${newStatus}.`;
+      if (newStatus === 'APPROVED') {
+        systemText = 'Your booking request has been approved.';
+      } else if (newStatus === 'DECLINED') {
+        systemText = reason
+          ? `Your booking request has been declined. Reason: ${reason}`
+          : 'Your booking request has been declined.';
+      } else if (newStatus === 'PAID') {
+        systemText = 'Payment confirmed — booking is secured.';
+      } else if (newStatus === 'COLLECTED') {
+        systemText = 'Items collected — enjoy your event!';
+      } else if (newStatus === 'RETURNED') {
+        systemText = 'Items returned — awaiting confirmation.';
+      } else if (newStatus === 'COMPLETED') {
+        systemText = 'Rental complete. Thanks for using Odd Folk!';
+      }
+      await postSystemMessage(updatedBooking.threadId, user.id, systemText);
+      // Update thread updatedAt
+      await prisma.thread.update({ where: { id: updatedBooking.threadId }, data: { updatedAt: new Date() } });
     }
-    await prisma.message.create({
-      data: {
-        bookingId: id,
-        senderId: user.id,
-        text: systemText,
-        type: 'SYSTEM',
-      },
-    });
 
     // Create ESCROW transaction when booking is PAID
     if (newStatus === 'PAID') {
@@ -164,24 +170,25 @@ export async function PUT(
       totalHirerCost: updatedBooking.totalHirerCost,
       hirer: { name: updatedBooking.hirer.name, email: updatedBooking.hirer.email },
       lister: { name: updatedBooking.lister.name, email: updatedBooking.lister.email },
+      threadId: updatedBooking.threadId,
     };
     const productTitle = updatedBooking.product.title;
     if (newStatus === 'APPROVED') {
       sendBookingApprovedEmail(emailData);
-      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.name, productTitle);
+      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
     }
     if (newStatus === 'DECLINED') {
       sendBookingDeclinedEmail(emailData);
-      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.name, productTitle);
+      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
     }
     if (newStatus === 'PAID') {
       sendPaymentReceivedEmail(emailData);
-      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.name, productTitle);
+      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.name, productTitle, updatedBooking.threadId ?? undefined);
     }
     if (newStatus === 'COMPLETED') {
       sendBookingCompletedEmail(emailData);
-      notifyBookingCompleted(updatedBooking.hirerId, productTitle);
-      notifyBookingCompleted(updatedBooking.listerId, productTitle);
+      notifyBookingCompleted(updatedBooking.hirerId, productTitle, updatedBooking.threadId ?? undefined);
+      notifyBookingCompleted(updatedBooking.listerId, productTitle, updatedBooking.threadId ?? undefined);
     }
 
     return successResponse(updatedBooking);

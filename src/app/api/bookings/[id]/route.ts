@@ -25,13 +25,8 @@ export async function GET(
         lister: {
           select: { id: true, name: true, avatarUrl: true },
         },
-        messages: {
-          include: {
-            sender: {
-              select: { id: true, name: true, avatarUrl: true },
-            },
-          },
-          orderBy: { createdAt: 'asc' },
+        thread: {
+          select: { id: true },
         },
       },
     });

@@ -4,6 +4,7 @@ import { successResponse, errorResponse } from '@/lib/api-response';
 import { requireAuth } from '@/lib/auth';
 import { sendBookingRequestEmail } from '@/lib/email';
 import { notifyBookingRequest } from '@/lib/notifications';
+import { findOrCreateThread, postSystemMessage } from '@/lib/threads';
 
 const PLATFORM_FEE_PERCENT = 0.15;
 
@@ -105,7 +106,10 @@ export async function POST(req: NextRequest) {
     const totalHirerCost = Math.round((baseRental + platformFee) * 100) / 100;
     const listerPayout = Math.round(baseRental * 100) / 100;
 
-    // Create booking
+    // Find or create thread for this product+hirer pair
+    const thread = await findOrCreateThread(productId, user.id, product.ownerId);
+
+    // Create booking linked to thread
     const responseDeadlineAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     const booking = await prisma.booking.create({
       data: {
@@ -119,6 +123,7 @@ export async function POST(req: NextRequest) {
         platformFee,
         status: 'PENDING',
         responseDeadlineAt,
+        threadId: thread.id,
       },
       include: {
         product: {
@@ -133,8 +138,29 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Format dates for system message
+    const fmtDate = (d: Date) =>
+      d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Create system message marking the booking in the thread
+    await postSystemMessage(
+      thread.id,
+      user.id,
+      `--- Booking request: ${fmtDate(start)} – ${fmtDate(end)} (${days} day${days > 1 ? 's' : ''}) ---`
+    );
+
+    // Create initial user message if provided
+    if (message && message.trim()) {
+      await prisma.message.create({
+        data: { threadId: thread.id, senderId: user.id, text: message.trim(), type: 'USER' },
+      });
+    }
+
+    // Update thread updatedAt
+    await prisma.thread.update({ where: { id: thread.id }, data: { updatedAt: new Date() } });
+
     // Notify lister of new booking request (email + in-app)
-    notifyBookingRequest(booking.listerId, booking.hirer.name, booking.product.title);
+    notifyBookingRequest(booking.listerId, booking.hirer.name, booking.product.title, thread.id);
     sendBookingRequestEmail({
       id: booking.id,
       productTitle: booking.product.title,
@@ -144,28 +170,7 @@ export async function POST(req: NextRequest) {
       totalHirerCost: booking.totalHirerCost,
       hirer: { name: booking.hirer.name, email: booking.hirer.email },
       lister: { name: booking.lister.name, email: booking.lister.email },
-    });
-
-    // Create initial user message if provided
-    if (message && message.trim()) {
-      await prisma.message.create({
-        data: {
-          bookingId: booking.id,
-          senderId: user.id,
-          text: message.trim(),
-          type: 'USER',
-        },
-      });
-    }
-
-    // Create system message about booking creation
-    await prisma.message.create({
-      data: {
-        bookingId: booking.id,
-        senderId: user.id,
-        text: `Booking request created for ${days} day${days > 1 ? 's' : ''}.`,
-        type: 'SYSTEM',
-      },
+      threadId: thread.id,
     });
 
     return successResponse(booking, 201);

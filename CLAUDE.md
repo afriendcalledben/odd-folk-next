@@ -87,6 +87,7 @@ Key variables in `.env.local`:
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth
 - `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` — Facebook OAuth
 - `RESEND_API_KEY` — Resend transactional email API key (emails silently skipped if absent)
+- `CRON_SECRET` — Secret for the `/api/cron/*` routes (checked as `Authorization: Bearer <secret>`). Set in Coolify environment variables.
 - `UPLOAD_DIR` — File upload directory
 
 **Do NOT set `NEXT_PUBLIC_SITE_URL`** — conflicts with Better Auth client baseURL config.
@@ -102,3 +103,5 @@ Do not create git commits unless explicitly asked.
 - **State management:** React Context (`AuthContext`) for auth state and user favourites. No external state library.
 - **Database IDs:** UUIDs throughout.
 - **Images:** Configured for remote patterns (`i.pravatar.cc`, `picsum.photos`) in `next.config.ts`.
+- **Scheduled tasks:** Add cron jobs in `src/instrumentation.ts` using `node-cron`. The `register()` function runs on server start; guard with `if (process.env.NEXT_RUNTIME !== 'nodejs')` to skip build/edge. Extract logic into `src/lib/*.ts` so it can also be called manually via an `/api/cron/*` route (secured with `CRON_SECRET`).
+- **Item protection:** Removed entirely for the first iteration — no `ProtectionBadge`, no damage protection fee. Do not re-add unless explicitly requested.

@@ -4,11 +4,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail } from 'lucide-react';
 
-interface Conversation {
-  bookingId: string;
+interface ThreadSummary {
+  threadId: string;
   productTitle: string;
   otherParty: { id: string; name: string; avatarUrl: string | null };
-  lastMessage: { text: string; createdAt: string; isOwn: boolean } | null;
+  lastMessage: { text: string; type: string; createdAt: string; isOwn: boolean } | null;
   unreadCount: number;
 }
 
@@ -25,16 +25,16 @@ function timeAgo(dateStr: string): string {
 export default function MessageInbox() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [threads, setThreads] = useState<ThreadSummary[]>([]);
   const [totalUnread, setTotalUnread] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
   const fetchInbox = useCallback(async () => {
     try {
-      const res = await fetch('/api/messages/inbox', { credentials: 'include' });
+      const res = await fetch('/api/threads', { credentials: 'include' });
       if (!res.ok) return;
       const json = await res.json();
-      setConversations(json.data?.conversations ?? []);
+      setThreads(json.data?.threads ?? []);
       setTotalUnread(json.data?.totalUnread ?? 0);
     } catch {}
   }, []);
@@ -45,7 +45,6 @@ export default function MessageInbox() {
     return () => clearInterval(interval);
   }, [fetchInbox]);
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -54,18 +53,12 @@ export default function MessageInbox() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  async function handleConversationClick(bookingId: string) {
-    // Mark as read
-    await fetch(`/api/messages/inbox/${bookingId}/read`, { method: 'PUT', credentials: 'include' });
-    setConversations(prev =>
-      prev.map(c => c.bookingId === bookingId ? { ...c, unreadCount: 0 } : c)
-    );
-    setTotalUnread(prev => {
-      const conv = conversations.find(c => c.bookingId === bookingId);
-      return Math.max(0, prev - (conv?.unreadCount ?? 0));
-    });
+  async function handleThreadClick(threadId: string, unreadCount: number) {
+    await fetch(`/api/threads/${threadId}/read`, { method: 'PUT', credentials: 'include' });
+    setThreads(prev => prev.map(t => t.threadId === threadId ? { ...t, unreadCount: 0 } : t));
+    setTotalUnread(prev => Math.max(0, prev - unreadCount));
     setOpen(false);
-    router.push(`/dashboard?tab=bookings`);
+    router.push(`/inbox?t=${threadId}`);
   }
 
   return (
@@ -85,52 +78,66 @@ export default function MessageInbox() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-brand-grey/20 z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-brand-grey/20">
+          <div className="px-4 py-3 border-b border-brand-grey/20 flex items-center justify-between">
             <span className="font-heading text-brand-burgundy text-sm">Messages</span>
+            <button
+              onClick={() => { setOpen(false); router.push('/inbox'); }}
+              className="text-xs text-brand-burgundy/40 hover:text-brand-orange font-body transition-colors"
+            >
+              View all →
+            </button>
           </div>
 
           <div className="max-h-96 overflow-y-auto">
-            {conversations.length === 0 ? (
+            {threads.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm font-body text-brand-burgundy/40">
                 No messages yet
               </p>
             ) : (
-              conversations.map(c => (
-                <button
-                  key={c.bookingId}
-                  onClick={() => handleConversationClick(c.bookingId)}
-                  className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-brand-grey/10 transition-colors border-b border-brand-grey/10 last:border-0 ${c.unreadCount > 0 ? 'bg-brand-orange/5' : ''}`}
-                >
-                  <img
-                    src={c.otherParty.avatarUrl || '/avatar-placeholder.svg'}
-                    alt={c.otherParty.name}
-                    className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-brand-grey"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={`text-sm font-body truncate ${c.unreadCount > 0 ? 'font-semibold text-brand-burgundy' : 'text-brand-burgundy/80'}`}>
-                        {c.otherParty.name}
-                      </p>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {c.unreadCount > 0 && (
-                          <span className="min-w-[18px] h-[18px] bg-brand-orange rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1">
-                            {c.unreadCount}
-                          </span>
-                        )}
+              threads.map(t => {
+                const preview = t.lastMessage
+                  ? t.lastMessage.type === 'SYSTEM'
+                    ? '— system update —'
+                    : t.lastMessage.isOwn
+                      ? `You: ${t.lastMessage.text}`
+                      : t.lastMessage.text
+                  : null;
+
+                return (
+                  <button
+                    key={t.threadId}
+                    onClick={() => handleThreadClick(t.threadId, t.unreadCount)}
+                    className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-brand-grey/10 transition-colors border-b border-brand-grey/10 last:border-0 ${t.unreadCount > 0 ? 'bg-brand-orange/5' : ''}`}
+                  >
+                    <img
+                      src={t.otherParty.avatarUrl || '/avatar-placeholder.svg'}
+                      alt={t.otherParty.name}
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-brand-grey"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className={`text-sm font-body truncate ${t.unreadCount > 0 ? 'font-semibold text-brand-burgundy' : 'text-brand-burgundy/80'}`}>
+                          {t.otherParty.name}
+                        </p>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {t.unreadCount > 0 && (
+                            <span className="min-w-[18px] h-[18px] bg-brand-orange rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1">
+                              {t.unreadCount}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <p className="text-xs text-brand-burgundy/50 font-body truncate">{t.productTitle}</p>
+                      {preview && (
+                        <p className="text-xs text-brand-burgundy/60 font-body mt-0.5 truncate">{preview}</p>
+                      )}
+                      {t.lastMessage && (
+                        <p className="text-[10px] text-brand-burgundy/40 font-body mt-0.5">{timeAgo(t.lastMessage.createdAt)}</p>
+                      )}
                     </div>
-                    <p className="text-xs text-brand-burgundy/50 font-body truncate">{c.productTitle}</p>
-                    {c.lastMessage && (
-                      <p className="text-xs text-brand-burgundy/60 font-body mt-0.5 truncate">
-                        {c.lastMessage.isOwn ? 'You: ' : ''}{c.lastMessage.text}
-                      </p>
-                    )}
-                    {c.lastMessage && (
-                      <p className="text-[10px] text-brand-burgundy/40 font-body mt-0.5">{timeAgo(c.lastMessage.createdAt)}</p>
-                    )}
-                  </div>
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
