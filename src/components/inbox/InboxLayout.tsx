@@ -59,54 +59,60 @@ export default function InboxLayout() {
 
   const selectedThread = threads.find(t => t.threadId === selectedThreadId) ?? null;
 
-  // Mobile: show thread view when a thread is selected, otherwise show list
-  const showMobileList = !selectedThreadId;
-
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-brand-cream">
-      {/* Thread list — always visible on desktop, hidden on mobile when thread open */}
-      <div className={`
-        w-full md:w-80 md:flex-shrink-0 border-r border-brand-grey/20 bg-brand-white flex flex-col
-        ${selectedThreadId ? 'hidden md:flex' : 'flex'}
-      `}>
-        <div className="px-4 py-4 border-b border-brand-grey/20">
-          <h1 className="font-heading text-xl text-brand-burgundy">Inbox</h1>
-        </div>
-        <ThreadList
-          threads={threads}
-          loading={loading}
-          selectedThreadId={selectedThreadId}
-          onSelect={selectThread}
-        />
-      </div>
+    <div className="bg-brand-cream py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)]">
+      <div className="container mx-auto max-w-7xl">
+        <h1 className="font-heading text-3xl text-brand-burgundy mb-6">Inbox</h1>
 
-      {/* Thread view — takes remaining width on desktop, full width on mobile */}
-      <div className={`
-        flex-1 flex flex-col bg-brand-white
-        ${!selectedThreadId ? 'hidden md:flex' : 'flex'}
-      `}>
-        {selectedThreadId ? (
-          <>
-            {/* Mobile back button */}
-            <button
-              onClick={() => router.push('/inbox')}
-              className="md:hidden flex items-center gap-2 px-4 py-3 border-b border-brand-grey/20 text-brand-burgundy/60 hover:text-brand-burgundy text-sm font-body"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              All messages
-            </button>
-            <ThreadView
-              threadId={selectedThreadId}
-              summary={selectedThread}
-              onRead={() => markThreadRead(selectedThreadId)}
-              onNewMessage={fetchThreads}
+        {/* Two-panel card */}
+        <div className="flex h-[calc(100vh-220px)] min-h-96 bg-brand-white border border-brand-grey/20 rounded-3xl shadow-xl overflow-hidden">
+
+          {/* Thread list — always visible on desktop, hidden on mobile when thread open */}
+          <div className={`
+            w-full md:w-80 md:flex-shrink-0 border-r border-brand-grey/20 flex flex-col
+            ${selectedThreadId ? 'hidden md:flex' : 'flex'}
+          `}>
+            <div className="px-4 py-3 border-b border-brand-grey/20">
+              <p className="font-body text-xs uppercase tracking-widest text-brand-burgundy/40 font-semibold">Conversations</p>
+            </div>
+            <ThreadList
+              threads={threads}
+              loading={loading}
+              selectedThreadId={selectedThreadId}
+              onSelect={selectThread}
             />
-          </>
-        ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center text-brand-burgundy/30 font-body text-sm">
-            Select a conversation
           </div>
-        )}
+
+          {/* Thread view */}
+          <div className={`
+            flex-1 flex flex-col
+            ${!selectedThreadId ? 'hidden md:flex' : 'flex'}
+          `}>
+            {selectedThreadId ? (
+              <>
+                {/* Mobile back button */}
+                <button
+                  onClick={() => router.push('/inbox')}
+                  className="md:hidden flex items-center gap-2 px-4 py-3 border-b border-brand-grey/20 text-brand-burgundy/60 hover:text-brand-burgundy text-sm font-body"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  All messages
+                </button>
+                <ThreadView
+                  threadId={selectedThreadId}
+                  summary={selectedThread}
+                  onRead={() => markThreadRead(selectedThreadId)}
+                  onNewMessage={fetchThreads}
+                />
+              </>
+            ) : (
+              <div className="hidden md:flex flex-1 items-center justify-center text-brand-burgundy/30 font-body text-sm">
+                Select a conversation
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
     </div>
   );
