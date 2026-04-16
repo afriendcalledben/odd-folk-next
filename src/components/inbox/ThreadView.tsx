@@ -18,25 +18,17 @@ interface Message {
 interface Props {
   threadId: string;
   summary: ThreadSummary | null;
+  currentUserId: string | null;
   onRead: () => void;
   onNewMessage: () => void;
 }
 
-export default function ThreadView({ threadId, summary, onRead, onNewMessage }: Props) {
+export default function ThreadView({ threadId, summary, currentUserId, onRead, onNewMessage }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Get current user id
-  useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then(r => r.json())
-      .then(json => setCurrentUserId(json.data?.id ?? null))
-      .catch(() => {});
-  }, []);
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -131,7 +123,7 @@ export default function ThreadView({ threadId, summary, onRead, onNewMessage }: 
               )}
               <div className={`max-w-[75%] px-3 py-2 rounded-2xl font-body text-sm ${
                 isMe
-                  ? 'bg-brand-blue text-white rounded-br-sm'
+                  ? 'bg-brand-burgundy text-white rounded-br-sm'
                   : 'bg-white border border-brand-grey text-brand-burgundy rounded-bl-sm shadow-sm'
               }`}>
                 {msg.text}

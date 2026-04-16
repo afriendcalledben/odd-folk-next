@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import ThreadList from './ThreadList';
 import ThreadView from './ThreadView';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export interface ThreadSummary {
   threadId: string;
@@ -26,6 +27,7 @@ export interface ThreadSummary {
 export default function InboxLayout() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
   const selectedThreadId = searchParams.get('t');
 
   const [threads, setThreads] = useState<ThreadSummary[]>([]);
@@ -101,6 +103,7 @@ export default function InboxLayout() {
                 <ThreadView
                   threadId={selectedThreadId}
                   summary={selectedThread}
+                  currentUserId={user?.id ?? null}
                   onRead={() => markThreadRead(selectedThreadId)}
                   onNewMessage={fetchThreads}
                 />
