@@ -2,6 +2,13 @@
 
 A peer-to-peer rental marketplace for event furniture and decorative props in London. Built with Next.js 16 (App Router), TypeScript, Prisma, Supabase (PostgreSQL), Stripe, and Tailwind CSS v4.
 
+## Hosting
+
+- **Platform:** Private VPS with [Coolify](https://coolify.io/) (NOT Vercel)
+- **Database:** Self-hosted PostgreSQL via a Supabase instance on the same VPS
+- **Runtime:** Persistent Node.js server (`output: 'standalone'`) — not serverless
+- **Scheduled tasks:** `node-cron` via `src/instrumentation.ts` (runs inside the Next.js process). Do NOT use `vercel.json` or Vercel Cron — they will not work here.
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 with App Router (`/src/app`)
@@ -31,7 +38,7 @@ src/
 ├── context/                # React Context providers (AuthContext)
 ├── emails/                 # React Email templates (BookingRequestEmail, BookingStatusEmail)
 ├── services/               # API client (services/api.ts)
-├── lib/                    # Server utilities (prisma, auth, api-response, email)
+├── lib/                    # Server utilities (prisma, auth, api-response, email, notifications)
 └── types.ts                # Shared TypeScript type definitions
 ```
 
@@ -61,11 +68,13 @@ All API endpoints must return consistent JSON:
 
 ```ts
 // Success
-successResponse(data, status?)   // { success: true, ...data }
+successResponse(data, status?)   // { success: true, data: <data> }
 
 // Error
-errorResponse(message, status?)  // { success: true, error: "message" }
+errorResponse(message, status?)  // { success: false, error: "message" }
 ```
+
+**Important:** `successResponse` nests data under a `data` key — it does NOT spread. When consuming API responses directly with `fetch` (not via `services/api.ts`), read `json.data.yourField`, not `json.yourField`. The `api.get/post` helpers in `services/api.ts` unwrap this automatically via `data.data ?? data`.
 
 ## Environment Variables
 

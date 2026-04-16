@@ -141,6 +141,48 @@ export async function sendBookingCompletedEmail(b: BookingEmailData) {
   );
 }
 
+export async function sendBookingReminderEmail(b: BookingEmailData, hoursRemaining: number) {
+  const urgency = hoursRemaining <= 3 ? 'Urgent: ' : '';
+  await send(
+    b.lister.email,
+    `${urgency}${hoursRemaining} hours left to respond to a booking request`,
+    createElement(BookingStatusEmail, {
+      recipientName: b.lister.name,
+      heading: `${hoursRemaining} hours remaining`,
+      body: `${b.hirer.name} is waiting for your response to their booking request for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}). If you don't respond within ${hoursRemaining} hours the request will be automatically declined.`,
+      ctaText: 'Respond now',
+      ctaUrl: DASHBOARD_BOOKINGS,
+    })
+  );
+}
+
+export async function sendBookingAutoDeclinedEmail(b: BookingEmailData) {
+  // Notify lister
+  await send(
+    b.lister.email,
+    `Booking request for ${b.productTitle} has expired`,
+    createElement(BookingStatusEmail, {
+      recipientName: b.lister.name,
+      heading: 'Booking request expired',
+      body: `The booking request from ${b.hirer.name} for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}) was not responded to within 48 hours and has been automatically declined.`,
+      ctaText: 'View dashboard',
+      ctaUrl: DASHBOARD_BOOKINGS,
+    })
+  );
+  // Notify hirer
+  await send(
+    b.hirer.email,
+    `Your booking request for ${b.productTitle} wasn't responded to`,
+    createElement(BookingStatusEmail, {
+      recipientName: b.hirer.name,
+      heading: 'Request not responded to',
+      body: `Unfortunately your booking request for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}) wasn't responded to within 48 hours and has been automatically declined. Browse similar items on Odd Folk.`,
+      ctaText: 'Browse listings',
+      ctaUrl: `${SITE_URL}/search`,
+    })
+  );
+}
+
 export async function sendReviewReceivedEmail(data: {
   reviewee: { name: string; email: string };
   reviewer: { name: string };

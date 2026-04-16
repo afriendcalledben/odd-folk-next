@@ -5,6 +5,8 @@ export const NotificationType = {
   BOOKING_APPROVED: 'BOOKING_APPROVED',
   BOOKING_DECLINED: 'BOOKING_DECLINED',
   BOOKING_CANCELLED: 'BOOKING_CANCELLED',
+  BOOKING_REMINDER: 'BOOKING_REMINDER',
+  BOOKING_AUTO_DECLINED: 'BOOKING_AUTO_DECLINED',
   PAYMENT_RECEIVED: 'PAYMENT_RECEIVED',
   BOOKING_COMPLETED: 'BOOKING_COMPLETED',
   REVIEW_RECEIVED: 'REVIEW_RECEIVED',
@@ -81,6 +83,27 @@ export function notifyBookingCompleted(userId: string, productTitle: string) {
     NotificationType.BOOKING_COMPLETED,
     'Rental complete',
     `Your rental of ${productTitle} is complete — leave a review!`
+  );
+}
+
+export function notifyBookingReminder(listerId: string, hirerName: string, productTitle: string, hoursRemaining: number) {
+  const urgency = hoursRemaining <= 3 ? 'Urgent: ' : '';
+  return createNotification(
+    listerId,
+    NotificationType.BOOKING_REMINDER,
+    `${urgency}${hoursRemaining} hours to respond`,
+    `You have ${hoursRemaining} hours to accept or decline ${hirerName}'s request for ${productTitle} before it is automatically declined`
+  );
+}
+
+export function notifyBookingAutoDeclined(userId: string, productTitle: string, isLister: boolean) {
+  return createNotification(
+    userId,
+    NotificationType.BOOKING_AUTO_DECLINED,
+    'Booking request expired',
+    isLister
+      ? `A booking request for ${productTitle} was not responded to and has been automatically declined`
+      : `Your booking request for ${productTitle} was not responded to within 48 hours and has been automatically declined`
   );
 }
 

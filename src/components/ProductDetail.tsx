@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import BookingCalendar from './BookingCalendar';
 import SupportCenter from './SupportCenter';
 import PriceBreakdown from './PriceBreakdown';
-import ProtectionBadge from './ProtectionBadge';
+
 
 interface ProductDetailProps {
   product: Product;
@@ -227,14 +227,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${product.quantityAvailable > 0 ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
                             {product.quantityAvailable > 0 ? `${product.quantityAvailable} in stock` : 'Out of stock'}
                         </span>
-                        <ProtectionBadge variant="badge" />
                     </div>
                 </div>
 
                 <p className="text-brand-burgundy/80 leading-relaxed">{product.description}</p>
-
-                {/* Protection Info Card */}
-                <ProtectionBadge variant="card" />
 
                 {/* Booking Widget */}
                 <div className="bg-white border border-brand-grey/50 rounded-xl shadow-xl overflow-hidden">

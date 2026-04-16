@@ -45,7 +45,7 @@ export async function PUT(
     const user = await requireAuth(req);
     const { id } = await params;
 
-    const { status: newStatus } = await req.json();
+    const { status: newStatus, reason } = await req.json();
 
     if (!newStatus) {
       return errorResponse('status is required', 400);
@@ -93,7 +93,10 @@ export async function PUT(
     // Update booking status
     const updatedBooking = await prisma.booking.update({
       where: { id },
-      data: { status: newStatus },
+      data: {
+        status: newStatus,
+        ...(newStatus === 'DECLINED' && reason ? { cancelReason: reason } : {}),
+      },
       include: {
         product: {
           select: { id: true, title: true, images: true },
@@ -108,11 +111,19 @@ export async function PUT(
     });
 
     // Create system message about the status change
+    let systemText = `Booking status updated to ${newStatus}.`;
+    if (newStatus === 'APPROVED') {
+      systemText = 'Your booking request has been approved.';
+    } else if (newStatus === 'DECLINED') {
+      systemText = reason
+        ? `Your booking request has been declined. Reason: ${reason}`
+        : 'Your booking request has been declined.';
+    }
     await prisma.message.create({
       data: {
         bookingId: id,
         senderId: user.id,
-        text: `Booking status updated to ${newStatus}.`,
+        text: systemText,
         type: 'SYSTEM',
       },
     });

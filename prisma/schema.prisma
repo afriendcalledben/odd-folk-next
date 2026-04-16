@@ -128,11 +128,15 @@ model Booking {
   totalHirerCost  Float    @map("total_hirer_cost")
   listerPayout    Float    @map("lister_payout")
   platformFee     Float    @map("platform_fee")
-  status          String   @default("PENDING") // PENDING, APPROVED, DECLINED, PAID, COLLECTED, RETURNED, COMPLETED, CANCELLED
-  paymentIntentId String?  @map("payment_intent_id")
-  cancelReason    String?  @map("cancel_reason")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  status             String    @default("PENDING") // PENDING, APPROVED, DECLINED, PAID, COLLECTED, RETURNED, COMPLETED, CANCELLED, AUTO_DECLINED
+  paymentIntentId    String?   @map("payment_intent_id")
+  cancelReason       String?   @map("cancel_reason")
+  responseDeadlineAt DateTime? @map("response_deadline_at")
+  reminder24Sent     Boolean   @default(false) @map("reminder_24_sent")
+  reminder12Sent     Boolean   @default(false) @map("reminder_12_sent")
+  reminder3Sent      Boolean   @default(false) @map("reminder_3_sent")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   // Relations
   product         Product       @relation(fields: [productId], references: [id])

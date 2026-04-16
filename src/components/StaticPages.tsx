@@ -406,7 +406,7 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="Can I communicate outside the platform?"
-                        a="No. All communication must happen through Odd Folk's messaging. Bypassing this violates Terms of Service and removes protections."
+                        a="No. All communication must happen through Odd Folk's messaging. Bypassing this violates our Terms of Service."
                     />
                     <Question
                         q="How do reviews work?"

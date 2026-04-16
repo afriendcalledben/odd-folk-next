@@ -102,7 +102,7 @@ export const TermsOfService: React.FC = () => {
 
             <section>
                 <h2 className="font-heading text-2xl mb-4">11. Hirer-specific terms</h2>
-                <p><strong>Booking and payment:</strong> Pay rental price + 10% fee + optional protection. Payment held in escrow.</p>
+                <p><strong>Booking and payment:</strong> Pay rental price + 10% service fee. Payment held in escrow.</p>
                 <p><strong>Responsibilities:</strong> Collect/return on time, use carefully, report damage.</p>
                 <p><strong>Returns and late fees:</strong> Late returns incur fees. Report delays immediately.</p>
                 <p><strong>Cancellation:</strong> 48h+ full refund; 24-48h 50% refund; less than 24h no refund.</p>
@@ -115,32 +115,27 @@ export const TermsOfService: React.FC = () => {
             </section>
 
             <section>
-                <h2 className="font-heading text-2xl mb-4">13. Damage protection</h2>
-                <p>Optional 10-15% fee covers accidental damage up to declared value. Does not cover negligence/theft.</p>
-            </section>
-
-            <section>
-                <h2 className="font-heading text-2xl mb-4">14. Dispute resolution</h2>
+                <h2 className="font-heading text-2xl mb-4">13. Dispute resolution</h2>
                 <p>Encourage direct resolution. Odd Folk mediation available by contacting hello@oddfolk.co.uk (fee up to 30%). Lister Guarantee available for non-payment.</p>
             </section>
 
              <section>
-                <h2 className="font-heading text-2xl mb-4">15. User content and reviews</h2>
+                <h2 className="font-heading text-2xl mb-4">14. User content and reviews</h2>
                 <p>You retain ownership but grant license to Odd Folk. Content must be accurate and legal. Reviews must be honest.</p>
             </section>
 
              <section>
-                <h2 className="font-heading text-2xl mb-4">16. Rules of acceptable use</h2>
+                <h2 className="font-heading text-2xl mb-4">15. Rules of acceptable use</h2>
                 <p>No illegal purpose, fee avoidance, or harassment. Fee avoidance penalty: Double fees or £200.</p>
             </section>
             
             <section>
-                <h2 className="font-heading text-2xl mb-4">17-22. General provisions</h2>
+                <h2 className="font-heading text-2xl mb-4">16-21. General provisions</h2>
                 <p>Platform provided "as is". Liability limited to fees paid in last 12 months. Third-party services subject to their own terms. Account termination possible for violations. Terms governed by laws of England and Wales.</p>
             </section>
 
              <section>
-                <h2 className="font-heading text-2xl mb-4">23. Contact us</h2>
+                <h2 className="font-heading text-2xl mb-4">22. Contact us</h2>
                 <p>Email: hello@oddfolk.co.uk</p>
             </section>
         </div>

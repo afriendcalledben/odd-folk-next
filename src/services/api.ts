@@ -341,6 +341,7 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
       totalHirerCost: b.totalHirerCost,
       listerFee: b.platformFee,
       listerPayout: b.listerPayout,
+      responseDeadlineAt: b.responseDeadlineAt,
       hasReviewed: b.hasReviewed ?? false,
       hirer: b.hirer,
       lister: b.lister,
@@ -356,6 +357,14 @@ export const submitBookingReview = async (
   comment?: string
 ): Promise<Review> => {
   return api.post<Review>(`/bookings/${bookingId}/review`, { rating, comment });
+};
+
+export const cancelBooking = async (bookingId: string, reason?: string): Promise<void> => {
+  await api.post(`/bookings/${bookingId}/cancel`, { reason: reason || '' });
+};
+
+export const declineBooking = async (bookingId: string, reason?: string): Promise<void> => {
+  await api.put(`/bookings/${bookingId}/status`, { status: 'DECLINED', reason: reason || '' });
 };
 
 export const updateBookingStatus = async (bookingId: string, status: BookingStatus): Promise<Booking> => {

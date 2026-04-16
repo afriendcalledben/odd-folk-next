@@ -27,7 +27,7 @@ export interface Product {
   };
 }
 
-export type BookingStatus = 
+export type BookingStatus =
   | 'pending'           // Hirer requested
   | 'approved'          // Lister approved
   | 'paid'              // Hirer paid (Escrow)
@@ -36,6 +36,7 @@ export type BookingStatus =
   | 'return_pending'    // Rental period over, item returned by hirer
   | 'completed'         // Lister confirmed return (Funds released)
   | 'cancelled'
+  | 'auto_declined'     // Lister didn't respond within 48 hours
   | 'disputed';         // Issue reported
 
 export interface Booking {
@@ -59,6 +60,7 @@ export interface Booking {
   listerFee: number;
   listerPayout: number;
 
+  responseDeadlineAt?: string;
   hasReviewed?: boolean;
   hirer?: { id: string; name: string; avatarUrl?: string };
   lister?: { id: string; name: string; avatarUrl?: string };

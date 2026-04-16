@@ -95,7 +95,7 @@ const Chat: React.FC<ChatProps> = ({ bookingId, currentUserId }) => {
                 </form>
                 <div className="bg-yellow-50 p-2 text-center border-t border-yellow-100 rounded-b-xl">
                     <p className="text-[10px] text-brand-burgundy/60">
-                        Always communicate through Odd Folk to ensure you are protected by our scams and payment guarantees.
+                        Always communicate through Odd Folk to keep your rental safe and avoid scams.
                     </p>
                 </div>
             </div>

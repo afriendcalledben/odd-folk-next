@@ -12,7 +12,6 @@ interface PriceBreakdownProps {
 
 // Fee percentages (configurable)
 const SERVICE_FEE_PERCENT = 0.10; // 10% service fee
-const PROTECTION_FEE_PERCENT = 0.05; // 5% damage protection
 const LISTER_FEE_PERCENT = 0.10; // 10% platform fee for listers
 
 const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
@@ -25,8 +24,7 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
   // Calculate all fees
   const baseRental = pricePerDay * days * quantity;
   const serviceFee = baseRental * SERVICE_FEE_PERCENT;
-  const protectionFee = baseRental * PROTECTION_FEE_PERCENT;
-  const totalHirerCost = baseRental + serviceFee + protectionFee;
+  const totalHirerCost = baseRental + serviceFee;
 
   // Lister receives 90% of base rental
   const listerPayout = baseRental * (1 - LISTER_FEE_PERCENT);
@@ -41,10 +39,6 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
         <div className="flex justify-between text-brand-burgundy/70">
           <span>Service fee</span>
           <span>£{serviceFee.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between text-brand-burgundy/70">
-          <span>Damage protection</span>
-          <span>£{protectionFee.toFixed(2)}</span>
         </div>
         <div className="border-t border-brand-grey/30 pt-2 mt-2 flex justify-between font-bold text-brand-burgundy">
           <span>Total</span>
@@ -83,22 +77,6 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
           </div>
         </div>
         <span className="text-sm font-medium text-brand-burgundy">£{serviceFee.toFixed(2)}</span>
-      </div>
-
-      {/* Damage protection */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-brand-burgundy/80">Damage protection (5%)</span>
-          <div className="group relative">
-            <svg className="w-4 h-4 text-brand-burgundy/40 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-brand-burgundy text-white text-xs p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-              Covers accidental damage up to the item's value. See our protection policy for details.
-            </div>
-          </div>
-        </div>
-        <span className="text-sm font-medium text-brand-burgundy">£{protectionFee.toFixed(2)}</span>
       </div>
 
       {/* Divider */}

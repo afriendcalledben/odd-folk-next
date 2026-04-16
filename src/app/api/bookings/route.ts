@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
     const listerPayout = Math.round(baseRental * 100) / 100;
 
     // Create booking
+    const responseDeadlineAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     const booking = await prisma.booking.create({
       data: {
         productId,
@@ -117,6 +118,7 @@ export async function POST(req: NextRequest) {
         listerPayout,
         platformFee,
         status: 'PENDING',
+        responseDeadlineAt,
       },
       include: {
         product: {
