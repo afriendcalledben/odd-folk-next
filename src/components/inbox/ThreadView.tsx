@@ -28,9 +28,7 @@ export default function ThreadView({ threadId, summary, onRead, onNewMessage }: 
   const [sending, setSending] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const shouldScrollRef = useRef(true); // true on initial load or after sending
 
   // Get current user id
   useEffect(() => {
@@ -55,19 +53,12 @@ export default function ThreadView({ threadId, summary, onRead, onNewMessage }: 
   }, [threadId, onRead]);
 
   useEffect(() => {
-    shouldScrollRef.current = true; // scroll to bottom on initial load
     fetchMessages();
     markRead();
     const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
   }, [fetchMessages, markRead]);
 
-  // Only scroll to bottom when explicitly requested (initial load or after sending)
-  useEffect(() => {
-    if (!shouldScrollRef.current) return;
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    shouldScrollRef.current = false;
-  }, [messages]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -81,7 +72,6 @@ export default function ThreadView({ threadId, summary, onRead, onNewMessage }: 
         body: JSON.stringify({ text: text.trim() }),
       });
       setText('');
-      shouldScrollRef.current = true; // scroll to bottom after sending
       await fetchMessages();
       markRead();
       onNewMessage();
@@ -154,7 +144,6 @@ export default function ThreadView({ threadId, summary, onRead, onNewMessage }: 
             No messages yet. Start the conversation!
           </p>
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Compose */}
