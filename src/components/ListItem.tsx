@@ -6,6 +6,8 @@ import type { BlockedRange } from '../services/api';
 import { Button } from '@/components/ui';
 import type { Product } from '@/types';
 import BookingCalendar from './BookingCalendar';
+import ListingCropModal from './ListingCropModal';
+import { X, Crop, Camera } from 'lucide-react';
 
 const inputClass = 'w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors';
 const labelClass = 'block font-body text-sm font-bold text-brand-burgundy mb-1';
@@ -53,8 +55,16 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
   const [price7Day, setPrice7Day] = useState(initialData?.price7Day ? String(initialData.price7Day) : '');
   const [selectedLocationId, setSelectedLocationId] = useState<string>(initialData?.locationId || '');
   const [locations, setLocations] = useState<LocationOption[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.images || []);
+  const [imageFiles, setImageFiles] = useState<(File | null)[]>(
+    (initialData?.images || []).map(() => null)
+  );
+  const [originalFiles, setOriginalFiles] = useState<(File | null)[]>(
+    (initialData?.images || []).map(() => null)
+  );
+  const [cropTargetIndex, setCropTargetIndex] = useState<number | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [itemBlockedRanges, setItemBlockedRanges] = useState<BlockedRange[]>(
@@ -121,18 +131,61 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
 
   const removeTag = (tag: string) => setSelectedTags(selectedTags.filter(t => t !== tag));
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const reorder = <T,>(arr: T[], from: number, to: number): T[] => {
+    const r = [...arr];
+    const [item] = r.splice(from, 1);
+    r.splice(to, 0, item);
+    return r;
+  };
 
-    const newFiles = [...imageFiles];
-    const newPreviews = [...imagePreviews];
+  const handleAddImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length) return;
+    const slots = 8 - imagePreviews.length;
+    const toAdd = files.slice(0, slots);
+    setImagePreviews(p => [...p, ...toAdd.map(f => URL.createObjectURL(f))]);
+    setImageFiles(p => [...p, ...toAdd]);
+    setOriginalFiles(p => [...p, ...toAdd]);
+  };
 
-    newFiles[index] = file;
-    newPreviews[index] = URL.createObjectURL(file);
+  const handleRemoveImage = (i: number) => {
+    setImagePreviews(p => p.filter((_, idx) => idx !== i));
+    setImageFiles(p => p.filter((_, idx) => idx !== i));
+    setOriginalFiles(p => p.filter((_, idx) => idx !== i));
+  };
 
-    setImageFiles(newFiles);
-    setImagePreviews(newPreviews);
+  const handleDrop = (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    setImagePreviews(p => reorder(p, dragIndex, dropIndex));
+    setImageFiles(p => reorder(p, dragIndex, dropIndex));
+    setOriginalFiles(p => reorder(p, dragIndex, dropIndex));
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleOpenCrop = async (i: number) => {
+    if (originalFiles[i]) {
+      setCropTargetIndex(i);
+      return;
+    }
+    // Existing URL — fetch and store as original so future crops also use original
+    try {
+      const res = await fetch(imagePreviews[i]);
+      const blob = await res.blob();
+      const file = new File([blob], 'photo.jpg', { type: blob.type });
+      setOriginalFiles(p => { const n = [...p]; n[i] = file; return n; });
+      setCropTargetIndex(i);
+    } catch {
+      setCropTargetIndex(i);
+    }
+  };
+
+  const handleCropConfirm = (croppedFile: File) => {
+    if (cropTargetIndex === null) return;
+    setImageFiles(p => { const n = [...p]; n[cropTargetIndex] = croppedFile; return n; });
+    setImagePreviews(p => { const n = [...p]; n[cropTargetIndex] = URL.createObjectURL(croppedFile); return n; });
+    setCropTargetIndex(null);
   };
 
   const handleSubmit = async () => {
@@ -144,34 +197,20 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
     if (!color) { setError('Please select a color'); return; }
     if (!price1Day || parseFloat(price1Day) <= 0) { setError('Please enter a valid price for 1 day'); return; }
 
-    const hasImages = isEditMode
-      ? imagePreviews.filter(Boolean).length > 0
-      : imageFiles.filter(f => f).length > 0;
-    if (!hasImages) { setError('Please upload at least one image'); return; }
+    if (imagePreviews.length === 0) { setError('Please upload at least one image'); return; }
 
     setIsSubmitting(true);
 
     try {
-      let imageUrls: string[];
+      // Upload any new/cropped files; keep existing URLs as-is
+      const filesToUpload = imageFiles.filter((f): f is File => f !== null);
+      const uploadedUrls = filesToUpload.length > 0 ? await uploadImages(filesToUpload) : [];
+      let uploadIdx = 0;
+      const imageUrls = imagePreviews.map((preview, i) =>
+        imageFiles[i] ? uploadedUrls[uploadIdx++] : preview
+      );
 
       if (isEditMode) {
-        // Build final image array: keep existing URLs, upload new files
-        const slotUrls: (string | null)[] = Array(8).fill(null);
-        for (let i = 0; i < 8; i++) {
-          if (!imageFiles[i] && imagePreviews[i]) {
-            slotUrls[i] = imagePreviews[i];
-          }
-        }
-        const newFiles = imageFiles.filter(f => f);
-        if (newFiles.length > 0) {
-          const newUrls = await uploadImages(newFiles);
-          let urlIdx = 0;
-          for (let i = 0; i < 8; i++) {
-            if (imageFiles[i]) slotUrls[i] = newUrls[urlIdx++];
-          }
-        }
-        imageUrls = slotUrls.filter(Boolean) as string[];
-
         await updateProduct(productId!, {
           title: title.trim(),
           description: description.trim(),
@@ -188,9 +227,6 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           blockedDates: itemBlockedRanges,
         });
       } else {
-        const validFiles = imageFiles.filter(f => f);
-        imageUrls = await uploadImages(validFiles);
-
         await createProduct({
           title: title.trim(),
           description: description.trim(),
@@ -215,12 +251,10 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
     }
   };
 
-  const hasImages = isEditMode
-    ? imagePreviews.filter(Boolean).length > 0
-    : imageFiles.filter(f => f).length > 0;
-  const isFormValid = title && selectedCategory && condition && color && price1Day && hasImages;
+  const isFormValid = title && selectedCategory && condition && color && price1Day && imagePreviews.length > 0;
 
   return (
+    <>
     <div className="bg-brand-white min-h-screen py-12 md:py-20 animate-fade-in">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
         <div className="mb-12 text-center">
@@ -351,30 +385,61 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           <FormStep number={4} title="Add photos">
             <div className="space-y-4">
               <p className="font-body text-sm text-brand-burgundy/60 leading-relaxed">
-                {isEditMode
-                  ? 'Click any slot to replace an image. Existing images are kept unless you upload a new one.'
-                  : 'Upload at least 1 photo. Make sure you include multiple angles and any damage/marks where necessary.'}
+                Upload at least 1 photo. Drag to reorder. Click the crop icon to adjust framing.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <label key={i} className="aspect-[4/3] bg-brand-orange/5 border-2 border-dashed border-brand-orange/20 rounded-xl flex items-center justify-center cursor-pointer hover:bg-brand-orange/10 hover:border-brand-orange transition-all group overflow-hidden relative">
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, i)}
-                    />
-                    {imagePreviews[i] ? (
-                      <img src={imagePreviews[i]} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <svg className="w-8 h-8 text-brand-burgundy/20 group-hover:text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    )}
-                  </label>
+                {imagePreviews.map((src, i) => (
+                  <div
+                    key={i}
+                    draggable
+                    onDragStart={() => setDragIndex(i)}
+                    onDragOver={e => { e.preventDefault(); setDragOverIndex(i); }}
+                    onDrop={() => handleDrop(i)}
+                    onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                    className={`relative aspect-[4/3] rounded-xl overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing select-none ${
+                      dragOverIndex === i && dragIndex !== i
+                        ? 'border-brand-orange scale-105'
+                        : dragIndex === i
+                        ? 'border-brand-orange/40 opacity-60'
+                        : 'border-transparent'
+                    }`}
+                  >
+                    <img src={src} alt={`Photo ${i + 1}`} className="w-full h-full object-cover pointer-events-none" draggable={false} />
+
+                    {/* Order badge */}
+                    <span className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bg-black/60 text-white text-xs font-bold flex items-center justify-center pointer-events-none">
+                      {i + 1}
+                    </span>
+
+                    {/* Remove */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(i)}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-500 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+
+                    {/* Crop */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCrop(i)}
+                      className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-brand-orange transition-colors"
+                    >
+                      <Crop className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 ))}
+
+                {imagePreviews.length < 8 && (
+                  <label className="aspect-[4/3] bg-brand-orange/5 border-2 border-dashed border-brand-orange/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-brand-orange/10 hover:border-brand-orange transition-all group">
+                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleAddImages} />
+                    <Camera className="w-8 h-8 text-brand-burgundy/20 group-hover:text-brand-orange transition-colors" />
+                    <span className="text-xs text-brand-burgundy/40 mt-1.5 group-hover:text-brand-orange transition-colors">Add photos</span>
+                  </label>
+                )}
               </div>
+              <p className="text-xs text-brand-burgundy/40">{imagePreviews.length}/8 photos</p>
             </div>
           </FormStep>
 
@@ -517,6 +582,15 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
         </div>
       </div>
     </div>
+
+    {cropTargetIndex !== null && originalFiles[cropTargetIndex] && (
+      <ListingCropModal
+        file={originalFiles[cropTargetIndex]!}
+        onConfirm={handleCropConfirm}
+        onCancel={() => setCropTargetIndex(null)}
+      />
+    )}
+    </>
   );
 };
 
