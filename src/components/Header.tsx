@@ -5,6 +5,7 @@ import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
 import NotificationBell from './NotificationBell';
 import MessageInbox from './MessageInbox';
+import { Package, CalendarDays, Heart, User, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   onNavigate: (view: string) => void;
@@ -73,12 +74,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
                 </div>
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-brand-grey/20 overflow-hidden py-2">
-                    <button onClick={() => handleNavigate('dashboard-listings')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">📦 Listings</button>
-                    <button onClick={() => handleNavigate('dashboard-bookings')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">📅 Bookings</button>
-                    <button onClick={() => handleNavigate('dashboard-favorites')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">❤️ Favourites</button>
-                    <button onClick={() => handleNavigate('dashboard-profile')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">👤 My Profile</button>
+                    <button onClick={() => handleNavigate('dashboard-listings')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors flex items-center gap-2"><Package className="w-4 h-4 flex-shrink-0" /> Listings</button>
+                    <button onClick={() => handleNavigate('dashboard-bookings')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors flex items-center gap-2"><CalendarDays className="w-4 h-4 flex-shrink-0" /> Bookings</button>
+                    <button onClick={() => handleNavigate('dashboard-favorites')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors flex items-center gap-2"><Heart className="w-4 h-4 flex-shrink-0" /> Favourites</button>
+                    <button onClick={() => handleNavigate('dashboard-profile')} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors flex items-center gap-2"><User className="w-4 h-4 flex-shrink-0" /> My Profile</button>
                     <div className="border-t border-brand-grey/20 mt-2 pt-2">
-                      <button onClick={logout} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors">🚪 Sign out</button>
+                      <button onClick={logout} className="w-full text-left px-4 py-2.5 text-sm text-brand-burgundy hover:bg-brand-grey/10 hover:text-brand-orange transition-colors flex items-center gap-2"><LogOut className="w-4 h-4 flex-shrink-0" /> Sign out</button>
                     </div>
                   </div>
                 )}
@@ -127,11 +128,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
             <button onClick={() => handleNavigate('list-item')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">List an item</button>
             {!isLoading && (user ? (
               <>
-                <button onClick={() => handleNavigate('dashboard-listings')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">📦 Listings</button>
-                <button onClick={() => handleNavigate('dashboard-bookings')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">📅 Bookings</button>
-                <button onClick={() => handleNavigate('dashboard-favorites')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">❤️ Favourites</button>
-                <button onClick={() => handleNavigate('dashboard-profile')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">👤 My Profile</button>
-                <button onClick={logout} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow transition-colors">🚪 Sign out</button>
+                <button onClick={() => handleNavigate('dashboard-listings')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><Package className="w-4 h-4 flex-shrink-0" /> Listings</button>
+                <button onClick={() => handleNavigate('dashboard-bookings')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><CalendarDays className="w-4 h-4 flex-shrink-0" /> Bookings</button>
+                <button onClick={() => handleNavigate('dashboard-favorites')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><Heart className="w-4 h-4 flex-shrink-0" /> Favourites</button>
+                <button onClick={() => handleNavigate('dashboard-profile')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><User className="w-4 h-4 flex-shrink-0" /> My Profile</button>
+                <button onClick={logout} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow transition-colors flex items-center gap-2"><LogOut className="w-4 h-4 flex-shrink-0" /> Sign out</button>
               </>
             ) : (
               <div className="flex gap-3 pt-3">

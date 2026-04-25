@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell } from 'lucide-react';
+import { Bell, Inbox, CircleCheck, CircleX, Ban, BanknoteArrowDown, PartyPopper, Star } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -24,15 +24,20 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-const TYPE_ICON: Record<string, string> = {
-  BOOKING_REQUEST: '📥',
-  BOOKING_APPROVED: '✅',
-  BOOKING_DECLINED: '❌',
-  BOOKING_CANCELLED: '🚫',
-  PAYMENT_RECEIVED: '💰',
-  BOOKING_COMPLETED: '🎉',
-  REVIEW_RECEIVED: '⭐',
+const TYPE_ICON: Record<string, React.ElementType> = {
+  BOOKING_REQUEST: Inbox,
+  BOOKING_APPROVED: CircleCheck,
+  BOOKING_DECLINED: CircleX,
+  BOOKING_CANCELLED: Ban,
+  PAYMENT_RECEIVED: BanknoteArrowDown,
+  BOOKING_COMPLETED: PartyPopper,
+  REVIEW_RECEIVED: Star,
 };
+
+function NotifIcon({ type }: { type: string }) {
+  const Icon = TYPE_ICON[type] ?? Bell;
+  return <Icon className="w-4 h-4 flex-shrink-0 mt-0.5 text-brand-burgundy/60" />;
+}
 
 export default function NotificationBell() {
   const router = useRouter();
@@ -123,7 +128,7 @@ export default function NotificationBell() {
                   onClick={() => handleNotificationClick(n)}
                   className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-brand-grey/10 transition-colors border-b border-brand-grey/10 last:border-0 ${!n.isRead ? 'bg-brand-orange/5' : ''}`}
                 >
-                  <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICON[n.type] ?? '🔔'}</span>
+                  <NotifIcon type={n.type} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <p className={`text-sm font-body leading-snug ${!n.isRead ? 'font-semibold text-brand-burgundy' : 'text-brand-burgundy/80'}`}>

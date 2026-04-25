@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { LockKeyhole, CalendarDays, Star, ChevronLeft } from 'lucide-react';
 import type { Product, Review } from '../types';
 import { createBookingRequest, fetchReviewsForProduct, toggleFavorite, getProductAvailability } from '../services/api';
 import { useAuth } from '@/context/AuthContext';
@@ -50,7 +51,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
 
   const handleToggleFavorite = async () => {
     if (!isLoggedIn) {
-      toast('Log in to save favourites', { icon: '🔒' });
+      toast('Log in to save favourites', { icon: <LockKeyhole className="w-4 h-4" /> });
       return;
     }
     try {
@@ -83,7 +84,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
 
   const handleRequestBook = async () => {
       if (!pickupDate || !dropoffDate) {
-          toast('Please select rental dates', { icon: '📅' });
+          toast('Please select rental dates', { icon: <CalendarDays className="w-4 h-4" /> });
           return;
       }
       try {
@@ -142,8 +143,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <div className="flex items-center justify-between mb-8">
-          <button onClick={onBack} className="font-body font-medium text-brand-blue flex items-center hover:text-brand-orange">
-            ← Back to all items
+          <button onClick={onBack} className="font-body font-medium text-brand-blue flex items-center gap-1 hover:text-brand-orange">
+            <ChevronLeft className="w-4 h-4" /> Back to all items
           </button>
           {isOwner && (
             <button
@@ -239,7 +240,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                             <p className="font-bold text-brand-burgundy text-sm">{product.owner.name}</p>
                             {product.owner.avgRating != null && (
                                 <p className="flex items-center gap-1 text-xs text-brand-burgundy/60 mt-0.5">
-                                    <span className="text-brand-orange">★</span>
+                                    <Star className="w-3 h-3 text-brand-orange fill-brand-orange" />
                                     <span>{product.owner.avgRating.toFixed(1)}</span>
                                     <span>({product.owner.reviewCount} review{product.owner.reviewCount !== 1 ? 's' : ''})</span>
                                 </p>

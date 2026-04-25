@@ -2,6 +2,7 @@
 
 import React from 'react';
 import toast from 'react-hot-toast';
+import { LockKeyhole, Star } from 'lucide-react';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -22,7 +23,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isLoggedIn) {
-      toast('Log in to save favourites', { icon: '🔒' });
+      toast('Log in to save favourites', { icon: <LockKeyhole className="w-4 h-4" /> });
       return;
     }
     if (onToggleFavorite) {
@@ -106,7 +107,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <div className="flex items-center gap-2">
             {product.owner.avgRating != null && (
               <span className="flex items-center gap-0.5 text-xs text-brand-white/60 font-body">
-                <span className="text-brand-orange">★</span>
+                <Star className="w-3 h-3 text-brand-orange fill-brand-orange" />
                 {product.owner.avgRating.toFixed(1)}
               </span>
             )}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { Package, CalendarDays, Heart, User, MapPinned, PiggyBank, LogOut, Trash2, Timer, Star } from 'lucide-react';
 import { getUserBookings, updateBookingStatus, cancelBooking, declineBooking, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, updateLocation, deleteLocation, getUserFavorites, updateVacationMode, updateBlockedDates, getBlockedDates, type BlockedRange } from '../services/api';
 import ProductGrid from './ProductGrid';
 import { useAuth } from '@/context/AuthContext';
@@ -84,8 +85,8 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
                 </div>
 
                 {countdown && (
-                    <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full mb-3 ${countdown.colour}`}>
-                        ⏱ {countdown.label}
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full mb-3 ${countdown.colour}`}>
+                        <Timer className="w-3 h-3 flex-shrink-0" />{countdown.label}
                     </span>
                 )}
 
@@ -146,14 +147,14 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
                     {booking.status === 'completed' && (
                         booking.hasReviewed ? (
                             <span className="flex items-center gap-1.5 text-sm font-body text-brand-burgundy/50">
-                                <span className="text-brand-orange">★</span> Review submitted
+                                <Star className="w-3.5 h-3.5 text-brand-orange fill-brand-orange" /> Review submitted
                             </span>
                         ) : (
                             <button
                                 onClick={() => onReview(booking)}
-                                className="bg-brand-orange/10 text-brand-orange border border-brand-orange/30 px-6 py-2 rounded-xl font-body font-bold hover:bg-brand-orange/20 transition-colors"
+                                className="inline-flex items-center gap-2 bg-brand-orange/10 text-brand-orange border border-brand-orange/30 px-6 py-2 rounded-xl font-body font-bold hover:bg-brand-orange/20 transition-colors"
                             >
-                                ★ Leave a review
+                                <Star className="w-4 h-4" /> Leave a review
                             </button>
                         )
                     )}
@@ -168,7 +169,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
                     className="inline-flex items-center gap-2 text-brand-blue font-bold text-sm uppercase tracking-widest hover:text-brand-orange transition-colors"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                    View messages →
+                    View messages
                 </Link>
             </div>
         )}
@@ -480,14 +481,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     };
 
     const renderSidebar = () => {
-        const tabs = [
-            { id: 'listings', label: 'Listings', icon: '📦' },
-            { id: 'bookings', label: 'Bookings', icon: '📅' },
-            { id: 'favorites', label: 'Favourites', icon: '💙' },
-            { id: 'profile', label: 'My Profile', icon: '👤' },
-            { id: 'locations', label: 'Locations', icon: '📍' },
-            { id: 'block-days', label: 'Block Days', icon: '🗓️' },
-            { id: 'wallet', label: 'Wallet', icon: '💷' },
+        const tabs: Array<{ id: string; label: string; icon: React.ElementType }> = [
+            { id: 'listings', label: 'Listings', icon: Package },
+            { id: 'bookings', label: 'Bookings', icon: CalendarDays },
+            { id: 'favorites', label: 'Favourites', icon: Heart },
+            { id: 'profile', label: 'My Profile', icon: User },
+            { id: 'locations', label: 'Locations', icon: MapPinned },
+            { id: 'block-days', label: 'Block Days', icon: CalendarDays },
+            { id: 'wallet', label: 'Wallet', icon: PiggyBank },
         ];
 
         return (
@@ -512,7 +513,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                 : 'text-white/80 hover:bg-white/10'
                             }`}
                         >
-                            <span className="mr-4 text-xl">{tab.icon}</span>
+                            <tab.icon className="w-5 h-5 mr-4 flex-shrink-0" />
                             {tab.label}
                         </button>
                     ))}
@@ -523,7 +524,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                         onClick={onLogout} 
                         className="flex items-center px-5 py-4 rounded-2xl text-base font-bold text-brand-orange hover:bg-white/10 transition-all"
                     >
-                        <span className="mr-4 text-xl">🚪</span> Sign out
+                        <LogOut className="w-5 h-5 mr-4 flex-shrink-0" /> Sign out
                     </button>
                     
                     <button 
@@ -534,7 +535,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                             : 'text-red-400/60 hover:text-red-400 hover:bg-red-400/10'
                         }`}
                     >
-                        <span className="mr-4 text-lg">🗑️</span> Delete Account
+                        <Trash2 className="w-5 h-5 mr-4 flex-shrink-0" /> Delete Account
                     </button>
                 </nav>
             </div>
