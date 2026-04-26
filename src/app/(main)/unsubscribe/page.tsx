@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAppNavigate } from '@/lib/navigation';
 import { Button } from '@/components/ui';
 
-export default function UnsubscribePage() {
+function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const navigate = useAppNavigate();
   const token = searchParams.get('token');
@@ -79,5 +79,13 @@ export default function UnsubscribePage() {
         <Button onClick={() => navigate('home')}>Back to Home</Button>
       </div>
     </div>
+  );
+}
+
+export default function UnsubscribePage() {
+  return (
+    <Suspense>
+      <UnsubscribeContent />
+    </Suspense>
   );
 }
