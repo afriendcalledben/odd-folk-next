@@ -28,16 +28,16 @@ export interface Product {
 }
 
 export type BookingStatus =
-  | 'pending'           // Hirer requested
-  | 'approved'          // Lister approved
-  | 'paid'              // Hirer paid (Escrow)
-  | 'handover_pending'  // Payment secured, ready for pickup
-  | 'active'            // Item picked up (Handover confirmed)
-  | 'return_pending'    // Rental period over, item returned by hirer
-  | 'completed'         // Lister confirmed return (Funds released)
+  | 'pending'        // Hirer requested
+  | 'approved'       // Lister approved
+  | 'declined'       // Lister declined
+  | 'paid'           // Hirer paid (escrow held)
+  | 'collected'      // Hirer confirmed collection
+  | 'returned'       // Lister confirmed item returned
+  | 'completed'      // Lister confirmed item condition — escrow released
   | 'cancelled'
-  | 'auto_declined'     // Lister didn't respond within 48 hours
-  | 'disputed';         // Issue reported
+  | 'auto_declined'  // Lister didn't respond within 48 hours
+  | 'disputed';
 
 export interface Booking {
   id: string;

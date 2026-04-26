@@ -28,10 +28,10 @@ const STATUS_TRANSITIONS: Record<string, Record<string, 'hirer' | 'lister' | 'bo
     CANCELLED: 'hirer',
   },
   PAID: {
-    COLLECTED: 'both',
+    COLLECTED: 'hirer',
   },
   COLLECTED: {
-    RETURNED: 'both',
+    RETURNED: 'lister',
   },
   RETURNED: {
     COMPLETED: 'lister',

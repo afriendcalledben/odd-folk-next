@@ -111,11 +111,37 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
 
                     {!isLister && booking.status === 'paid' && (
                         <button
-                            onClick={() => onStatusChange(booking.id, 'handover_pending')}
+                            onClick={() => onStatusChange(booking.id, 'collected')}
                             className="bg-brand-yellow text-brand-burgundy px-6 py-2 rounded-xl font-body font-bold hover:brightness-110 shadow-md"
                         >
                             Confirm collection
                         </button>
+                    )}
+
+                    {isLister && booking.status === 'collected' && (
+                        <button
+                            onClick={() => onStatusChange(booking.id, 'returned')}
+                            className="bg-brand-blue text-white px-6 py-2 rounded-xl font-body font-bold hover:brightness-110 shadow-md"
+                        >
+                            {new Date() < new Date(booking.endDate) ? 'Confirm early return' : 'Confirm return'}
+                        </button>
+                    )}
+
+                    {isLister && booking.status === 'returned' && (
+                        <>
+                            <button
+                                onClick={() => onStatusChange(booking.id, 'completed')}
+                                className="bg-brand-yellow text-brand-burgundy px-6 py-2 rounded-xl font-body font-bold hover:brightness-110 shadow-md"
+                            >
+                                Confirm item condition
+                            </button>
+                            <button
+                                onClick={() => onStatusChange(booking.id, 'completed')}
+                                className="bg-red-50 text-red-600 border border-red-200 px-6 py-2 rounded-xl font-body font-bold hover:bg-red-100 transition-colors"
+                            >
+                                Report damage to item
+                            </button>
+                        </>
                     )}
 
                     {isLister && booking.status === 'pending' && (

@@ -42,7 +42,7 @@ const SupportCenter: React.FC<SupportCenterProps> = ({ mode, bookingId, targetId
       } else if (mode === 'report_user' && targetId) {
         await reportUser(targetId, reason, description);
       } else if (mode === 'handover' && bookingId) {
-        await updateBookingStatus(bookingId, 'active');
+        await updateBookingStatus(bookingId, 'collected');
       } else if (mode === 'return' && bookingId) {
         await updateBookingStatus(bookingId, 'completed');
       }
