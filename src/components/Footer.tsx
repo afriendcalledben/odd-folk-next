@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Logo from './Logo';
+import toast from 'react-hot-toast';
 
 interface FooterProps {
   onNavigate: (view: string) => void;
@@ -25,12 +26,24 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
     "Signage & displays"
   ];
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
+    if (!email) return;
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error || 'Something went wrong. Please try again.');
+        return;
+      }
       setSubscribed(true);
       setEmail('');
-      setTimeout(() => setSubscribed(false), 5000);
+    } catch {
+      toast.error('Something went wrong. Please try again.');
     }
   };
 
@@ -51,7 +64,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <ul className="space-y-2 font-body text-brand-white/80 text-sm">
               {categories.map((cat) => (
                   <li key={cat}>
-                      <button onClick={() => onNavigate('home')} className="hover:text-brand-orange transition-colors text-left">{cat}</button>
+                      <a href={`/?category=${encodeURIComponent(cat)}`} className="hover:text-brand-orange transition-colors text-left">{cat}</a>
                   </li>
               ))}
             </ul>
@@ -103,17 +116,14 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <button onClick={() => onNavigate('contact')} className="font-body text-brand-white/80 hover:text-brand-orange transition-colors block mb-2">
                     Contact Us
                 </button>
-                <a href="mailto:hello@oddfolk.co.uk" className="font-body text-brand-white/80 hover:text-brand-orange transition-colors block">
-                    hello@oddfolk.co.uk
-                </a>
             </div>
           </div>
         </div>
         <div className="mt-16 border-t border-brand-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center">
           <p className="font-body text-sm text-brand-white/60">&copy; {new Date().getFullYear()} Odd Folk. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 sm:mt-0">
-            <a href="#" className="text-brand-white/60 hover:text-brand-yellow transition-colors font-body text-sm">Instagram</a>
-            <a href="#" className="text-brand-white/60 hover:text-brand-yellow transition-colors font-body text-sm">Facebook</a>
+            <a href="https://www.instagram.com/oddfolkhire" className="text-brand-white/60 hover:text-brand-yellow transition-colors font-body text-sm">Instagram</a>
+            <a href="https://www.facebook.com/oddfolkhire" className="text-brand-white/60 hover:text-brand-yellow transition-colors font-body text-sm">Facebook</a>
           </div>
         </div>
       </div>

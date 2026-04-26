@@ -2,6 +2,8 @@ import { Resend } from 'resend';
 import { createElement } from 'react';
 import BookingRequestEmail from '@/emails/BookingRequestEmail';
 import BookingStatusEmail from '@/emails/BookingStatusEmail';
+import NewsletterWelcomeEmail from '@/emails/NewsletterWelcomeEmail';
+import ContactConfirmationEmail from '@/emails/ContactConfirmationEmail';
 import prisma from '@/lib/prisma';
 
 const FROM = 'Odd Folk <bookings@oddfolk.co.uk>';
@@ -248,5 +250,22 @@ export async function sendNewMessageEmail(
       ctaText: 'Reply in Odd Folk',
       ctaUrl: inboxUrl(thread.id),
     })
+  );
+}
+
+export async function sendNewsletterWelcomeEmail(email: string, unsubscribeToken: string) {
+  const unsubscribeUrl = `${SITE_URL}/unsubscribe?token=${unsubscribeToken}`;
+  await send(
+    email,
+    'You\'re on the Odd Folk list!',
+    createElement(NewsletterWelcomeEmail, { unsubscribeUrl })
+  );
+}
+
+export async function sendContactConfirmationEmail(name: string, email: string, subject: string) {
+  await send(
+    email,
+    'We\'ve received your message',
+    createElement(ContactConfirmationEmail, { name, subject })
   );
 }

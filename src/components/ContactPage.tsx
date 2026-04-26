@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { submitContactForm } from '../services/api';
 import { Input, Select, Textarea, Button } from '@/components/ui';
+import TurnstileWidget from '@/components/TurnstileWidget';
 
 interface ContactPageProps {
   onNavigate: (view: string) => void;
@@ -15,6 +15,8 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
     subject: '',
     message: '',
   });
+  const [subscribeToNewsletter, setSubscribeToNewsletter] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -27,13 +29,31 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!captchaToken) {
+      setError('Please complete the CAPTCHA verification.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await submitContactForm(formData);
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, captchaToken, subscribeToNewsletter }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.error || 'Failed to send message. Please try again.');
+        return;
+      }
+
       setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to send message. Please try again.');
+    } catch {
+      setError('Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -50,7 +70,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
           </div>
           <h1 className="font-heading text-4xl text-brand-burgundy mb-4">Message Sent!</h1>
           <p className="font-body text-brand-burgundy/70 text-lg mb-8">
-            Thank you for reaching out. We'll get back to you within 24-48 hours.
+            Thank you for reaching out. We'll get back to you within 24–48 hours. Check your inbox — we've sent you a confirmation email.
           </p>
           <Button onClick={() => onNavigate('home')}>
             Back to Home
@@ -130,6 +150,30 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   placeholder="Tell us how we can help..."
                 />
 
+                {/* Newsletter opt-in */}
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={subscribeToNewsletter}
+                    onChange={(e) => setSubscribeToNewsletter(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-brand-orange rounded cursor-pointer"
+                  />
+                  <span className="font-body text-sm text-brand-burgundy/70 group-hover:text-brand-burgundy transition-colors">
+                    Sign me up for Odd Folk updates — new listings, seasonal collections, and community news.
+                  </span>
+                </label>
+
+                {/* CAPTCHA */}
+                <div>
+                  <TurnstileWidget
+                    onVerify={setCaptchaToken}
+                    onExpire={() => setCaptchaToken('')}
+                  />
+                  {!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                    <p className="text-xs text-brand-burgundy/40 mt-1">CAPTCHA not configured (dev mode)</p>
+                  )}
+                </div>
+
                 <Button type="submit" fullWidth size="lg" isLoading={isSubmitting}>
                   {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
@@ -137,25 +181,23 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Contact Info Sidebar */}
+          {/* Sidebar */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Email Card */}
+            {/* Response time card */}
             <div className="bg-brand-blue rounded-2xl p-6 text-white">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs text-white/60 uppercase tracking-wider">Email Us</p>
-                  <a href="mailto:hello@oddfolk.co.uk" className="font-heading text-lg hover:text-brand-yellow transition-colors">
-                    hello@oddfolk.co.uk
-                  </a>
+                  <p className="text-xs text-white/60 uppercase tracking-wider">Response time</p>
+                  <p className="font-heading text-lg">Within 24–48 hours</p>
                 </div>
               </div>
               <p className="text-sm text-white/70">
-                We typically respond within 24-48 hours during business days.
+                We aim to respond to all enquiries during business days. You'll receive a confirmation email as soon as you submit.
               </p>
             </div>
 

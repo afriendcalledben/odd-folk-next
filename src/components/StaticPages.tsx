@@ -7,113 +7,157 @@ export const HowItWorks: React.FC = () => {
     <div className="bg-brand-white py-16 md:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
         <div className="text-center mb-16">
-            <h1 className="font-heading text-5xl md:text-6xl text-brand-orange mb-6">How Odd Folk works</h1>
+            <h1 className="font-heading text-5xl md:text-6xl text-brand-orange mb-6">How Odd Folk Works</h1>
             <p className="font-body text-xl text-brand-burgundy/80 max-w-2xl mx-auto">
-                Odd Folk is a peer-to-peer marketplace for styling items and props — we connect event hosts and creatives who need <span className="text-brand-blue font-semibold">unique pieces</span> with collectors and stylists who have them.
-            </p>
-            <p className="font-body text-lg text-brand-burgundy/80 max-w-2xl mx-auto mt-4">
-                Turn your creative collection into income by sharing your styling pieces with London's creative community.
+                Odd Folk is a peer-to-peer marketplace for styling items and props — we connect event professionals and creatives who need unique pieces with collectors and stylists who have them. Simple, secure, and community-focused.
             </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-16 mb-20">
             <div>
-                <h2 className="font-heading text-3xl text-brand-blue mb-8">For listers (renting out)</h2>
+                <h2 className="font-heading text-3xl text-brand-blue mb-2">For Listers (Renting Out Your Items)</h2>
+                <p className="font-body text-brand-burgundy/70 mb-8">Turn your creative collection into income by sharing your styling pieces with London&apos;s event community.</p>
                 <div className="space-y-8">
                     <div className="flex">
                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">1</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Create your account</h3>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Create Your Account</h3>
                             <p className="font-body text-brand-burgundy/70">Sign up with your email, name, phone number, and London address. It takes just 2 minutes.</p>
                         </div>
                     </div>
                     <div className="flex">
                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">2</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">List your items</h3>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">List Your Items</h3>
                             <p className="font-body text-brand-burgundy/70">Create listings for your styling items and props:</p>
                             <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
-                                <li>Upload 2-5 high-quality photos</li>
-                                <li>Write a detailed description including dimensions</li>
+                                <li>Upload high-quality photos</li>
+                                <li>Write a detailed description including dimensions, condition, and setup notes</li>
                                 <li>Set your daily/weekly rental prices</li>
-                                <li>Add your collection postcode</li>
+                                <li>Add your collection address and availability</li>
                             </ul>
                         </div>
                     </div>
                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">3</div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">3</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Await approval</h3>
-                            <p className="font-body text-brand-burgundy/70">Our team reviews all listings to ensure quality and accuracy.</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Upload</h3>
+                            <p className="font-body text-brand-burgundy/70">Your item will automatically upload. You will receive a message from us if it goes against our terms of service and the item has been removed.</p>
                         </div>
                     </div>
                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">4</div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">4</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Manage requests</h3>
-                            <p className="font-body text-brand-burgundy/70">Review the booking dates and hirer's profile. Approve or decline within 24 hours.</p>
-                        </div>
-                    </div>
-                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">5</div>
-                        <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Arrange collection</h3>
-                            <p className="font-body text-brand-burgundy/70">Communicate through our secure platform messaging to arrange collection time and location.</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Manage Booking Requests</h3>
+                            <p className="font-body text-brand-burgundy/70">When someone wants to rent your item:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>You&apos;ll receive a notification</li>
+                                <li>Review the booking dates and Hirer&apos;s profile</li>
+                                <li>Approve or decline within 48 hours</li>
+                            </ul>
                         </div>
                     </div>
                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">6</div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">5</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Get paid</h3>
-                            <p className="font-body text-brand-burgundy/70">Payment is released to you automatically after the 48-hour dispute window following return.</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Arrange Collection</h3>
+                            <p className="font-body text-brand-burgundy/70">Once you approve a booking and the Hirer pays:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>Communicate through our secure Platform messaging</li>
+                                <li>Arrange collection time and location</li>
+                                <li>Confirm collection through the Platform (both parties must confirm)</li>
+                                <li>Only hand items to the verified Hirer</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div className="flex">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">6</div>
+                        <div>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Confirm Return &amp; Get Paid</h3>
+                            <p className="font-body text-brand-burgundy/70">When the rental period ends:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>Arrange return with the Hirer</li>
+                                <li>Both parties confirm return through the Platform</li>
+                                <li>Inspect items within 48 hours and report any issues</li>
+                                <li>Payment is released to you automatically after the 48-hour dispute window</li>
+                                <li>You receive your rental fee minus 10% platform fee</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div>
-                <h2 className="font-heading text-3xl text-brand-blue mb-8">For hirers (renting items)</h2>
+                <h2 className="font-heading text-3xl text-brand-blue mb-2">For Hirers (Renting Items)</h2>
+                <p className="font-body text-brand-burgundy/70 mb-8">Discover extraordinary styling pieces and props to make your event unforgettable.</p>
                 <div className="space-y-8">
                     <div className="flex">
                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">1</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Find what you need</h3>
-                            <p className="font-body text-brand-burgundy/70">Browse our curated collection of unique items by category, location, or keywords.</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Find What You Need</h3>
+                            <p className="font-body text-brand-burgundy/70">Browse our collection of unique items:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>Search by category, location, or keywords</li>
+                                <li>Filter by London area (postcode/area)</li>
+                                <li>View detailed photos, descriptions, and pricing</li>
+                                <li>Check availability for your event dates</li>
+                            </ul>
                         </div>
                     </div>
                     <div className="flex">
                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">2</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Request your booking</h3>
-                            <p className="font-body text-brand-burgundy/70">Select your rental dates and submit your booking request.</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Create Your Account</h3>
+                            <p className="font-body text-brand-burgundy/70">Sign up with your email, name, phone number, and address. Quick and easy.</p>
                         </div>
                     </div>
                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">3</div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">3</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Wait for approval & pay</h3>
-                            <p className="font-body text-brand-burgundy/70">Once approved, complete payment through our secure system. Your payment is held in escrow.</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Request Your Booking</h3>
+                            <p className="font-body text-brand-burgundy/70">Found the perfect piece? Here&apos;s what happens:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>Select your rental dates</li>
+                                <li>Review the total cost (rental price + 10% service fee)</li>
+                                <li>Submit your booking request</li>
+                            </ul>
                         </div>
                     </div>
                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">4</div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">4</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Arrange collection</h3>
-                            <p className="font-body text-brand-burgundy/70">Use our platform messaging to coordinate with the lister for pickup.</p>
-                        </div>
-                    </div>
-                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">5</div>
-                        <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Enjoy your items</h3>
-                            <p className="font-body text-brand-burgundy/70">Collect your items and bring them to life at your event!</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Wait for Approval &amp; Pay</h3>
+                            <p className="font-body text-brand-burgundy/70">The Lister has 24 hours to approve your request. Once approved:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>You&apos;ll receive a confirmation notification</li>
+                                <li>Complete payment through our secure system</li>
+                                <li>Your payment is held safely in escrow</li>
+                            </ul>
                         </div>
                     </div>
                     <div className="flex">
-                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">6</div>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">5</div>
                         <div>
-                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Return & review</h3>
-                            <p className="font-body text-brand-burgundy/70">Return items on time and leave a review to help the community.</p>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Arrange Collection</h3>
+                            <p className="font-body text-brand-burgundy/70">Use our Platform messaging to coordinate with the Lister:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>Confirm collection time and location</li>
+                                <li>Both parties confirm collection through the Platform</li>
+                                <li>Collect your items and bring them to life at your event!</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div className="flex">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-yellow flex items-center justify-center font-heading text-brand-burgundy text-xl mr-4">6</div>
+                        <div>
+                            <h3 className="font-heading text-xl text-brand-burgundy mb-2">Return Items &amp; Leave a Review</h3>
+                            <p className="font-body text-brand-burgundy/70">When your event is over:</p>
+                            <ul className="list-disc pl-5 mt-2 text-brand-burgundy/70 text-sm space-y-1">
+                                <li>Return items on time in the same condition</li>
+                                <li>Confirm return through the Platform (both parties confirm)</li>
+                                <li>Payment is released to the Lister after 48 hours</li>
+                                <li>Leave a review to help the community</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -122,32 +166,50 @@ export const HowItWorks: React.FC = () => {
 
         <div className="grid md:grid-cols-2 gap-12 mb-20">
             <div className="bg-brand-blue p-8 rounded-3xl border border-brand-blue shadow-xl text-brand-white">
-                <h2 className="font-heading text-2xl mb-6 text-brand-yellow">Safety & security</h2>
+                <h2 className="font-heading text-2xl mb-6 text-brand-yellow">Safety &amp; Security</h2>
                 <ul className="space-y-4 font-body">
                     <li className="flex items-start gap-3">
                         <span className="text-brand-yellow font-bold mt-1">✓</span>
-                        <span><strong>Verified users:</strong> All users provide verified contact details.</span>
+                        <span><strong>Users:</strong> All users provide contact details and addresses.</span>
                     </li>
                     <li className="flex items-start gap-3">
                         <span className="text-brand-yellow font-bold mt-1">✓</span>
-                        <span><strong>Secure payments:</strong> Processed via Stripe and held in escrow.</span>
+                        <span><strong>Secure Payments:</strong> Payments are processed securely through Stripe and held in escrow.</span>
                     </li>
                     <li className="flex items-start gap-3">
                         <span className="text-brand-yellow font-bold mt-1">✓</span>
-                        <span><strong>48-hour dispute window:</strong> Listers have 48 hours to report any damage.</span>
+                        <span><strong>Platform Messaging:</strong> All communication happens through Odd Folk to protect both parties.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <span className="text-brand-yellow font-bold mt-1">✓</span>
+                        <span><strong>48-Hour Dispute Window:</strong> Listers have 48 hours after return to report any damage.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <span className="text-brand-yellow font-bold mt-1">✓</span>
+                        <span><strong>Mediation Service:</strong> If disputes arise, our team is here to help find fair solutions.</span>
                     </li>
                 </ul>
             </div>
             <div className="bg-brand-orange p-8 rounded-3xl border border-brand-orange shadow-xl text-brand-white">
-                 <h2 className="font-heading text-2xl mb-6 text-brand-yellow">Payment breakdown</h2>
-                 <div className="space-y-6 font-body">
-                     <div className="bg-white/10 p-5 rounded-2xl">
-                         <p className="font-bold text-xl mb-2">Total commission: 20%</p>
-                         <p className="text-sm opacity-90 leading-relaxed">
-                            10% from hirer + 10% from lister covers our secure platform and support.
-                         </p>
-                     </div>
-                 </div>
+                <h2 className="font-heading text-2xl mb-6 text-brand-yellow">Payment Breakdown</h2>
+                <div className="space-y-6 font-body">
+                    <div className="bg-white/10 p-5 rounded-2xl">
+                        <p className="font-bold mb-2">For Hirers, you pay:</p>
+                        <ul className="list-disc pl-5 text-sm space-y-1 opacity-90">
+                            <li>Rental price (set by Lister)</li>
+                            <li>10% service fee</li>
+                            <li>Example: £100 rental + £10 service fee = £110 total</li>
+                        </ul>
+                    </div>
+                    <div className="bg-white/10 p-5 rounded-2xl">
+                        <p className="font-bold mb-2">For Listers, you receive:</p>
+                        <ul className="list-disc pl-5 text-sm space-y-1 opacity-90">
+                            <li>Rental price minus 10% service fee</li>
+                            <li>Example: £100 rental - £10 service fee = £90 in your pocket</li>
+                        </ul>
+                    </div>
+                    <p className="text-sm opacity-90">Platform commission: 20% total (10% from Hirer + 10% from Lister)</p>
+                </div>
             </div>
         </div>
       </div>
@@ -228,11 +290,20 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="Can businesses use Odd Folk?"
-                        a="Yes. Prop houses, event planners, photographers, stylists, and businesses are welcome."
+                        a="Yes. Prop houses, event planners, photographers, stylists, and businesses are welcome. "
                     />
                     <Question
                         q="Can I sell items as well as rent?"
                         a="Odd Folk is currently a rent only platform, and does not support sale transactions."
+                    />
+                    <Question
+                        q="Can I communicate with users outside the platform?"
+                        a={
+                            <div className="space-y-3">
+                                <p>All communication must happen through Odd Folk&apos;s messaging system until a booking is confirmed. Sharing phone numbers, email addresses, or other contact details before confirmation is not allowed.</p>
+                                <p>Communication outside the platform can lead to account deletion. For full terms, see our <a href="/terms" className="text-brand-orange hover:underline">Terms of Service</a>.</p>
+                            </div>
+                        }
                     />
                 </div>
             </section>
@@ -247,11 +318,11 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="What can't I list?"
-                        a="Vehicles, weapons, illegal items, live animals, adult content, stolen goods, or anything unsafe."
+                        a="Vehicles, weapons, illegal items, live animals, pornographic content, stolen goods, or anything unsafe."
                     />
                     <Question
                         q="How do I create a listing?"
-                        a="Create account → Click 'List an Item' → Upload 3-6 photos (first one: cutout on plain background) → Add description, dimensions, condition → Set price → Submit for review (approved within 24-48 hours)."
+                        a="Create account → Click 'List an Item' → Upload your photos → Add description, dimensions, condition → Set price → Submit to upload."
                     />
                     <Question
                         q="How should I photograph items?"
@@ -259,27 +330,29 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="When do I get paid?"
-                        a="Payment releases after both parties confirm a safe return. This can take longer if disputes are made known. It can take 2-3 business days once released to clear in your account."
+                        a="Payment releases 24 hours after both parties confirm a safe return. This can take longer if disputes are made known. "
                     />
                     <Question
                         q="Do I have to approve every booking?"
-                        a="No. Decline if dates don't work or you're not comfortable. Just respond within 24 hours or the request expires."
+                        a="No. Decline if dates don't work or you're not comfortable. Just respond within 48 hours or the request expires."
                     />
                     <Question
                         q="Can I cancel after accepting?"
-                        a="Yes, free up to 48 hours before start. Under 48 hours = 25% penalty. Repeated cancellations may affect your account."
+                        a="Yes, but check our terms of use to see if you'll be charged."
                     />
                     <Question
                         q="Can I remove a listing?"
-                        a="Yes, anytime through your dashboard. But fulfill existing bookings first."
+                        a="Yes, anytime through your dashboard. But fulfill or cancel existing bookings first."
                     />
                     <Question
                         q="What if someone damages my item?"
-                        a="Document with photos. Message the hirer first to discuss covering the fix or replacement fee. Can't agree? Request mediation at <a href='mailto:hello@oddfolk.co.uk'>hello@oddfolk.co.uk</a> within 48 hours of return."
+                        a={
+                            <p>Document with photos. Message the hirer first to discuss covering the fix or replacement fee. Can&apos;t agree? <a href="/contact" className="text-brand-orange hover:underline">Contact us</a> to request mediation within 48 hours of return. Full terms found in our terms of service.</p>
+                        }
                     />
                     <Question
                         q="Do I handle delivery?"
-                        a="No. Collection only—hirers come to you. If you both agree to use a courier, Odd Folk isn't responsible for items in transit."
+                        a="No. Collection only—hirers come to you, unless you both agree to use a courier. Odd Folk isn't responsible for items"
                     />
                 </div>
             </section>
@@ -316,7 +389,7 @@ export const FAQ: React.FC = () => {
                         q="What if I need to cancel?"
                         a={
                             <div className="space-y-2">
-                                <p>Refund policies vary by listing. Standard policy:</p>
+                                <p>Refund policies:</p>
                                 <ul className="list-disc pl-5 space-y-1">
                                     <li>48+ hours before: Full refund minus processing fees</li>
                                     <li>24-48 hours before: 50% refund</li>
@@ -343,7 +416,7 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="What if the item isn't as described?"
-                        a="Message the lister immediately and document with photos. Can't resolve it? Email hello@oddfolk.co.uk for help."
+                        a={<p>Message the lister immediately and document with photos. Can&apos;t resolve it? <a href="/contact" className="text-brand-orange hover:underline">Contact us</a> for help.</p>}
                     />
                 </div>
             </section>
@@ -367,7 +440,7 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="How should I price my items?"
-                        a="You set your own prices. Research similar items and consider value, rarity, condition, and demand. A good rule of thumb: 10-15% of the purchase price per rental."
+                        a="You set your own prices. Research similar items and consider value, rarity, condition, and demand. A good rule of thumb: 10% of the purchase price for a 3 day rental. "
                     />
                     <Question
                         q="How does escrow work?"
@@ -378,16 +451,12 @@ export const FAQ: React.FC = () => {
                         a="After return confirmation, listers have 48 hours to inspect and report issues. Nothing reported? Payment releases automatically."
                     />
                     <Question
-                        q="Do you take deposits?"
-                        a="No separate deposits. But if items aren't returned on time or damage is suspected, we may hold a deposit equal to the item's value."
-                    />
-                    <Question
                         q="Can I modify a booking after it's confirmed?"
                         a="Changes need mutual agreement. Message through the platform. Extensions require immediate payment for extra days."
                     />
                     <Question
                         q="What if an item isn't returned on time?"
-                        a="Hirer must contact you immediately to arrange new time and pay for extension. Unresponsive? Contact support—we may charge fees or hold deposits."
+                        a="Hirer must contact you immediately to arrange new time and pay for extension. Unresponsive? Contact support—we may charge fees additional fees."
                     />
                 </div>
             </section>
@@ -405,16 +474,12 @@ export const FAQ: React.FC = () => {
                         a="Yes. Email and phone details stay private. All communication should be through our secure platform messaging. Read our Privacy Policy for details."
                     />
                     <Question
-                        q="Can I communicate outside the platform?"
-                        a="No. All communication must happen through Odd Folk's messaging. Bypassing this violates our Terms of Service."
-                    />
-                    <Question
                         q="How do reviews work?"
-                        a="Both parties can review after each rental. Reviews publish after both submit (or after 14 days). Honest reviews build community trust."
+                        a="Both parties can review after each rental. Reviews publish after both submit (or after 7 days). Honest reviews build community trust."
                     />
                     <Question
                         q="What if a review is unfair?"
-                        a="Reviews should be honest and accurate. If you believe one violates guidelines, contact hello@oddfolk.co.uk. We'll review and may remove it."
+                        a={<p>Reviews should be honest and accurate. If you believe one violates guidelines, <a href="/contact" className="text-brand-orange hover:underline">contact us</a>. We&apos;ll review and may remove it.</p>}
                     />
                 </div>
             </section>
@@ -425,11 +490,11 @@ export const FAQ: React.FC = () => {
                 <div className="space-y-2">
                     <Question
                         q="What if we can't agree on damage?"
-                        a="Request mediation at hello@oddfolk.co.uk. We'll review evidence (photos, messages, receipts) and make a binding decision. Mediation fee up to 30% may be charged to hirer."
+                        a={<p><a href="/contact" className="text-brand-orange hover:underline">Contact us</a> to request mediation. We&apos;ll review evidence (photos, messages, receipts) and make a binding decision. Mediation fee up to 30% may be charged to hirer.</p>}
                     />
                     <Question
                         q="How do I report a problem?"
-                        a="Email hello@oddfolk.co.uk with details, photos, and evidence. We respond within 24-48 hours."
+                        a={<p><a href="/contact" className="text-brand-orange hover:underline">Contact us</a> with details, photos, and evidence. We respond within 24–48 hours.</p>}
                     />
                     <Question
                         q="What happens if someone violates Terms of Service?"
@@ -452,11 +517,17 @@ export const FAQ: React.FC = () => {
                     />
                     <Question
                         q="How do I change account information?"
-                        a="Settings → Update email, phone, address, payment methods, or password."
+                        a={
+                            <div className="space-y-1">
+                                <p>Click on your profile icon → My profile → Update email, phone, bio, or password</p>
+                                <p>Locations → update addresses</p>
+                                <p>Wallet → update payment methods</p>
+                            </div>
+                        }
                     />
                     <Question
                         q="How do I delete my account?"
-                        a="Email hello@oddfolk.co.uk. Fulfill active bookings first. Data removed per Privacy Policy."
+                        a="Click your profile icon, click delete account button below. Fulfill active bookings first. Data removed per Privacy Policy."
                     />
                 </div>
             </section>
@@ -469,10 +540,10 @@ export const FAQ: React.FC = () => {
                 Our support team is always ready to assist you with any questions or issues.
             </p>
             <a
-                href="mailto:hello@oddfolk.co.uk"
+                href="/contact"
                 className="inline-block bg-brand-orange text-brand-white font-heading text-lg px-8 py-4 rounded-xl hover:brightness-110 transition-all shadow-xl"
             >
-                Email hello@oddfolk.co.uk
+                Contact Us
             </a>
         </div>
       </div>
@@ -486,15 +557,15 @@ export const Sustainability: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
         <div className="text-center mb-16">
             <h1 className="font-heading text-5xl md:text-6xl text-brand-orange mb-6">Sustainability at Odd Folk</h1>
-            <p className="font-body text-xl text-brand-burgundy/80 max-w-2xl mx-auto">
-                Odd Folk offers a better way to style your events while protecting our planet.
-            </p>
         </div>
 
         <section className="mb-20">
             <h2 className="font-heading text-3xl text-brand-blue mb-6">Why Renting Matters</h2>
+            <p className="font-body text-lg text-brand-burgundy/80 leading-relaxed mb-4">
+                Every year, thousands of props, furniture pieces, and decorative items are bought for single-use events—then stored, forgotten, or thrown away. It&apos;s wasteful, expensive, and unnecessary.
+            </p>
             <p className="font-body text-lg text-brand-burgundy/80 leading-relaxed">
-                Every year, thousands of props, furniture pieces, and decorative items are bought for single-use events—then stored, forgotten, or thrown away. It's wasteful, expensive, and unnecessary.
+                Odd Folk offers a better way.
             </p>
         </section>
 
@@ -503,17 +574,17 @@ export const Sustainability: React.FC = () => {
                 <h2 className="font-heading text-2xl text-brand-burgundy mb-6">The Problem with Single-Use Event Props</h2>
                 <div className="space-y-6">
                     <div>
-                        <h4 className="font-heading text-sm text-brand-burgundy/60 uppercase tracking-widest mb-2">The traditional approach</h4>
+                        <h4 className="font-heading text-sm text-brand-burgundy/60 uppercase tracking-widest mb-2">The traditional approach:</h4>
                         <ul className="list-disc pl-5 font-body text-brand-burgundy/80 space-y-1">
                             <li>Buy new props for one event</li>
                             <li>Use them once</li>
-                            <li>Store them indefinitely</li>
-                            <li>Eventually throw them away</li>
+                            <li>Store them indefinitely (taking up space and gathering dust)</li>
+                            <li>Eventually throw them away when moving or decluttering</li>
                             <li>Repeat for the next event</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-heading text-sm text-brand-burgundy/60 uppercase tracking-widest mb-2">The impact</h4>
+                        <h4 className="font-heading text-sm text-brand-burgundy/60 uppercase tracking-widest mb-2">The impact:</h4>
                         <ul className="list-disc pl-5 font-body text-brand-burgundy/80 space-y-1">
                             <li>Increased manufacturing demand and carbon emissions</li>
                             <li>More waste ending up in landfills</li>
@@ -531,20 +602,32 @@ export const Sustainability: React.FC = () => {
                     <div>
                         <h3 className="font-heading text-xl text-brand-orange mb-2">Reuse Over Waste</h3>
                         <p className="font-body text-brand-burgundy/80">
-                            When you rent from Odd Folk, you're giving existing items another life. That velvet sofa has already been made—the carbon cost is paid. Every rental extends its useful life and prevents a new item from being manufactured.
+                            When you rent from Odd Folk, you&apos;re giving existing items another life. That velvet sofa has already been made—the carbon cost is paid. Every rental extends its useful life and prevents a new item from being manufactured.
                         </p>
                     </div>
                     <div>
                         <h3 className="font-heading text-xl text-brand-orange mb-2">Local Means Lower Carbon</h3>
-                        <p className="font-body text-brand-burgundy/80">
-                            Odd Folk is different: Collection from your neighborhood means walking, cycling, or driving short distances. No delivery vans crisscrossing the city means lower transport emissions.
+                        <p className="font-body text-brand-burgundy/80 mb-3">
+                            Traditional rental companies operate from central warehouses—often outside city centers. Items travel long distances by van for delivery and collection.
                         </p>
+                        <p className="font-body text-brand-burgundy/80 mb-2">Odd Folk is different:</p>
+                        <ul className="list-disc pl-5 font-body text-brand-burgundy/80 space-y-1">
+                            <li>Collection from your neighborhood – Walk, cycle, or drive a short distance</li>
+                            <li>No delivery vans crisscrossing the city – Lower transport emissions</li>
+                            <li>Hyperlocal sharing – Items stay within London communities</li>
+                        </ul>
                     </div>
                     <div>
                         <h3 className="font-heading text-xl text-brand-orange mb-2">Keep Quality Items in Circulation</h3>
-                        <p className="font-body text-brand-burgundy/80">
-                            The best props and furniture are often vintage, handmade, or unique pieces built to last. Odd Folk keeps quality pieces circulating: vintage finds get used regularly instead of languishing in storage.
+                        <p className="font-body text-brand-burgundy/80 mb-3">
+                            The best props and furniture are often vintage, handmade, or unique pieces built to last. These items deserve long lives—not landfills.
                         </p>
+                        <p className="font-body text-brand-burgundy/80 mb-2">Odd Folk keeps quality pieces circulating:</p>
+                        <ul className="list-disc pl-5 font-body text-brand-burgundy/80 space-y-1">
+                            <li>Vintage finds get used regularly instead of languishing in storage</li>
+                            <li>Well-made items stay in active use for years or decades</li>
+                            <li>Character pieces with history continue making new memories</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -555,7 +638,7 @@ export const Sustainability: React.FC = () => {
 
             <div className="grid md:grid-cols-2 gap-10">
                 <div>
-                    <h3 className="font-heading text-xl mb-4 border-b border-brand-white/20 pb-2">What We're Doing Now</h3>
+                    <h3 className="font-heading text-xl mb-4 border-b border-brand-white/20 pb-2">What We&apos;re Doing Now</h3>
                     <ul className="space-y-4 font-body">
                         <li>
                             <strong>Encouraging longer rentals:</strong> Listers can offer discounts for weekly or monthly rentals—more use per collection/return = better efficiency.
@@ -569,10 +652,10 @@ export const Sustainability: React.FC = () => {
                     </ul>
                 </div>
                 <div>
-                    <h3 className="font-heading text-xl mb-4 border-b border-brand-white/20 pb-2">What's Coming</h3>
+                    <h3 className="font-heading text-xl mb-4 border-b border-brand-white/20 pb-2">What&apos;s Coming</h3>
                     <ul className="space-y-4 font-body">
                         <li>
-                            <strong>Carbon footprint tracking:</strong> Show users the environmental impact they've avoided by renting instead of buying.
+                            <strong>Carbon footprint tracking:</strong> Show users the environmental impact they&apos;ve avoided by renting instead of buying.
                         </li>
                         <li>
                             <strong>Impact reporting:</strong> Annual reports on total items shared, rentals completed, and estimated waste diverted from landfills.

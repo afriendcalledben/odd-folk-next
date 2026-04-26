@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Hero from '@/components/Hero';
 import SearchBar, { type SearchFilters } from '@/components/SearchBar';
 import ProductGrid from '@/components/ProductGrid';
@@ -26,6 +26,7 @@ const categories = [
 
 export default function HomePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toggleFavorite, favoriteIds, isLoggedIn } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -43,8 +44,14 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+    const categoryParam = searchParams.get('category');
+    if (categoryParam && categories.includes(categoryParam)) {
+      setSelectedCategory(categoryParam);
+      loadProducts({ category: categoryParam });
+    } else {
+      loadProducts();
+    }
+  }, [loadProducts, searchParams]);
 
   const handleSearch = useCallback((filters: SearchFilters) => {
     setSearchFilters(filters);

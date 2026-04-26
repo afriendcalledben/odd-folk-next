@@ -536,8 +536,15 @@ export const submitContactForm = async (data: {
   email: string;
   subject: string;
   message: string;
+  captchaToken: string;
+  subscribeToNewsletter?: boolean;
 }): Promise<{ message: string }> => {
   return api.post('/contact', data);
+};
+
+// --- NEWSLETTER ---
+export const subscribeToNewsletter = async (email: string): Promise<{ message: string }> => {
+  return api.post('/newsletter/subscribe', { email });
 };
 
 // --- VERIFICATION ---

@@ -276,9 +276,10 @@ model ContactInquiry {
   email     String
   subject   String
   message   String
-  status    String   @default("NEW") // NEW, IN_PROGRESS, RESOLVED
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  status                 String   @default("NEW") // NEW, IN_PROGRESS, RESOLVED
+  subscribedToNewsletter Boolean  @default(false) @map("subscribed_to_newsletter")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@map("contact_inquiries")
@@ -363,6 +364,18 @@ model Verification {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("verifications")
+}
+
+// ============================================
+// NEWSLETTER SUBSCRIBER
+// ============================================
+model NewsletterSubscriber {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  token        String   @unique @default(uuid())
+  subscribedAt DateTime @default(now()) @map("subscribed_at")
+
+  @@map("newsletter_subscribers")
 }
 
 // ============================================
