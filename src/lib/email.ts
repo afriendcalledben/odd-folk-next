@@ -213,7 +213,7 @@ export async function sendReviewReceivedEmail(data: {
  * The cooldown is tracked on the Thread model.
  */
 export async function sendNewMessageEmail(
-  thread: { id: string; hirerId: string; listerLastMsgEmailAt: Date | null; hirerLastMsgEmailAt: Date | null },
+  thread: { id: string; hirerId: string | null; listerLastMsgEmailAt: Date | null; hirerLastMsgEmailAt: Date | null },
   senderName: string,
   messageText: string,
   recipientEmail: string,

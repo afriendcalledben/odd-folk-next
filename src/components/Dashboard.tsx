@@ -247,6 +247,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     const [showVacationModal, setShowVacationModal] = useState(false);
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const [removeTarget, setRemoveTarget] = useState<BlockedRange | null>(null);
+    const [deletionCheck, setDeletionCheck] = useState<{
+        canDelete: boolean; activeBookings: number;
+        listings: number; bookings: number; favorites: number;
+    } | null>(null);
+    const [isDeletionCheckLoading, setIsDeletionCheckLoading] = useState(false);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const currentUserId = user.id;
 
     const [locations, setLocations] = useState<any[]>([]);
@@ -452,6 +458,37 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
 
 
 
+    const handleOpenDeleteAccount = async () => {
+        setCurrentTab('delete-account');
+        setIsDeletionCheckLoading(true);
+        try {
+            const res = await fetch('/api/auth/deletion-check', { credentials: 'include' });
+            const json = await res.json();
+            if (json.success) setDeletionCheck(json.data);
+        } catch {
+            toast.error('Could not load account information. Please try again.');
+        } finally {
+            setIsDeletionCheckLoading(false);
+        }
+    };
+
+    const handleConfirmDeleteAccount = async () => {
+        setIsDeletingAccount(true);
+        try {
+            const res = await fetch('/api/auth/account', { method: 'DELETE', credentials: 'include' });
+            const json = await res.json();
+            if (!json.success) {
+                toast.error(json.error ?? 'Could not delete account.');
+                return;
+            }
+            window.location.href = '/';
+        } catch {
+            toast.error('Something went wrong. Please try again.');
+        } finally {
+            setIsDeletingAccount(false);
+        }
+    };
+
     const handleStatusChange = async (bookingId: string, newStatus: BookingStatus) => {
         await updateBookingStatus(bookingId, newStatus);
         const bookingsData = await getUserBookings(currentUserId);
@@ -525,11 +562,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                         <LogOut className="w-5 h-5 mr-4 flex-shrink-0" /> Sign out
                     </button>
                     
-                    <button 
-                        onClick={() => setCurrentTab('delete-account')}
+                    <button
+                        onClick={handleOpenDeleteAccount}
                         className={`flex items-center px-5 py-4 rounded-2xl text-sm font-bold transition-all ${
-                            currentTab === 'delete-account' 
-                            ? 'bg-red-500 text-white' 
+                            currentTab === 'delete-account'
+                            ? 'bg-red-500 text-white'
                             : 'text-red-400/60 hover:text-red-400 hover:bg-red-400/10'
                         }`}
                     >
@@ -1162,11 +1199,53 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </div>
                         <h2 className="font-heading text-4xl text-brand-blue mb-4">Are you sure?</h2>
+
+                        {isDeletionCheckLoading && (
+                            <p className="font-body text-brand-blue/50 mb-6 animate-pulse">Checking your account…</p>
+                        )}
+
+                        {deletionCheck && !isDeletionCheckLoading && (
+                            <>
+                                {(deletionCheck.listings > 0 || deletionCheck.bookings > 0 || deletionCheck.favorites > 0) && (
+                                    <div className="bg-brand-grey/10 rounded-2xl p-6 mb-6 text-left space-y-2">
+                                        <p className="font-body text-sm text-brand-blue/70">Deleting your account will permanently remove:</p>
+                                        <ul className="font-body text-sm text-brand-blue space-y-1 mt-3 list-disc list-inside">
+                                            {deletionCheck.listings > 0 && (
+                                                <li>{deletionCheck.listings} listing{deletionCheck.listings !== 1 ? 's' : ''}</li>
+                                            )}
+                                            {deletionCheck.bookings > 0 && (
+                                                <li>{deletionCheck.bookings} booking record{deletionCheck.bookings !== 1 ? 's' : ''}</li>
+                                            )}
+                                            {deletionCheck.favorites > 0 && (
+                                                <li>{deletionCheck.favorites} saved favourite{deletionCheck.favorites !== 1 ? 's' : ''}</li>
+                                            )}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {!deletionCheck.canDelete && (
+                                    <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6 text-left">
+                                        <p className="font-body text-red-700 font-bold text-sm mb-1">You have active bookings</p>
+                                        <p className="font-body text-red-600 text-sm">
+                                            You have {deletionCheck.activeBookings} active booking{deletionCheck.activeBookings !== 1 ? 's' : ''}.
+                                            Please resolve {deletionCheck.activeBookings === 1 ? 'it' : 'them'} before deleting your account.
+                                        </p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
                         <p className="font-body text-brand-blue/60 mb-10 text-lg leading-relaxed">
-                            Deleting your account is permanent. You will lose all your listings, rental history, and any saved favourites. Any pending payouts will be voided.
+                            This is permanent and cannot be undone.
                         </p>
                         <div className="space-y-4">
-                            <button className="w-full bg-red-500 text-white py-5 rounded-[1.5rem] font-heading text-xl hover:bg-red-600 shadow-2xl transition-all active:scale-95">Confirm Deletion</button>
+                            <button
+                                onClick={handleConfirmDeleteAccount}
+                                disabled={!deletionCheck?.canDelete || isDeletingAccount || isDeletionCheckLoading}
+                                className="w-full bg-red-500 text-white py-5 rounded-[1.5rem] font-heading text-xl hover:bg-red-600 shadow-2xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {isDeletingAccount ? 'Deleting…' : 'Confirm Deletion'}
+                            </button>
                             <button onClick={() => setCurrentTab('profile')} className="w-full text-brand-blue font-bold text-lg hover:underline transition-all">Nevermind, keep my account</button>
                         </div>
                     </div>

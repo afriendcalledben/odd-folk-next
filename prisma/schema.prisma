@@ -144,8 +144,8 @@ model Booking {
 
   // Relations
   product         Product       @relation(fields: [productId], references: [id])
-  hirer           User          @relation("HirerBookings", fields: [hirerId], references: [id])
-  lister          User          @relation("ListerBookings", fields: [listerId], references: [id])
+  hirer           User          @relation("HirerBookings", fields: [hirerId], references: [id], onDelete: Cascade)
+  lister          User          @relation("ListerBookings", fields: [listerId], references: [id], onDelete: Cascade)
   thread          Thread?       @relation(fields: [threadId], references: [id])
   reviews           Review[]
   transactions      Transaction[]
@@ -163,8 +163,8 @@ model Booking {
 model Thread {
   id                   String    @id @default(uuid())
   productId            String    @map("product_id")
-  hirerId              String    @map("hirer_id")
-  listerId             String    @map("lister_id")
+  hirerId              String?   @map("hirer_id")
+  listerId             String?   @map("lister_id")
   hirerLastMsgEmailAt  DateTime? @map("hirer_last_msg_email_at")
   listerLastMsgEmailAt DateTime? @map("lister_last_msg_email_at")
   createdAt            DateTime  @default(now()) @map("created_at")
@@ -172,8 +172,8 @@ model Thread {
 
   // Relations
   product           Product           @relation(fields: [productId], references: [id])
-  hirer             User              @relation("HirerThreads", fields: [hirerId], references: [id])
-  lister            User              @relation("ListerThreads", fields: [listerId], references: [id])
+  hirer             User?             @relation("HirerThreads", fields: [hirerId], references: [id], onDelete: SetNull)
+  lister            User?             @relation("ListerThreads", fields: [listerId], references: [id], onDelete: SetNull)
   messages          Message[]
   bookings          Booking[]
   conversationReads ConversationRead[]
@@ -190,14 +190,14 @@ model Thread {
 model Message {
   id        String   @id @default(uuid())
   threadId  String   @map("thread_id")
-  senderId  String   @map("sender_id")
+  senderId  String?  @map("sender_id")
   text      String
   type      String   @default("USER") // USER, SYSTEM
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  sender    User     @relation(fields: [senderId], references: [id])
+  sender    User?    @relation(fields: [senderId], references: [id], onDelete: SetNull)
 
   @@index([threadId])
   @@map("messages")
@@ -217,10 +217,10 @@ model Review {
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
-  booking     Booking  @relation(fields: [bookingId], references: [id])
-  product     Product  @relation(fields: [productId], references: [id])
-  reviewer    User     @relation("ReviewerReviews", fields: [reviewerId], references: [id])
-  reviewee    User     @relation("RevieweeReviews", fields: [revieweeId], references: [id])
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  reviewer    User     @relation("ReviewerReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee    User     @relation("RevieweeReviews", fields: [revieweeId], references: [id], onDelete: Cascade)
 
   @@unique([bookingId, reviewerId])
   @@index([productId])
@@ -233,7 +233,7 @@ model Review {
 // ============================================
 model Transaction {
   id                String   @id @default(uuid())
-  userId            String   @map("user_id")
+  userId            String?  @map("user_id")
   bookingId         String?  @map("booking_id")
   amount            Float
   type              String   // PAYOUT, ESCROW, ESCROW_RELEASE, FEE, REFUND
@@ -243,7 +243,7 @@ model Transaction {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user              User     @relation(fields: [userId], references: [id])
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   booking           Booking? @relation(fields: [bookingId], references: [id])
 
   @@index([userId])
@@ -370,7 +370,7 @@ model Verification {
 // ============================================
 model Report {
   id              String   @id @default(uuid())
-  reporterId      String   @map("reporter_id")
+  reporterId      String?  @map("reporter_id")
   type            String   // USER, PRODUCT
   targetUserId    String?  @map("target_user_id")
   targetProductId String?  @map("target_product_id")
@@ -381,7 +381,7 @@ model Report {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
-  reporter       User     @relation("ReporterReports", fields: [reporterId], references: [id])
+  reporter       User?    @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: SetNull)
   targetUser     User?    @relation("ReportedUserReports", fields: [targetUserId], references: [id])
   targetProduct  Product? @relation(fields: [targetProductId], references: [id])
 

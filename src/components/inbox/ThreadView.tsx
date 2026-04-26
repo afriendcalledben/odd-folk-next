@@ -8,11 +8,11 @@ import type { ThreadSummary } from './InboxLayout';
 interface Message {
   id: string;
   threadId: string;
-  senderId: string;
+  senderId: string | null;
   text: string;
   type: 'USER' | 'SYSTEM';
   createdAt: string;
-  sender: { id: string; name: string; avatarUrl: string | null };
+  sender: { id: string | null; name: string; avatarUrl: string | null };
 }
 
 interface Props {

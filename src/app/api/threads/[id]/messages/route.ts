@@ -19,11 +19,15 @@ export async function GET(
       return errorResponse('Forbidden', 403);
     }
 
-    const messages = await prisma.message.findMany({
+    const DELETED_SENDER = { id: null as string | null, name: 'Deleted User', avatarUrl: null as string | null };
+
+    const rawMessages = await prisma.message.findMany({
       where: { threadId },
       include: { sender: { select: { id: true, name: true, avatarUrl: true } } },
       orderBy: { createdAt: 'asc' },
     });
+
+    const messages = rawMessages.map((msg) => ({ ...msg, sender: msg.sender ?? DELETED_SENDER }));
 
     return successResponse(messages);
   } catch (error: unknown) {
@@ -65,13 +69,17 @@ export async function POST(
     // Update thread updatedAt so it sorts to top of inbox
     await prisma.thread.update({ where: { id: threadId }, data: { updatedAt: new Date() } });
 
-    // Notify the other party
+    // Notify the other party (skip if they've deleted their account)
     const recipientId = thread.hirerId === user.id ? thread.listerId : thread.hirerId;
-    const senderName = thread.hirerId === user.id ? thread.hirer.name : thread.lister.name;
-    const recipient = thread.hirerId === user.id ? thread.lister : thread.hirer;
+    if (recipientId) {
+      const senderName = (thread.hirerId === user.id ? thread.hirer?.name : thread.lister?.name) ?? 'Someone';
+      const recipient = thread.hirerId === user.id ? thread.lister : thread.hirer;
 
-    notifyNewMessage(recipientId, senderName, thread.product.title, threadId);
-    sendNewMessageEmail(thread, senderName, text.trim(), recipient.email, recipientId);
+      notifyNewMessage(recipientId, senderName, thread.product.title, threadId);
+      if (recipient?.email) {
+        sendNewMessageEmail(thread, senderName, text.trim(), recipient.email, recipientId);
+      }
+    }
 
     return successResponse(message, 201);
   } catch (error: unknown) {

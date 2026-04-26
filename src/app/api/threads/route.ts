@@ -64,16 +64,20 @@ export async function GET(req: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     });
 
+    const DELETED_USER = { id: null as string | null, name: 'Deleted User', avatarUrl: null as string | null };
+
     // Calculate unread counts
     const result = await Promise.all(threads.map(async (thread) => {
       const readAt = thread.conversationReads[0]?.readAt ?? new Date(0);
-      const otherParty = thread.hirerId === user.id ? thread.lister : thread.hirer;
+      const otherPartyRaw = thread.hirerId === user.id ? thread.lister : thread.hirer;
+      const otherParty = otherPartyRaw ?? DELETED_USER;
 
       const unreadCount = await prisma.message.count({
         where: {
           threadId: thread.id,
           senderId: { not: user.id },
           createdAt: { gt: readAt },
+          type: 'USER',
         },
       });
 

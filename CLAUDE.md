@@ -28,12 +28,13 @@ A peer-to-peer rental marketplace for event furniture and decorative props in Lo
 src/
 ├── app/                    # App Router pages and API routes
 │   ├── (main)/             # Main layout group
-│   │   ├── (auth)/         # Protected routes (dashboard, list-item, welcome)
+│   │   ├── (auth)/         # Protected routes (dashboard, list-item, welcome, inbox, admin/*)
 │   │   └── ...             # Public routes (products, users, faq, etc.)
 │   ├── api/                # API route handlers
 │   └── login/              # Login page + server actions
 ├── components/             # React components (organised by feature)
 │   ├── auth/               # LoginForm, WelcomeForm
+│   ├── inbox/              # InboxLayout, ThreadList, ThreadView, BookingStatusBanner
 │   └── ui/                 # Input, Textarea, Select, Button (exported via index.ts)
 ├── context/                # React Context providers (AuthContext)
 ├── emails/                 # React Email templates (BookingRequestEmail, BookingStatusEmail)
@@ -105,3 +106,6 @@ Do not create git commits unless explicitly asked.
 - **Images:** Configured for remote patterns (`i.pravatar.cc`, `picsum.photos`) in `next.config.ts`.
 - **Scheduled tasks:** Add cron jobs in `src/instrumentation.ts` using `node-cron`. The `register()` function runs on server start; guard with `if (process.env.NEXT_RUNTIME !== 'nodejs')` to skip build/edge. Extract logic into `src/lib/*.ts` so it can also be called manually via an `/api/cron/*` route (secured with `CRON_SECRET`).
 - **Item protection:** Removed entirely for the first iteration — no `ProtectionBadge`, no damage protection fee. Do not re-add unless explicitly requested.
+- **Listing images:** `ListItem.tsx` Step 4 uses three parallel arrays (`imagePreviews`, `imageFiles`, `originalFiles`) with multi-select upload, HTML5 DnD reorder, and `ListingCropModal.tsx` (4:3 rectangular crop). Placeholder: `public/product-placeholder.svg`.
+- **Admin bulk upload:** Hidden route at `/admin/bulk-upload` (`src/components/BulkUpload.tsx` + `src/app/api/admin/bulk-upload/route.ts`) — CSV upload for rapid test data creation, not linked from any user-facing UI.
+- **Phone inputs:** Currently disabled site-wide (testing phase). `PhoneInput` supports a `disabled` prop.
