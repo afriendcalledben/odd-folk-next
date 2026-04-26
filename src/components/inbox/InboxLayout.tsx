@@ -101,6 +101,7 @@ export default function InboxLayout() {
                   All messages
                 </button>
                 <ThreadView
+                  key={selectedThreadId}
                   threadId={selectedThreadId}
                   summary={selectedThread}
                   currentUserId={user?.id ?? null}

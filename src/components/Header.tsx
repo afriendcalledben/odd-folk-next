@@ -5,7 +5,7 @@ import Logo from './Logo';
 import { useAuth } from '@/context/AuthContext';
 import NotificationBell from './NotificationBell';
 import MessageInbox from './MessageInbox';
-import { Package, CalendarDays, Heart, User, LogOut } from 'lucide-react';
+import { Package, CalendarDays, Heart, User, LogOut, Search, BookOpen, CircleHelp, Tag } from 'lucide-react';
 
 interface HeaderProps {
   onNavigate: (view: string) => void;
@@ -47,10 +47,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-10">
-            <button onClick={() => handleNavigate('search')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors">Search</button>
-            <button onClick={() => handleNavigate('how-it-works')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors">How it works</button>
-            <button onClick={() => handleNavigate('faq')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors">FAQs</button>
-            <button onClick={() => handleNavigate('list-item')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors">List an item</button>
+            <button onClick={() => handleNavigate('search')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors flex items-center gap-2"><Search className="w-4 h-4 flex-shrink-0" />Search</button>
+            <button onClick={() => handleNavigate('how-it-works')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors flex items-center gap-2"><BookOpen className="w-4 h-4 flex-shrink-0" />How it works</button>
+            <button onClick={() => handleNavigate('faq')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors flex items-center gap-2"><CircleHelp className="w-4 h-4 flex-shrink-0" />FAQs</button>
+            <button onClick={() => handleNavigate('list-item')} className="font-body font-bold text-white text-base hover:text-brand-yellow transition-colors flex items-center gap-2"><Tag className="w-4 h-4 flex-shrink-0" />List an item</button>
           </nav>
 
           {/* Desktop Auth / User */}
@@ -122,10 +122,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-white/10 bg-brand-blue">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
-            <button onClick={() => handleNavigate('search')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">Search</button>
-            <button onClick={() => handleNavigate('how-it-works')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">How it works</button>
-            <button onClick={() => handleNavigate('faq')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">FAQs</button>
-            <button onClick={() => handleNavigate('list-item')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors">List an item</button>
+            <button onClick={() => handleNavigate('search')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><Search className="w-4 h-4 flex-shrink-0" />Search</button>
+            <button onClick={() => handleNavigate('how-it-works')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><BookOpen className="w-4 h-4 flex-shrink-0" />How it works</button>
+            <button onClick={() => handleNavigate('faq')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><CircleHelp className="w-4 h-4 flex-shrink-0" />FAQs</button>
+            <button onClick={() => handleNavigate('list-item')} className="text-left font-body font-bold text-white text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><Tag className="w-4 h-4 flex-shrink-0" />List an item</button>
             {!isLoading && (user ? (
               <>
                 <button onClick={() => handleNavigate('dashboard-listings')} className="text-left font-body text-white/80 text-base py-3 px-2 hover:text-brand-yellow border-b border-white/10 transition-colors flex items-center gap-2"><Package className="w-4 h-4 flex-shrink-0" /> Listings</button>
