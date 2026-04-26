@@ -33,11 +33,16 @@ function HomeContent() {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({ search: '', location: '', startDate: '', endDate: '' });
   const [isSearching, setIsSearching] = useState(false);
 
-  const loadProducts = useCallback(async (params?: SearchParams) => {
+  const loadProducts = useCallback(async (params?: SearchParams, scrollToListings = false) => {
     setIsSearching(true);
     try {
       const results = await fetchProducts(params);
       setProducts(results);
+      if (scrollToListings) {
+        requestAnimationFrame(() => {
+          document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' });
+        });
+      }
     } finally {
       setIsSearching(false);
     }
@@ -47,7 +52,7 @@ function HomeContent() {
     const categoryParam = searchParams.get('category');
     if (categoryParam && categories.includes(categoryParam)) {
       setSelectedCategory(categoryParam);
-      loadProducts({ category: categoryParam });
+      loadProducts({ category: categoryParam }, true);
     } else {
       loadProducts();
     }
@@ -83,7 +88,7 @@ function HomeContent() {
           <SearchBar onSearch={handleSearch} initialFilters={searchFilters} />
         </div>
       </div>
-      <div className="bg-brand-white">
+      <div id="listings" className="bg-brand-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {searchFilters.search ? (
             <div className="text-center mb-12">
