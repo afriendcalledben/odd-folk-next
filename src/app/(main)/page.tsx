@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Hero from '@/components/Hero';
 import SearchBar, { type SearchFilters } from '@/components/SearchBar';
@@ -24,7 +24,7 @@ const categories = [
   "Signage & displays"
 ];
 
-export default function HomePage() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toggleFavorite, favoriteIds, isLoggedIn } = useAuth();
@@ -141,5 +141,13 @@ export default function HomePage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
   );
 }
