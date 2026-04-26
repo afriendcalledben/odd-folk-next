@@ -368,9 +368,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
         if (profileUsernameStatus === 'checking') {
             return;
         }
-        if (profilePhone && !validatePhone(profilePhone)) {
-            newErrors.phone = 'Enter a valid phone number';
-        }
+
         if (Object.keys(newErrors).length > 0) {
             setProfileErrors(newErrors);
             return;
@@ -1120,6 +1118,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
 
                                 <div>
                                     <label className="block font-body text-sm font-bold text-brand-burgundy mb-1">Phone Number</label>
+                                    <p className="text-xs text-red-500 mb-1">Phone numbers are not required at this point</p>
                                     <PhoneInput
                                         value={profilePhone}
                                         onChange={v => {
@@ -1127,6 +1126,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                             if (profileErrors.phone) setProfileErrors(prev => ({ ...prev, phone: undefined }));
                                         }}
                                         error={profileErrors.phone}
+                                        disabled
                                     />
                                 </div>
                                 <div>

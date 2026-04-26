@@ -249,10 +249,12 @@ export default function WelcomeForm({ user }: { user: User }) {
           <label className="block font-body text-sm font-bold text-brand-burgundy mb-1">
             Phone number <span className="text-brand-burgundy/40 font-normal">(optional)</span>
           </label>
+          <p className="text-xs text-red-500 mb-1">Phone numbers are not required at this point</p>
           <PhoneInput
             value={phone}
             onChange={setPhone}
             error={errors.phone}
+            disabled
           />
         </div>
 
