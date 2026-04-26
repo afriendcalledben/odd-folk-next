@@ -33,6 +33,8 @@ export async function GET(
             id: true,
             city: true,
             postcode: true,
+            lat: true,
+            lng: true,
           },
         },
         reviews: {

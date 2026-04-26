@@ -144,6 +144,8 @@ const toFrontendProduct = (p: any): Product => ({
   color: p.color || '',
   locationId: p.locationId ?? null,
   location: p.location?.city || 'London',
+  locationLat: p.location?.lat ?? null,
+  locationLng: p.location?.lng ?? null,
   category: p.category,
   condition: p.condition,
   quantityAvailable: p.quantity || 1,

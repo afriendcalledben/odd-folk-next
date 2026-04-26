@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import BookingCalendar from './BookingCalendar';
 import SupportCenter from './SupportCenter';
 import PriceBreakdown from './PriceBreakdown';
+import ProductLocationMap from './ProductLocationMap';
 
 
 interface ProductDetailProps {
@@ -346,6 +347,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                          })()}
                     </div>
                 </div>
+                {/* Location Map */}
+                {product.locationLat != null && product.locationLng != null && (
+                  <ProductLocationMap
+                    city={product.location}
+                    lat={product.locationLat}
+                    lng={product.locationLng}
+                  />
+                )}
              </div>
           </div>
         </div>

@@ -14,6 +14,8 @@ export interface Product {
   color?: string;
   locationId?: string | null;
   location: string;
+  locationLat?: number | null;
+  locationLng?: number | null;
   blockedDates?: Array<{ start: string; end: string }>;
   category: string;
   condition: Condition;
