@@ -31,7 +31,7 @@ export default function ContactConfirmationEmail({ name, subject }: ContactConfi
               Thanks for reaching out, {name}
             </Heading>
             <Text style={{ color: '#2d1b2e', fontSize: '16px', lineHeight: '1.6', marginBottom: '16px' }}>
-              We've received your message about <strong>{subject}</strong> and will get back to you within 24–48 hours.
+              We've received your message about <strong>{subject}</strong> and will get back to you within 48 hours.
             </Text>
             <Text style={{ color: '#2d1b2e', fontSize: '16px', lineHeight: '1.6', marginBottom: '0' }}>
               In the meantime, you might find an answer to your question in our FAQ.

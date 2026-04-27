@@ -100,11 +100,7 @@ function HomeContent() {
               </p>
             </div>
           ) : (
-            <div className="text-center mb-12">
-              <p className="font-body text-xl text-brand-burgundy/80 mt-4 max-w-2xl mx-auto leading-relaxed">
-                Find extraordinary pieces from local collectors for your next experience. No warehouses. No cliches. Just props with personality.
-              </p>
-            </div>
+            <div className="mb-12"></div>
           )}
 
           <CategoryPills

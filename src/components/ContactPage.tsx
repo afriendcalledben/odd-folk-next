@@ -70,7 +70,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
           </div>
           <h1 className="font-heading text-4xl text-brand-burgundy mb-4">Message Sent!</h1>
           <p className="font-body text-brand-burgundy/70 text-lg mb-8">
-            Thank you for reaching out. We'll get back to you within 24–48 hours. Check your inbox — we've sent you a confirmation email.
+            Thank you for reaching out. We'll get back to you within 48 hours. Check your inbox — we've sent you a confirmation email.
           </p>
           <Button onClick={() => onNavigate('home')}>
             Back to Home

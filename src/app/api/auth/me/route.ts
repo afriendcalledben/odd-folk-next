@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
         name: true,
         username: true,
         avatarUrl: true,
+        image: true,
         phone: true,
         bio: true,
         vacationMode: true,
@@ -36,7 +37,8 @@ export async function GET(req: NextRequest) {
       return errorResponse('User not found', 404);
     }
 
-    return successResponse({ user: { ...user, isGoogleUser } });
+    const { image, ...rest } = user;
+    return successResponse({ user: { ...rest, avatarUrl: user.avatarUrl || image || null, isGoogleUser } });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return errorResponse(message, 500);

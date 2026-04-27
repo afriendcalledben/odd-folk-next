@@ -26,6 +26,20 @@ export const auth = betterAuth({
       trustedProviders: ['google', 'facebook'],
     },
   },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          if (user.image && !user.avatarUrl) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { avatarUrl: user.image },
+            });
+          }
+        },
+      },
+    },
+  },
 })
 
 export async function getAuthUser(req: NextRequest) {
