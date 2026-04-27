@@ -103,10 +103,10 @@ export async function PUT(
           select: { id: true, title: true, images: true },
         },
         hirer: {
-          select: { id: true, name: true, avatarUrl: true, email: true },
+          select: { id: true, name: true, username: true, avatarUrl: true, email: true },
         },
         lister: {
-          select: { id: true, name: true, avatarUrl: true, email: true },
+          select: { id: true, name: true, username: true, avatarUrl: true, email: true },
         },
       },
     });
@@ -168,22 +168,22 @@ export async function PUT(
       endDate: updatedBooking.endDate,
       listerPayout: updatedBooking.listerPayout,
       totalHirerCost: updatedBooking.totalHirerCost,
-      hirer: { name: updatedBooking.hirer.name, email: updatedBooking.hirer.email },
-      lister: { name: updatedBooking.lister.name, email: updatedBooking.lister.email },
+      hirer: { name: updatedBooking.hirer.name, username: updatedBooking.hirer.username, email: updatedBooking.hirer.email },
+      lister: { name: updatedBooking.lister.name, username: updatedBooking.lister.username, email: updatedBooking.lister.email },
       threadId: updatedBooking.threadId,
     };
     const productTitle = updatedBooking.product.title;
     if (newStatus === 'APPROVED') {
       sendBookingApprovedEmail(emailData);
-      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
+      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
     }
     if (newStatus === 'DECLINED') {
       sendBookingDeclinedEmail(emailData);
-      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
+      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
     }
     if (newStatus === 'PAID') {
       sendPaymentReceivedEmail(emailData);
-      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.name, productTitle, updatedBooking.threadId ?? undefined);
+      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.username ?? updatedBooking.hirer.name, productTitle, updatedBooking.threadId ?? undefined);
     }
     if (newStatus === 'COMPLETED') {
       sendBookingCompletedEmail(emailData);

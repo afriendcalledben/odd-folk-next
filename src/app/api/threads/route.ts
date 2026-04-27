@@ -39,8 +39,8 @@ export async function GET(req: NextRequest) {
       },
       include: {
         product: { select: { id: true, title: true, images: true } },
-        hirer: { select: { id: true, name: true, avatarUrl: true } },
-        lister: { select: { id: true, name: true, avatarUrl: true } },
+        hirer: { select: { id: true, name: true, username: true, avatarUrl: true } },
+        lister: { select: { id: true, name: true, username: true, avatarUrl: true } },
         messages: {
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     });
 
-    const DELETED_USER = { id: null as string | null, name: 'Deleted User', avatarUrl: null as string | null };
+    const DELETED_USER = { id: null as string | null, name: 'Deleted User', username: null as string | null, avatarUrl: null as string | null };
 
     // Calculate unread counts
     const result = await Promise.all(threads.map(async (thread) => {

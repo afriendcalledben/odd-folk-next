@@ -20,9 +20,13 @@ export interface BookingEmailData {
   endDate: Date;
   listerPayout: number;
   totalHirerCost: number;
-  hirer: { name: string; email: string };
-  lister: { name: string; email: string };
+  hirer: { name: string; username?: string | null; email: string };
+  lister: { name: string; username?: string | null; email: string };
   threadId?: string | null;
+}
+
+function dn(u: { name: string; username?: string | null }) {
+  return u.username ?? u.name;
 }
 
 function fmt(date: Date) {
@@ -48,7 +52,7 @@ export async function sendBookingRequestEmail(b: BookingEmailData) {
     `New booking request for ${b.productTitle}`,
     createElement(BookingRequestEmail, {
       listerName: b.lister.name,
-      hirerName: b.hirer.name,
+      hirerName: dn(b.hirer),
       productTitle: b.productTitle,
       startDate: fmt(b.startDate),
       endDate: fmt(b.endDate),
@@ -65,7 +69,7 @@ export async function sendBookingApprovedEmail(b: BookingEmailData) {
     createElement(BookingStatusEmail, {
       recipientName: b.hirer.name,
       heading: 'Booking approved',
-      body: `Great news — ${b.lister.name} has approved your request for ${b.productTitle}. Head to your dashboard to complete payment and secure the booking.`,
+      body: `Great news — @${dn(b.lister)} has approved your request for ${b.productTitle}. Head to your dashboard to complete payment and secure the booking.`,
       detail: `${fmt(b.startDate)} – ${fmt(b.endDate)} · Total: £${b.totalHirerCost.toFixed(2)}`,
       ctaText: 'Pay now',
       ctaUrl: inboxUrl(b.threadId),
@@ -80,7 +84,7 @@ export async function sendBookingDeclinedEmail(b: BookingEmailData) {
     createElement(BookingStatusEmail, {
       recipientName: b.hirer.name,
       heading: 'Booking declined',
-      body: `Unfortunately ${b.lister.name} wasn't able to accept your request for ${b.productTitle} this time. Browse similar items on Odd Folk.`,
+      body: `Unfortunately @${dn(b.lister)} wasn't able to accept your request for ${b.productTitle} this time. Browse similar items on Odd Folk.`,
       ctaText: 'Browse listings',
       ctaUrl: `${SITE_URL}/search`,
     })
@@ -90,7 +94,7 @@ export async function sendBookingDeclinedEmail(b: BookingEmailData) {
 export async function sendBookingCancelledEmail(b: BookingEmailData, cancelledByRole: 'hirer' | 'lister') {
   const isHirerCancel = cancelledByRole === 'hirer';
   const recipient = isHirerCancel ? b.lister : b.hirer;
-  const cancellerName = isHirerCancel ? b.hirer.name : b.lister.name;
+  const cancellerName = `@${dn(isHirerCancel ? b.hirer : b.lister)}`;
 
   await send(
     recipient.email,
@@ -112,7 +116,7 @@ export async function sendPaymentReceivedEmail(b: BookingEmailData) {
     createElement(BookingStatusEmail, {
       recipientName: b.lister.name,
       heading: 'Payment secured',
-      body: `${b.hirer.name} has paid for their booking of ${b.productTitle}. The funds are held in escrow and will be released once the rental is completed.`,
+      body: `@${dn(b.hirer)} has paid for their booking of ${b.productTitle}. The funds are held in escrow and will be released once the rental is completed.`,
       detail: `${fmt(b.startDate)} – ${fmt(b.endDate)} · Your payout: £${b.listerPayout.toFixed(2)}`,
       ctaText: 'View booking',
       ctaUrl: inboxUrl(b.threadId),
@@ -127,7 +131,7 @@ export async function sendBookingCompletedEmail(b: BookingEmailData) {
     createElement(BookingStatusEmail, {
       recipientName: b.hirer.name,
       heading: 'Leave a review',
-      body: `Your rental of ${b.productTitle} is complete — we hope it was perfect for your event! Leave a review for ${b.lister.name} to help the Odd Folk community.`,
+      body: `Your rental of ${b.productTitle} is complete — we hope it was perfect for your event! Leave a review for @${dn(b.lister)} to help the Odd Folk community.`,
       ctaText: 'Leave a review',
       ctaUrl: `${SITE_URL}/dashboard?tab=bookings`,
     })
@@ -138,7 +142,7 @@ export async function sendBookingCompletedEmail(b: BookingEmailData) {
     createElement(BookingStatusEmail, {
       recipientName: b.lister.name,
       heading: 'Rental complete',
-      body: `${b.hirer.name} has completed their rental of ${b.productTitle}. Your funds have been released. Take a moment to leave a review for ${b.hirer.name}.`,
+      body: `@${dn(b.hirer)} has completed their rental of ${b.productTitle}. Your funds have been released. Take a moment to leave a review for @${dn(b.hirer)}.`,
       detail: `Payout: £${b.listerPayout.toFixed(2)}`,
       ctaText: 'Leave a review',
       ctaUrl: `${SITE_URL}/dashboard?tab=bookings`,
@@ -154,7 +158,7 @@ export async function sendBookingReminderEmail(b: BookingEmailData, hoursRemaini
     createElement(BookingStatusEmail, {
       recipientName: b.lister.name,
       heading: `${hoursRemaining} hours remaining`,
-      body: `${b.hirer.name} is waiting for your response to their booking request for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}). If you don't respond within ${hoursRemaining} hours the request will be automatically declined.`,
+      body: `@${dn(b.hirer)} is waiting for your response to their booking request for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}). If you don't respond within ${hoursRemaining} hours the request will be automatically declined.`,
       ctaText: 'Respond now',
       ctaUrl: inboxUrl(b.threadId),
     })
@@ -168,7 +172,7 @@ export async function sendBookingAutoDeclinedEmail(b: BookingEmailData) {
     createElement(BookingStatusEmail, {
       recipientName: b.lister.name,
       heading: 'Booking request expired',
-      body: `The booking request from ${b.hirer.name} for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}) was not responded to within 48 hours and has been automatically declined.`,
+      body: `The booking request from @${dn(b.hirer)} for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}) was not responded to within 48 hours and has been automatically declined.`,
       ctaText: 'View inbox',
       ctaUrl: inboxUrl(b.threadId),
     })
@@ -188,21 +192,22 @@ export async function sendBookingAutoDeclinedEmail(b: BookingEmailData) {
 
 export async function sendReviewReceivedEmail(data: {
   reviewee: { name: string; email: string };
-  reviewer: { name: string };
+  reviewer: { name: string; username?: string | null };
   rating: number;
   comment: string | null;
   productTitle: string;
 }) {
   const stars = '★'.repeat(data.rating) + '☆'.repeat(5 - data.rating);
+  const reviewerDisplay = `@${dn(data.reviewer)}`;
   await send(
     data.reviewee.email,
-    `${data.reviewer.name} left you a ${data.rating}-star review`,
+    `${reviewerDisplay} left you a ${data.rating}-star review`,
     createElement(BookingStatusEmail, {
       recipientName: data.reviewee.name,
       heading: `${stars} New review`,
       body: data.comment
-        ? `${data.reviewer.name} reviewed your rental of ${data.productTitle}: "${data.comment}"`
-        : `${data.reviewer.name} left a ${data.rating}-star review for your rental of ${data.productTitle}.`,
+        ? `${reviewerDisplay} reviewed your rental of ${data.productTitle}: "${data.comment}"`
+        : `${reviewerDisplay} left a ${data.rating}-star review for your rental of ${data.productTitle}.`,
       ctaText: 'View your profile',
       ctaUrl: `${SITE_URL}/dashboard`,
     })
@@ -242,10 +247,10 @@ export async function sendNewMessageEmail(
 
   await send(
     recipientEmail,
-    `New message from ${senderName}`,
+    `New message from @${senderName}`,
     createElement(BookingStatusEmail, {
       recipientName: '',
-      heading: `Message from ${senderName}`,
+      heading: `Message from @${senderName}`,
       body: messageText,
       ctaText: 'Reply in Odd Folk',
       ctaUrl: inboxUrl(thread.id),

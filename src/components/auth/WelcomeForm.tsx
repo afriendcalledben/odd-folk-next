@@ -21,6 +21,8 @@ export default function WelcomeForm({ user }: { user: User }) {
   const { refreshUser } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(1);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const skipRedirect = useRef(false);
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
@@ -146,31 +148,65 @@ export default function WelcomeForm({ user }: { user: User }) {
           </div>
           <div>
             <p className="text-xs font-body text-brand-burgundy/50 uppercase tracking-widest">Step 2 of 2</p>
-            <h1 className="font-heading text-2xl text-brand-burgundy leading-tight">Lender agreement</h1>
+            <h1 className="font-heading text-2xl text-brand-burgundy leading-tight">Before you continue</h1>
           </div>
         </div>
 
-        <div className="bg-brand-grey/20 rounded-xl p-5 mb-6 space-y-4 font-body text-sm text-brand-burgundy/80 leading-relaxed">
-          <p>
-            By using Odd Folk as a lender, you agree to take full and sole responsibility for every item you list and hire out through the platform. This includes ensuring that all items are safe, fit for purpose, accurately described, and in the condition stated at the time of listing.
-          </p>
-          <p>
-            You acknowledge that Odd Folk operates solely as a marketplace connecting hirers and lenders, and accepts no liability whatsoever for the condition, safety, suitability, or fitness for purpose of any item listed. All risk associated with the provision of items — including but not limited to loss, damage, injury, or third-party claims — rests entirely with you as the lender.
-          </p>
-          <p>
-            You agree to comply with all applicable laws and regulations relating to the rental of goods, and to handle any disputes, damage claims, or safety concerns directly and responsibly. By continuing, you confirm that you have read, understood, and agree to these terms.
-          </p>
+        <div className="mb-8">
+          <p className="font-body text-brand-burgundy/80 mb-4">By signing up to this website you agree to our:</p>
+          <div className="flex gap-3 mb-8">
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-body text-sm font-semibold text-brand-orange underline underline-offset-2 hover:text-brand-orange/80 transition-colors">
+              Privacy Policy
+            </a>
+            <span className="text-brand-burgundy/30">·</span>
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-body text-sm font-semibold text-brand-orange underline underline-offset-2 hover:text-brand-orange/80 transition-colors">
+              Terms of Service
+            </a>
+          </div>
+
+          <div className="space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptedPrivacy}
+                onChange={e => setAcceptedPrivacy(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-brand-orange rounded cursor-pointer flex-shrink-0"
+              />
+              <span className="font-body text-sm text-brand-burgundy/70 group-hover:text-brand-burgundy transition-colors">
+                I have read and accept the{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-orange underline underline-offset-2 hover:text-brand-orange/80">
+                  Privacy Policy
+                </a>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={e => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-brand-orange rounded cursor-pointer flex-shrink-0"
+              />
+              <span className="font-body text-sm text-brand-burgundy/70 group-hover:text-brand-burgundy transition-colors">
+                I have read and accept the{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand-orange underline underline-offset-2 hover:text-brand-orange/80">
+                  Terms of Service
+                </a>
+              </span>
+            </label>
+          </div>
         </div>
 
         <Button
           fullWidth
           size="lg"
+          disabled={!acceptedPrivacy || !acceptedTerms}
           onClick={() => {
             toast.success('Welcome to Odd Folk!');
             router.push('/');
           }}
         >
-          I agree — let&apos;s go
+          Continue
         </Button>
       </>
     );

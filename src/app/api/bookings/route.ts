@@ -25,10 +25,10 @@ export async function GET(req: NextRequest) {
           select: { id: true, title: true, images: true },
         },
         hirer: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, name: true, username: true, avatarUrl: true },
         },
         lister: {
-          select: { id: true, name: true, avatarUrl: true },
+          select: { id: true, name: true, username: true, avatarUrl: true },
         },
         reviews: {
           select: { reviewerId: true },
@@ -130,10 +130,10 @@ export async function POST(req: NextRequest) {
           select: { id: true, title: true, images: true },
         },
         hirer: {
-          select: { id: true, name: true, avatarUrl: true, email: true },
+          select: { id: true, name: true, username: true, avatarUrl: true, email: true },
         },
         lister: {
-          select: { id: true, name: true, avatarUrl: true, email: true },
+          select: { id: true, name: true, username: true, avatarUrl: true, email: true },
         },
       },
     });
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     await prisma.thread.update({ where: { id: thread.id }, data: { updatedAt: new Date() } });
 
     // Notify lister of new booking request (email + in-app)
-    notifyBookingRequest(booking.listerId, booking.hirer.name, booking.product.title, thread.id);
+    notifyBookingRequest(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, thread.id);
     sendBookingRequestEmail({
       id: booking.id,
       productTitle: booking.product.title,
@@ -168,8 +168,8 @@ export async function POST(req: NextRequest) {
       endDate: booking.endDate,
       listerPayout: booking.listerPayout,
       totalHirerCost: booking.totalHirerCost,
-      hirer: { name: booking.hirer.name, email: booking.hirer.email },
-      lister: { name: booking.lister.name, email: booking.lister.email },
+      hirer: { name: booking.hirer.name, username: booking.hirer.username, email: booking.hirer.email },
+      lister: { name: booking.lister.name, username: booking.lister.username, email: booking.lister.email },
       threadId: thread.id,
     });
 

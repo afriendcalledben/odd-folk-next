@@ -19,11 +19,11 @@ export async function GET(
       return errorResponse('Forbidden', 403);
     }
 
-    const DELETED_SENDER = { id: null as string | null, name: 'Deleted User', avatarUrl: null as string | null };
+    const DELETED_SENDER = { id: null as string | null, name: 'Deleted User', username: null as string | null, avatarUrl: null as string | null };
 
     const rawMessages = await prisma.message.findMany({
       where: { threadId },
-      include: { sender: { select: { id: true, name: true, avatarUrl: true } } },
+      include: { sender: { select: { id: true, name: true, username: true, avatarUrl: true } } },
       orderBy: { createdAt: 'asc' },
     });
 
@@ -52,8 +52,8 @@ export async function POST(
       where: { id: threadId },
       include: {
         product: { select: { title: true } },
-        hirer: { select: { id: true, name: true, email: true } },
-        lister: { select: { id: true, name: true, email: true } },
+        hirer: { select: { id: true, name: true, username: true, email: true } },
+        lister: { select: { id: true, name: true, username: true, email: true } },
       },
     });
     if (!thread) return errorResponse('Thread not found', 404);
@@ -72,7 +72,8 @@ export async function POST(
     // Notify the other party (skip if they've deleted their account)
     const recipientId = thread.hirerId === user.id ? thread.listerId : thread.hirerId;
     if (recipientId) {
-      const senderName = (thread.hirerId === user.id ? thread.hirer?.name : thread.lister?.name) ?? 'Someone';
+      const senderRaw = thread.hirerId === user.id ? thread.hirer : thread.lister;
+      const senderName = (senderRaw?.username ?? senderRaw?.name) ?? 'Someone';
       const recipient = thread.hirerId === user.id ? thread.lister : thread.hirer;
 
       notifyNewMessage(recipientId, senderName, thread.product.title, threadId);

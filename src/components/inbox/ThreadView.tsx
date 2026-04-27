@@ -88,7 +88,7 @@ export default function ThreadView({ threadId, summary, currentUserId, onRead, o
         )}
         <div className="min-w-0">
           <p className="font-body font-semibold text-brand-burgundy text-sm truncate">
-            {otherParty?.name ?? '…'}
+            {(otherParty?.username ?? otherParty?.name) ?? '…'}
           </p>
           {productTitle && (
             <p className="text-xs text-brand-burgundy/50 font-body truncate">{productTitle}</p>

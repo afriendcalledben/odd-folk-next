@@ -50,8 +50,8 @@ export async function POST(
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
-        hirer: { select: { id: true, name: true, email: true } },
-        lister: { select: { id: true, name: true, email: true } },
+        hirer: { select: { id: true, name: true, username: true, email: true } },
+        lister: { select: { id: true, name: true, username: true, email: true } },
         product: { select: { id: true, title: true } },
       },
     });
@@ -84,10 +84,10 @@ export async function POST(
       },
     });
 
-    notifyReviewReceived(revieweeId, reviewer.name, rating, booking.product.title);
+    notifyReviewReceived(revieweeId, reviewer.username ?? reviewer.name, rating, booking.product.title);
     sendReviewReceivedEmail({
       reviewee: { name: reviewee.name, email: reviewee.email },
-      reviewer: { name: reviewer.name },
+      reviewer: { name: reviewer.name, username: reviewer.username },
       rating,
       comment: comment || null,
       productTitle: booking.product.title,

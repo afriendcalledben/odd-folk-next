@@ -69,7 +69,7 @@ export default function ThreadList({ threads, loading, selectedThreadId, onSelec
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <p className={`text-sm font-body truncate ${thread.unreadCount > 0 ? 'font-semibold text-brand-burgundy' : 'text-brand-burgundy/80'}`}>
-                  {thread.otherParty.name}
+                  {thread.otherParty.username ?? thread.otherParty.name}
                 </p>
                 <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
                   {thread.lastMessage && (

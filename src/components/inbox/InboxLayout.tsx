@@ -12,7 +12,7 @@ export interface ThreadSummary {
   productId: string;
   productTitle: string;
   productImage: string | null;
-  otherParty: { id: string | null; name: string; avatarUrl: string | null };
+  otherParty: { id: string | null; name: string; username?: string | null; avatarUrl: string | null };
   lastMessage: { text: string; type: string; createdAt: string; isOwn: boolean } | null;
   unreadCount: number;
   activeBooking: {

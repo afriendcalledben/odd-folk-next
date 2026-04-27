@@ -19,8 +19,8 @@ export async function POST(
       where: { id: bookingId },
       include: {
         product: { select: { title: true } },
-        hirer: { select: { name: true, email: true } },
-        lister: { select: { name: true, email: true } },
+        hirer: { select: { name: true, username: true, email: true } },
+        lister: { select: { name: true, username: true, email: true } },
       },
     });
     if (!booking) return errorResponse('Booking not found', 404);
@@ -47,7 +47,9 @@ export async function POST(
 
     const cancelledByRole = booking.hirerId === user.id ? 'hirer' : 'lister';
     const recipientId = cancelledByRole === 'hirer' ? booking.listerId : booking.hirerId;
-    const cancellerName = cancelledByRole === 'hirer' ? booking.hirer.name : booking.lister.name;
+    const cancellerName = cancelledByRole === 'hirer'
+      ? (booking.hirer.username ?? booking.hirer.name)
+      : (booking.lister.username ?? booking.lister.name);
     notifyBookingCancelled(recipientId, cancellerName, booking.product.title, booking.threadId ?? undefined);
     sendBookingCancelledEmail({
       id: bookingId,
@@ -56,8 +58,8 @@ export async function POST(
       endDate: booking.endDate,
       listerPayout: booking.listerPayout,
       totalHirerCost: booking.totalHirerCost,
-      hirer: { name: booking.hirer.name, email: booking.hirer.email },
-      lister: { name: booking.lister.name, email: booking.lister.email },
+      hirer: { name: booking.hirer.name, username: booking.hirer.username, email: booking.hirer.email },
+      lister: { name: booking.lister.name, username: booking.lister.username, email: booking.lister.email },
       threadId: booking.threadId,
     }, cancelledByRole);
 
