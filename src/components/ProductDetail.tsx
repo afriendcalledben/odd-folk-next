@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { LockKeyhole, CalendarDays, Star, ChevronLeft } from 'lucide-react';
 import type { Product, Review } from '../types';
-import { createBookingRequest, fetchReviewsForProduct, toggleFavorite, getProductAvailability } from '../services/api';
+import { createBookingRequest, fetchReviewsForProduct, getProductAvailability } from '../services/api';
 import { useAuth } from '@/context/AuthContext';
 import BookingCalendar from './BookingCalendar';
 import SupportCenter from './SupportCenter';
@@ -50,19 +50,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
     setLocalIsFavorite(isFavorited);
   }, [isFavorited]);
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = () => {
     if (!isLoggedIn) {
       toast('Log in to save favourites', { icon: <LockKeyhole className="w-4 h-4" /> });
       return;
     }
-    try {
-      const newState = await toggleFavorite(product.id.toString());
-      setLocalIsFavorite(newState);
-      if (onFavoriteChange) {
-        onFavoriteChange(product.id.toString(), newState);
-      }
-    } catch (error) {
-      console.error('Failed to toggle favorite:', error);
+    setLocalIsFavorite(prev => !prev);
+    if (onFavoriteChange) {
+      onFavoriteChange(product.id.toString(), !localIsFavorite);
     }
   };
 
