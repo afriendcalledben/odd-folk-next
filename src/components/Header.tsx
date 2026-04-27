@@ -9,7 +9,7 @@ import { Package, CalendarDays, Heart, User, LogOut, Search, BookOpen, CircleHel
 
 interface HeaderProps {
   onNavigate: (view: string) => void;
-  user?: { name: string; avatarUrl?: string } | null;
+  user?: { name: string; username?: string | null; avatarUrl?: string } | null;
 }
 
 const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
@@ -67,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, user }) => {
                   className="flex items-center space-x-3 cursor-pointer group"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
-                  <p className="font-body text-base font-bold text-white leading-none group-hover:text-brand-yellow transition-colors">{user.name}</p>
+                  <p className="font-body text-base font-bold text-white leading-none group-hover:text-brand-yellow transition-colors">{user.username ?? user.name}</p>
                   <div className={`w-11 h-11 rounded-full p-0.5 border-2 transition-colors ${isDropdownOpen ? 'border-brand-yellow' : 'border-white/20 group-hover:border-brand-yellow'}`}>
                     <img src={user.avatarUrl || '/avatar-placeholder.svg'} alt={user.name} className="w-full h-full rounded-full object-cover" />
                   </div>

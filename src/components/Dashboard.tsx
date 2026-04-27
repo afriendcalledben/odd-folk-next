@@ -558,7 +558,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                     <div className="flex items-center space-x-4">
                         <img src={user.avatarUrl || '/avatar-placeholder.svg'} alt={user.name} className="w-16 h-16 rounded-full object-cover border-2 border-white/20" />
                         <div>
-                            <p className="font-heading text-xl leading-tight">{user.name}</p>
+                            <p className="font-heading text-xl leading-tight">{user.username ?? user.name}</p>
                             <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1">Odd Folk Member</p>
                         </div>
                     </div>
