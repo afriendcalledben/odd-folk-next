@@ -128,7 +128,7 @@ export default function WelcomeForm({ user }: { user: User }) {
     <div className="min-h-screen bg-brand-grey/20 flex flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
         <div className="flex justify-center mb-8">
-          <Logo className="h-16 w-auto" />
+          <Logo className="h-16 w-auto" color="#F54F19" />
         </div>
         <div className="bg-brand-white rounded-2xl shadow-sm border border-brand-grey p-8">
           {children}

@@ -42,7 +42,7 @@ export function notifyBookingRequest(listerId: string, hirerName: string, produc
     listerId,
     NotificationType.BOOKING_REQUEST,
     'New booking request',
-    `${hirerName} has requested ${productTitle}`,
+    `**${hirerName}** has requested **${productTitle}**`,
     inboxUrl(threadId)
   );
 }
@@ -52,7 +52,7 @@ export function notifyBookingApproved(hirerId: string, listerName: string, produ
     hirerId,
     NotificationType.BOOKING_APPROVED,
     'Booking approved',
-    `${listerName} approved your request for ${productTitle}`,
+    `**${listerName}** approved your request for **${productTitle}**`,
     inboxUrl(threadId)
   );
 }
@@ -62,7 +62,7 @@ export function notifyBookingDeclined(hirerId: string, listerName: string, produ
     hirerId,
     NotificationType.BOOKING_DECLINED,
     'Booking declined',
-    `${listerName} declined your request for ${productTitle}`,
+    `**${listerName}** declined your request for **${productTitle}**`,
     inboxUrl(threadId)
   );
 }
@@ -72,7 +72,7 @@ export function notifyBookingCancelled(recipientId: string, cancellerName: strin
     recipientId,
     NotificationType.BOOKING_CANCELLED,
     'Booking cancelled',
-    `${cancellerName} cancelled the booking for ${productTitle}`,
+    `**${cancellerName}** cancelled the booking for **${productTitle}**`,
     inboxUrl(threadId)
   );
 }
@@ -82,7 +82,7 @@ export function notifyPaymentReceived(listerId: string, hirerName: string, produ
     listerId,
     NotificationType.PAYMENT_RECEIVED,
     'Payment received',
-    `${hirerName} has paid for ${productTitle}`,
+    `**${hirerName}** has paid for **${productTitle}**`,
     inboxUrl(threadId)
   );
 }
@@ -92,7 +92,7 @@ export function notifyBookingCompleted(userId: string, productTitle: string, thr
     userId,
     NotificationType.BOOKING_COMPLETED,
     'Rental complete',
-    `Your rental of ${productTitle} is complete — leave a review!`,
+    `Your rental of **${productTitle}** is complete — leave a review!`,
     inboxUrl(threadId)
   );
 }
@@ -103,7 +103,7 @@ export function notifyBookingReminder(listerId: string, hirerName: string, produ
     listerId,
     NotificationType.BOOKING_REMINDER,
     `${urgency}${hoursRemaining} hours to respond`,
-    `You have ${hoursRemaining} hours to accept or decline ${hirerName}'s request for ${productTitle} before it is automatically declined`,
+    `You have ${hoursRemaining} hours to accept or decline **${hirerName}**'s request for **${productTitle}** before it is automatically declined`,
     inboxUrl(threadId)
   );
 }
@@ -114,8 +114,8 @@ export function notifyBookingAutoDeclined(userId: string, productTitle: string, 
     NotificationType.BOOKING_AUTO_DECLINED,
     'Booking request expired',
     isLister
-      ? `A booking request for ${productTitle} was not responded to and has been automatically declined`
-      : `Your booking request for ${productTitle} was not responded to within 48 hours and has been automatically declined`,
+      ? `A booking request for **${productTitle}** was not responded to and has been automatically declined`
+      : `Your booking request for **${productTitle}** was not responded to within 48 hours and has been automatically declined`,
     inboxUrl(threadId)
   );
 }
@@ -125,7 +125,7 @@ export function notifyReviewReceived(revieweeId: string, reviewerName: string, r
     revieweeId,
     NotificationType.REVIEW_RECEIVED,
     'New review',
-    `${reviewerName} left you a ${rating}-star review for ${productTitle}`,
+    `**${reviewerName}** left you a ${rating}-star review for **${productTitle}**`,
     `${SITE_URL}/dashboard`
   );
 }
@@ -135,7 +135,7 @@ export function notifyNewMessage(recipientId: string, senderName: string, produc
     recipientId,
     NotificationType.NEW_MESSAGE,
     'New message',
-    `${senderName} sent you a message about ${productTitle}`,
+    `**${senderName}** sent you a message about **${productTitle}**`,
     inboxUrl(threadId)
   );
 }

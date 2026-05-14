@@ -87,7 +87,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
           const startDateStr = pickupDate.toISOString().split('T')[0];
           const endDateStr = dropoffDate.toISOString().split('T')[0];
           await createBookingRequest(product, startDateStr, endDateStr, selectedQuantity);
-          if (onNavigate) onNavigate('dashboard');
+          toast.success('Booking request sent!');
       } catch (error: any) {
           toast.error(error.message || 'Booking failed');
       }

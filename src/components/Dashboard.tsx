@@ -133,7 +133,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
                                 onClick={() => onStatusChange(booking.id, 'completed')}
                                 className="bg-brand-yellow text-brand-burgundy px-6 py-2 rounded-xl font-body font-bold hover:brightness-110 shadow-md"
                             >
-                                Confirm item condition
+                                Confirm safe return
                             </button>
                             <button
                                 onClick={() => onStatusChange(booking.id, 'completed')}
@@ -442,6 +442,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
         if (currentTab !== 'block-days') return;
         getBlockedDates().then(setBlockedRanges).catch(() => setBlockedRanges([]));
     }, [currentTab]);
+
+    useEffect(() => {
+        if (currentTab !== 'bookings') return;
+        const poll = () => getUserBookings(currentUserId).then(setBookings).catch(() => {});
+        const interval = setInterval(poll, 30000);
+        return () => clearInterval(interval);
+    }, [currentTab, currentUserId]);
 
     useEffect(() => {
         const loadData = async () => {

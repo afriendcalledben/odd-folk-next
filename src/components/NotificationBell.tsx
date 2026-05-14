@@ -39,6 +39,19 @@ function NotifIcon({ type }: { type: string }) {
   return <Icon className="w-4 h-4 flex-shrink-0 mt-0.5 text-brand-burgundy/60" />;
 }
 
+function NotifBody({ text }: { text: string }) {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1
+          ? <strong key={i} className="font-semibold text-[#2d2d2d]">{part}</strong>
+          : <span key={i}>{part}</span>
+      )}
+    </>
+  );
+}
+
 export default function NotificationBell() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -138,7 +151,7 @@ export default function NotificationBell() {
                         <span className="w-2 h-2 rounded-full bg-brand-orange flex-shrink-0 mt-1.5" />
                       )}
                     </div>
-                    <p className="text-xs text-brand-burgundy/60 font-body mt-0.5 line-clamp-2">{n.body}</p>
+                    <p className="text-xs text-[#4a4a4a] font-body mt-0.5 line-clamp-2"><NotifBody text={n.body} /></p>
                     <p className="text-[10px] text-brand-burgundy/40 font-body mt-1">{timeAgo(n.createdAt)}</p>
                   </div>
                 </button>

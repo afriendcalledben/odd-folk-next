@@ -14,10 +14,16 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       prompt: 'select_account',
+      mapProfileToUser: (profile: { picture?: string }) => ({
+        avatarUrl: profile.picture ?? null,
+      }),
     },
     facebook: {
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      mapProfileToUser: (profile: { picture?: { data?: { url?: string } } }) => ({
+        avatarUrl: profile.picture?.data?.url ?? null,
+      }),
     },
   },
   account: {
