@@ -3,12 +3,18 @@ import { prismaAdapter } from 'better-auth/adapters/prisma'
 import prisma from '@/lib/prisma'
 import { NextRequest } from 'next/server'
 import { errorResponse } from '@/lib/api-response'
+import { sendPasswordResetEmail } from '@/lib/email'
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_SITE_URL,
   secret: process.env.BETTER_AUTH_SECRET,
-  emailAndPassword: { enabled: true },
+  emailAndPassword: {
+    enabled: true,
+    sendResetPassword: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
+      await sendPasswordResetEmail(user.email, url, user.name ?? user.email);
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,

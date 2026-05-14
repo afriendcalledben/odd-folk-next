@@ -84,7 +84,8 @@ export async function POST(
       },
     });
 
-    notifyReviewReceived(revieweeId, reviewer.username ?? reviewer.name, rating, booking.product.title);
+    const revieweeSubTab = isHirer ? 'received' : 'made';
+    notifyReviewReceived(revieweeId, reviewer.username ?? reviewer.name, rating, booking.product.title, bookingId, revieweeSubTab);
     sendReviewReceivedEmail({
       reviewee: { name: reviewee.name, email: reviewee.email },
       reviewer: { name: reviewer.name, username: reviewer.username },

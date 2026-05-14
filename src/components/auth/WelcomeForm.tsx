@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Logo from '@/components/Logo';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
-import { Input, Textarea, Button } from '@/components/ui';
+import { Input, Textarea, Button, FieldRequirements, usernameRequirements, filterUsername } from '@/components/ui';
 import { updateUserProfile } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import type { User } from '@/services/api';
@@ -226,7 +226,8 @@ export default function WelcomeForm({ user }: { user: User }) {
             type="text"
             value={username}
             onChange={e => {
-              setUsername(e.target.value);
+              const filtered = filterUsername(e.target.value);
+              setUsername(filtered);
               if (errors.username) setErrors(prev => ({ ...prev, username: undefined }));
             }}
             placeholder="your_username"
@@ -235,10 +236,8 @@ export default function WelcomeForm({ user }: { user: User }) {
             autoComplete="username"
             spellCheck={false}
           />
+          <FieldRequirements value={username} requirements={usernameRequirements} />
           <div className="mt-1 h-4 flex items-center gap-1.5">
-            {usernameStatus === 'idle' && (
-              <p className="text-xs text-brand-burgundy/40">3–30 characters: letters, numbers, _ or -</p>
-            )}
             {usernameStatus === 'checking' && (
               <>
                 <svg className="w-3.5 h-3.5 animate-spin text-brand-burgundy/40" fill="none" viewBox="0 0 24 24">

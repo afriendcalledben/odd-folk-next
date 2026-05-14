@@ -11,8 +11,10 @@ export interface Product {
   imageUrl: string;
   images?: string[];
   tags?: string[];
-  color?: string;
+  colors?: string[];
+  materials?: string[];
   locationId?: string | null;
+  status?: string;
   location: string;
   locationLat?: number | null;
   locationLng?: number | null;

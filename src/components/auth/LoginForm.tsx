@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { signIn, signUp } from '@/lib/auth-client'
+import FieldRequirements, { passwordRequirements } from '@/components/ui/FieldRequirements'
 
 interface Props {
   initialMode?: 'login' | 'signup'
@@ -16,6 +17,7 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
   const [error, setError] = useState<string | null>(pageError ?? null)
   const [pending, setPending] = useState(false)
+  const [password, setPassword] = useState('')
   const router = useRouter()
 
   const displayError = error
@@ -182,9 +184,16 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="password" className="block text-sm font-semibold text-brand-white/90">
-              Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-semibold text-brand-white/90">
+                Password
+              </label>
+              {mode === 'login' && (
+                <Link href="/forgot-password" className="text-xs text-brand-yellow/70 hover:text-brand-yellow transition-colors font-body">
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <input
               id="password"
               name="password"
@@ -192,9 +201,14 @@ export default function LoginForm({ initialMode = 'login', message, error: pageE
               required
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               minLength={8}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               className="w-full px-4 py-3.5 rounded-xl border border-brand-white/20 focus:border-brand-yellow focus:ring-2 focus:ring-brand-yellow/20 outline-none transition-all bg-white/5 text-brand-white placeholder-brand-white/30 font-body"
               placeholder="••••••••"
             />
+            {mode === 'signup' && (
+              <FieldRequirements value={password} requirements={passwordRequirements} variant="dark" />
+            )}
           </div>
 
           <button

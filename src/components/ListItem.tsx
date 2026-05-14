@@ -7,6 +7,8 @@ import { Button } from '@/components/ui';
 import type { Product } from '@/types';
 import BookingCalendar from './BookingCalendar';
 import ListingCropModal from './ListingCropModal';
+import { COLOUR_OPTIONS, COLOUR_HEX, pillTextClass } from '@/lib/colours';
+import { MATERIAL_OPTIONS } from '@/lib/materials';
 import { X, Crop, Camera } from 'lucide-react';
 
 const inputClass = 'w-full p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy placeholder:text-brand-burgundy/40 focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors';
@@ -44,7 +46,10 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialData?.category || '');
   const [condition, setCondition] = useState<string>(initialData?.condition || '');
-  const [color, setColor] = useState<string>(initialData?.color || '');
+  const [selectedColors, setSelectedColors] = useState<string[]>(initialData?.colors || []);
+  const [colorSearch, setColorSearch] = useState('');
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>(initialData?.materials || []);
+  const [materialSearch, setMaterialSearch] = useState('');
   const [quantity, setQuantity] = useState<number>(initialData?.quantityAvailable || 1);
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || []);
   const [tagInput, setTagInput] = useState('');
@@ -76,11 +81,6 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
   const categories = [
     "Furniture", "Lighting", "Decor", "Tableware",
     "Textiles", "Plants", "Seasonal", "Photography", "Weddings", "Signage"
-  ];
-
-  const colors = [
-    "Black", "White", "Grey", "Beige", "Brown", "Red", "Blue", "Green", "Yellow",
-    "Orange", "Pink", "Purple", "Gold", "Silver", "Copper", "Natural", "Cream", "Multi-colour"
   ];
 
   useEffect(() => {
@@ -194,7 +194,8 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
     if (!title.trim()) { setError('Please enter a title for your item'); return; }
     if (!selectedCategory) { setError('Please select a category'); return; }
     if (!condition) { setError('Please select the condition'); return; }
-    if (!color) { setError('Please select a color'); return; }
+    if (selectedColors.length === 0) { setError('Please select at least one colour'); return; }
+    if (selectedMaterials.length === 0) { setError('Please select at least one material'); return; }
     if (!price1Day || parseFloat(price1Day) <= 0) { setError('Please enter a valid price for 1 day'); return; }
 
     if (imagePreviews.length === 0) { setError('Please upload at least one image'); return; }
@@ -217,7 +218,8 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           category: selectedCategory,
           tags: selectedTags,
           condition,
-          color,
+          colors: selectedColors,
+          materials: selectedMaterials,
           quantity,
           price1Day: parseFloat(price1Day),
           price3Day: price3Day ? parseFloat(price3Day) : null,
@@ -233,7 +235,8 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           category: selectedCategory,
           tags: selectedTags,
           condition,
-          color,
+          colors: selectedColors,
+          materials: selectedMaterials,
           quantity,
           price1Day: parseFloat(price1Day),
           price3Day: price3Day ? parseFloat(price3Day) : undefined,
@@ -251,7 +254,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
     }
   };
 
-  const isFormValid = title && selectedCategory && condition && color && price1Day && imagePreviews.length > 0;
+  const isFormValid = title && selectedCategory && condition && selectedColors.length > 0 && selectedMaterials.length > 0 && price1Day && imagePreviews.length > 0;
 
   return (
     <>
@@ -272,6 +275,22 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl border border-brand-grey p-8 md:p-12 space-y-16">
+
+          {!isEditMode && locations.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+              <p className="font-body font-bold text-amber-800 mb-2">You have no locations set yet.</p>
+              <p className="font-body text-sm text-amber-700 mb-3">
+                All listed items must have a location in order to go live.{' '}
+                <a href="/dashboard/locations" className="underline font-semibold hover:text-amber-900">
+                  Click here to add a location
+                </a>{' '}
+                before adding your listing.
+              </p>
+              <p className="font-body text-sm text-amber-700">
+                If you create your listing now, it&apos;ll be saved as a draft but will not go live until you edit the listing later to add a location.
+              </p>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
@@ -318,15 +337,51 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
                     </select>
                   </div>
                   <div>
-                    <label className={labelClass}>Colour</label>
-                    <select
-                        className={inputClass}
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
-                    >
-                        <option value="" disabled>Select colour</option>
-                        {colors.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <label className={labelClass}>
+                      Colour <span className="text-brand-burgundy/40 text-xs font-normal">({selectedColors.length}/3)</span>
+                    </label>
+                    {selectedColors.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {selectedColors.map(c => (
+                          <span
+                            key={c}
+                            style={c === 'Multi-colour' ? { background: COLOUR_HEX[c] } : { backgroundColor: COLOUR_HEX[c] }}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-body font-medium drop-shadow-sm ${pillTextClass(c)}`}
+                          >
+                            {c}
+                            <button type="button" onClick={() => setSelectedColors(prev => prev.filter(x => x !== c))} className="opacity-70 hover:opacity-100">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {selectedColors.length < 3 && (
+                      <>
+                        <input
+                          type="text"
+                          placeholder="Filter colours…"
+                          value={colorSearch}
+                          onChange={e => setColorSearch(e.target.value)}
+                          className={`${inputClass} mb-3`}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {COLOUR_OPTIONS
+                            .filter(c => !selectedColors.includes(c) && c.toLowerCase().includes(colorSearch.toLowerCase()))
+                            .map(c => (
+                              <button
+                                type="button"
+                                key={c}
+                                onClick={() => { setSelectedColors(prev => [...prev, c]); setColorSearch(''); }}
+                                style={c === 'Multi-colour' ? { background: COLOUR_HEX[c] } : { backgroundColor: COLOUR_HEX[c] }}
+                                className={`px-3 py-1.5 rounded-full text-sm font-body font-medium drop-shadow-sm hover:scale-105 transition-transform ${pillTextClass(c)}`}
+                              >
+                                {c}
+                              </button>
+                            ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div>
                     <label className={labelClass}>How many do you have?</label>
@@ -338,6 +393,49 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
                       className={inputClass}
                     />
                   </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>
+                  Material <span className="text-brand-burgundy/40 text-xs font-normal">({selectedMaterials.length}/3)</span>
+                </label>
+                {selectedMaterials.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedMaterials.map(m => (
+                      <span key={m} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-body font-medium bg-brand-blue text-white">
+                        {m}
+                        <button type="button" onClick={() => setSelectedMaterials(prev => prev.filter(x => x !== m))}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {selectedMaterials.length < 3 && (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Filter materials…"
+                      value={materialSearch}
+                      onChange={e => setMaterialSearch(e.target.value)}
+                      className={`${inputClass} mb-3`}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {MATERIAL_OPTIONS
+                        .filter(m => !selectedMaterials.includes(m) && m.toLowerCase().includes(materialSearch.toLowerCase()))
+                        .map(m => (
+                          <button
+                            type="button"
+                            key={m}
+                            onClick={() => { setSelectedMaterials(prev => [...prev, m]); setMaterialSearch(''); }}
+                            className="px-3 py-1.5 rounded-full text-sm font-body font-medium bg-brand-blue/10 text-brand-blue hover:bg-brand-blue hover:text-white transition-colors"
+                          >
+                            {m}
+                          </button>
+                        ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div>

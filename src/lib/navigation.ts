@@ -14,8 +14,10 @@ export function useAppNavigate() {
     } else if (view === 'login') {
       router.push('/login');
     } else if (view.startsWith('dashboard-')) {
-      const tab = view.split('-')[1];
-      router.push(`/dashboard?tab=${tab}`);
+      const parts = view.slice('dashboard-'.length).split(':');
+      const tab = parts[0];
+      const rest = parts.slice(1).join('/');
+      router.push(rest ? `/dashboard/${tab}/${rest}` : `/dashboard/${tab}`);
     } else if (view.startsWith('user-profile:')) {
       const userId = view.split(':')[1];
       router.push(`/users/${userId}`);

@@ -274,3 +274,17 @@ export async function sendContactConfirmationEmail(name: string, email: string, 
     createElement(ContactConfirmationEmail, { name, subject })
   );
 }
+
+export async function sendPasswordResetEmail(to: string, resetUrl: string, name: string) {
+  await send(
+    to,
+    'Reset your Odd Folk password',
+    createElement(BookingStatusEmail, {
+      recipientName: name,
+      heading: 'Reset your password',
+      body: 'We received a request to reset your Odd Folk password. Click the button below to choose a new one. This link expires in 1 hour.',
+      ctaText: 'Reset password',
+      ctaUrl: resetUrl,
+    })
+  );
+}

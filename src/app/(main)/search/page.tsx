@@ -15,6 +15,7 @@ function filtersToSearchParams(filters: FilterState): URLSearchParams {
   if (filters.categories.length) p.set('categories', filters.categories.join(','));
   if (filters.conditions.length) p.set('conditions', filters.conditions.join(','));
   if (filters.colors.length) p.set('colors', filters.colors.join(','));
+  if (filters.materials.length) p.set('materials', filters.materials.join(','));
   if (filters.minPrice) p.set('minPrice', filters.minPrice);
   if (filters.maxPrice) p.set('maxPrice', filters.maxPrice);
   if (filters.locationQuery) p.set('locationQuery', filters.locationQuery);
@@ -32,6 +33,7 @@ function searchParamsToFilters(params: URLSearchParams): FilterState {
     categories: params.get('categories') ? params.get('categories')!.split(',') : [],
     conditions: params.get('conditions') ? params.get('conditions')!.split(',') : [],
     colors: params.get('colors') ? params.get('colors')!.split(',') : [],
+    materials: params.get('materials') ? params.get('materials')!.split(',') : [],
     minPrice: params.get('minPrice') || '',
     maxPrice: params.get('maxPrice') || '',
     locationQuery: params.get('locationQuery') || '',
@@ -98,7 +100,7 @@ function SearchPage() {
   }, []);
 
   const activeCount =
-    filters.categories.length + filters.conditions.length + filters.colors.length +
+    filters.categories.length + filters.conditions.length + filters.colors.length + filters.materials.length +
     (filters.lat !== null ? 1 : 0) +
     (filters.minPrice || filters.maxPrice ? 1 : 0) +
     (filters.search ? 1 : 0);

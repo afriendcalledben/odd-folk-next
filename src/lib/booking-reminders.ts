@@ -60,23 +60,23 @@ export async function runBookingReminders() {
         );
         await prisma.thread.update({ where: { id: booking.threadId }, data: { updatedAt: now } });
       }
-      notifyBookingAutoDeclined(booking.listerId, booking.product.title, true, booking.threadId ?? undefined);
-      notifyBookingAutoDeclined(booking.hirerId, booking.product.title, false, booking.threadId ?? undefined);
+      notifyBookingAutoDeclined(booking.listerId, booking.product.title, true, booking.threadId ?? undefined, booking.id, 'received');
+      notifyBookingAutoDeclined(booking.hirerId, booking.product.title, false, booking.threadId ?? undefined, booking.id, 'made');
       sendBookingAutoDeclinedEmail(emailData);
       autoDeclined++;
     } else if (hoursRemaining <= 3 && !booking.reminder3Sent) {
       await prisma.booking.update({ where: { id: booking.id }, data: { reminder3Sent: true } });
-      notifyBookingReminder(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, 3, booking.threadId ?? undefined);
+      notifyBookingReminder(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, 3, booking.threadId ?? undefined, booking.id);
       sendBookingReminderEmail(emailData, 3);
       reminders3h++;
     } else if (hoursRemaining <= 12 && !booking.reminder12Sent) {
       await prisma.booking.update({ where: { id: booking.id }, data: { reminder12Sent: true } });
-      notifyBookingReminder(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, 12, booking.threadId ?? undefined);
+      notifyBookingReminder(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, 12, booking.threadId ?? undefined, booking.id);
       sendBookingReminderEmail(emailData, 12);
       reminders12h++;
     } else if (hoursRemaining <= 24 && !booking.reminder24Sent) {
       await prisma.booking.update({ where: { id: booking.id }, data: { reminder24Sent: true } });
-      notifyBookingReminder(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, 24, booking.threadId ?? undefined);
+      notifyBookingReminder(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, 24, booking.threadId ?? undefined, booking.id);
       sendBookingReminderEmail(emailData, 24);
       reminders24h++;
     }

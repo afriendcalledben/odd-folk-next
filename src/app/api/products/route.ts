@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
     const condition = searchParams.get('condition');
     const colorsParam = searchParams.get('colors');
     const colors = colorsParam ? colorsParam.split(',').map(c => c.trim()).filter(Boolean) : null;
+    const materialsParam = searchParams.get('materials');
+    const materials = materialsParam ? materialsParam.split(',').map(c => c.trim()).filter(Boolean) : null;
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
     const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
     const distance = searchParams.get('distance') ? parseFloat(searchParams.get('distance')!) : null;
@@ -57,7 +59,15 @@ export async function GET(req: NextRequest) {
     }
 
     if (condition) where.condition = condition;
-    if (colors?.length) where.color = { in: colors };
+    if (colors?.length) {
+      const colorClauses = colors.map((c: string) => ({ colors: { contains: `"${c}"` } }));
+      where.AND = [...(where.AND || []), { OR: colorClauses }];
+    }
+
+    if (materials?.length) {
+      const matClauses = materials.map((m: string) => ({ materials: { contains: `"${m}"` } }));
+      where.AND = [...(where.AND || []), { OR: matClauses }];
+    }
 
     // Exclude products with overlapping bookings when date filtering
     if (filterByDates) {
@@ -102,12 +112,21 @@ export async function GET(req: NextRequest) {
         const ownerAvgRating = ownerRatings.length > 0
           ? ownerRatings.reduce((a: number, b: number) => a + b, 0) / ownerRatings.length
           : null;
+        const productColors = parseJsonField(product.colors) as string[];
         return {
           ...product,
           tags: parseJsonField(product.tags),
           images: parseJsonField(product.images),
+          colors: productColors,
+          materials: parseJsonField(product.materials) as string[],
           avgRating: avgRating._avg.rating,
           reviewCount: product._count.reviews,
+          colorMatchCount: colors?.length
+            ? colors.filter(c => productColors.includes(c)).length
+            : 0,
+          distanceMiles: (filterByLocation && product.location?.lat != null && product.location?.lng != null)
+            ? haversinemiles(lat!, lng!, product.location.lat, product.location.lng)
+            : null,
           owner: {
             id: product.owner.id,
             name: product.owner.name,
@@ -143,13 +162,19 @@ export async function GET(req: NextRequest) {
 
     // Apply distance filter in JS after fetching
     const filtered = filterByLocation
-      ? afterDateFilter.filter(p => {
-          const plat = p.location?.lat;
-          const plng = p.location?.lng;
-          if (plat == null || plng == null) return false;
-          return haversinemiles(lat!, lng!, plat, plng) <= distance!;
-        })
+      ? afterDateFilter.filter(p => p.distanceMiles != null && p.distanceMiles <= distance!)
       : afterDateFilter;
+
+    // Sort by color match score (desc), then distance/recency tiebreaker
+    if (colors?.length) {
+      filtered.sort((a, b) => {
+        const scoreDiff = (b.colorMatchCount ?? 0) - (a.colorMatchCount ?? 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        if (filterByLocation && a.distanceMiles != null && b.distanceMiles != null)
+          return a.distanceMiles - b.distanceMiles;
+        return 0;
+      });
+    }
 
     // Paginate the distance-filtered results
     const total = filtered.length;
@@ -181,7 +206,8 @@ export async function POST(req: NextRequest) {
       category,
       tags,
       condition,
-      color,
+      colors,
+      materials,
       quantity,
       price1Day,
       price3Day,
@@ -201,13 +227,15 @@ export async function POST(req: NextRequest) {
         category,
         tags: serializeArray(tagsArray),
         condition,
-        color,
+        colors: serializeArray((Array.isArray(colors) ? colors : colors ? JSON.parse(colors) : []).slice(0, 3)),
+        materials: serializeArray((Array.isArray(materials) ? materials : materials ? JSON.parse(materials) : []).slice(0, 3)),
         quantity: parseInt(quantity) || 1,
         price1Day: parseFloat(price1Day),
         price3Day: price3Day ? parseFloat(price3Day) : null,
         price7Day: price7Day ? parseFloat(price7Day) : null,
         images: serializeArray(imagesArray),
         locationId,
+        status: locationId ? 'ACTIVE' : 'DRAFT',
       },
       include: {
         owner: {

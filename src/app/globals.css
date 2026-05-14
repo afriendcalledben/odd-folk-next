@@ -31,6 +31,19 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes bookingHighlight {
+  0%   { box-shadow: 0 0 0 0 rgb(245 79 25 / 0.5); }
+  50%  { box-shadow: 0 0 0 8px rgb(245 79 25 / 0.2); }
+  100% { box-shadow: 0 0 0 0 rgb(245 79 25 / 0); }
+}
+
+.booking-highlight {
+  border-radius: 1.5rem;
+  outline: 2px solid #F54F19;
+  outline-offset: 2px;
+  animation: bookingHighlight 1.8s ease-out 0.2s;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;

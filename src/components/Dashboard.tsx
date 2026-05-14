@@ -6,10 +6,11 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { Package, CalendarDays, Heart, User, MapPinned, PiggyBank, LogOut, Trash2, Timer, Star } from 'lucide-react';
 import { getUserBookings, updateBookingStatus, cancelBooking, declineBooking, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, updateLocation, deleteLocation, getUserFavorites, updateVacationMode, updateBlockedDates, getBlockedDates, type BlockedRange } from '../services/api';
+import { changePassword } from '@/lib/auth-client';
 import ProductGrid from './ProductGrid';
 import { useAuth } from '@/context/AuthContext';
 import PhoneInput, { validatePhone } from '@/components/PhoneInput';
-import { Input, Textarea, Button } from '@/components/ui';
+import { Input, Textarea, Button, FieldRequirements, usernameRequirements, passwordRequirements, filterUsername } from '@/components/ui';
 import BookingTracker from './BookingTracker';
 import AvatarCropModal from './AvatarCropModal';
 import BookingCalendar from './BookingCalendar';
@@ -19,8 +20,10 @@ import type { Booking, BookingStatus, Product } from '../types';
 const LocationPicker = dynamic(() => import('./LocationPicker'), { ssr: false });
 
 interface DashboardProps {
-    user: { id: string; name: string; avatarUrl?: string; username?: string; bio?: string; phone?: string; email?: string };
+    user: { id: string; name: string; avatarUrl?: string; username?: string; bio?: string; phone?: string; email?: string; isGoogleUser?: boolean };
     activeTab?: string;
+    activeSubTab?: 'made' | 'received';
+    activeBookingId?: string;
     onLogout: () => void;
 }
 
@@ -256,10 +259,11 @@ const BookingActionModal: React.FC<BookingActionModalProps> = ({ action, booking
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', activeSubTab, activeBookingId, onLogout }) => {
     const { refreshUser, favoriteIds, toggleFavorite, isLoggedIn } = useAuth();
     const [currentTab, setCurrentTab] = useState(activeTab);
-    const [bookingSubTab, setBookingSubTab] = useState<'made' | 'received'>('made');
+    const [bookingSubTab, setBookingSubTab] = useState<'made' | 'received'>(activeSubTab ?? 'made');
+    const scrolledRef = useRef(false);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [myProducts, setMyProducts] = useState<Product[]>([]);
     const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
@@ -312,6 +316,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken';
     const [profileUsernameStatus, setProfileUsernameStatus] = useState<UsernameStatus>('idle');
     const profileUsernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const [pwCurrent, setPwCurrent] = useState('');
+    const [pwNew, setPwNew] = useState('');
+    const [pwConfirm, setPwConfirm] = useState('');
+    const [pwError, setPwError] = useState<string | null>(null);
+    const [pwSuccess, setPwSuccess] = useState(false);
+    const [pwPending, setPwPending] = useState(false);
 
     useEffect(() => {
         setLocalAvatarUrl(user.avatarUrl);
@@ -431,6 +442,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
     useEffect(() => {
         setCurrentTab(activeTab);
     }, [activeTab]);
+
+    useEffect(() => {
+        if (activeSubTab) setBookingSubTab(activeSubTab);
+    }, [activeSubTab]);
+
+    useEffect(() => {
+        if (currentTab !== 'bookings' || !activeBookingId || bookings.length === 0 || scrolledRef.current) return;
+        scrolledRef.current = true;
+        setTimeout(() => {
+            document.querySelector(`[data-booking-id="${activeBookingId}"]`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+    }, [currentTab, activeBookingId, bookings]);
 
     useEffect(() => {
         if (currentTab !== 'favorites') return;
@@ -643,6 +667,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                                     <h3 className="font-heading text-xl text-brand-blue">{p.name}</h3>
                                                 </Link>
                                                 <p className="text-brand-orange font-bold text-lg">£{p.pricePerDay} / day</p>
+                                                {p.status === 'DRAFT' && (
+                                                    <p className="text-xs font-body font-semibold text-amber-600 mt-1">
+                                                        Draft — not live. <Link href={`/list-item/edit/${p.id}`} className="underline">Add a location</Link> to publish.
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="flex gap-2 shrink-0">
                                                 <Link
@@ -733,7 +762,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                 <p className="font-body text-brand-burgundy/60 text-center py-12">You haven&apos;t made any booking requests yet.</p>
                             ) : (
                                 madeBookings.map(b => (
-                                    <BookingCard key={b.id} booking={b} isLister={false} onStatusChange={handleStatusChange} onDecline={() => {}} onCancel={() => {}} onReview={setReviewTarget} currentUserId={currentUserId} />
+                                    <div key={b.id} data-booking-id={b.id} className={activeBookingId === b.id ? 'booking-highlight' : undefined}>
+                                        <BookingCard booking={b} isLister={false} onStatusChange={handleStatusChange} onDecline={() => {}} onCancel={() => {}} onReview={setReviewTarget} currentUserId={currentUserId} />
+                                    </div>
                                 ))
                             )
                         ) : (
@@ -741,7 +772,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                 <p className="font-body text-brand-burgundy/60 text-center py-12">No booking requests for your listings yet.</p>
                             ) : (
                                 receivedBookings.map(b => (
-                                    <BookingCard key={b.id} booking={b} isLister={true} onStatusChange={handleStatusChange} onDecline={bk => setBookingActionTarget({ booking: bk, action: 'decline' })} onCancel={bk => setBookingActionTarget({ booking: bk, action: 'cancel' })} onReview={setReviewTarget} currentUserId={currentUserId} />
+                                    <div key={b.id} data-booking-id={b.id} className={activeBookingId === b.id ? 'booking-highlight' : undefined}>
+                                        <BookingCard booking={b} isLister={true} onStatusChange={handleStatusChange} onDecline={bk => setBookingActionTarget({ booking: bk, action: 'decline' })} onCancel={bk => setBookingActionTarget({ booking: bk, action: 'cancel' })} onReview={setReviewTarget} currentUserId={currentUserId} />
+                                    </div>
                                 ))
                             )
                         )}
@@ -1128,13 +1161,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                                         type="text"
                                         value={profileUsername}
                                         onChange={e => {
-                                            setProfileUsername(e.target.value);
+                                            const filtered = filterUsername(e.target.value);
+                                            setProfileUsername(filtered);
                                             if (profileErrors.username) setProfileErrors(prev => ({ ...prev, username: undefined }));
                                         }}
                                         prefix="@"
                                         error={profileErrors.username}
                                         spellCheck={false}
                                     />
+                                    <FieldRequirements value={profileUsername} requirements={usernameRequirements} />
                                     <div className="mt-1 h-4 flex items-center gap-1.5">
                                         {profileUsernameStatus === 'checking' && (
                                             <>
@@ -1221,6 +1256,85 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', onL
                             </div>
                           </div>
                         </form>
+
+                        {!user.isGoogleUser && (
+                            <div className="mt-10 pt-10 border-t border-brand-grey">
+                                <h3 className="font-heading text-2xl text-brand-burgundy mb-6">Change Password</h3>
+                                <form
+                                    className="space-y-5 max-w-md"
+                                    onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        setPwError(null);
+                                        setPwSuccess(false);
+                                        if (pwNew !== pwConfirm) {
+                                            setPwError('New passwords do not match');
+                                            return;
+                                        }
+                                        if (pwNew.length < 8) {
+                                            setPwError('Password must be at least 8 characters');
+                                            return;
+                                        }
+                                        setPwPending(true);
+                                        try {
+                                            const result = await changePassword({ currentPassword: pwCurrent, newPassword: pwNew, revokeOtherSessions: false });
+                                            if (result.error) {
+                                                setPwError('Current password is incorrect');
+                                            } else {
+                                                setPwSuccess(true);
+                                                setPwCurrent('');
+                                                setPwNew('');
+                                                setPwConfirm('');
+                                            }
+                                        } catch {
+                                            setPwError('Something went wrong. Please try again.');
+                                        } finally {
+                                            setPwPending(false);
+                                        }
+                                    }}
+                                >
+                                    {pwError && (
+                                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-body">
+                                            {pwError}
+                                        </div>
+                                    )}
+                                    {pwSuccess && (
+                                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm font-body">
+                                            Password changed successfully.
+                                        </div>
+                                    )}
+                                    <Input
+                                        label="Current password"
+                                        type="password"
+                                        value={pwCurrent}
+                                        onChange={(e) => setPwCurrent(e.target.value)}
+                                        autoComplete="current-password"
+                                        required
+                                    />
+                                    <div>
+                                        <Input
+                                            label="New password"
+                                            type="password"
+                                            value={pwNew}
+                                            onChange={(e) => setPwNew(e.target.value)}
+                                            autoComplete="new-password"
+                                            required
+                                        />
+                                        <FieldRequirements value={pwNew} requirements={passwordRequirements} />
+                                    </div>
+                                    <Input
+                                        label="Confirm new password"
+                                        type="password"
+                                        value={pwConfirm}
+                                        onChange={(e) => setPwConfirm(e.target.value)}
+                                        autoComplete="new-password"
+                                        required
+                                    />
+                                    <Button type="submit" isLoading={pwPending}>
+                                        {pwPending ? 'Saving…' : 'Change Password'}
+                                    </Button>
+                                </form>
+                            </div>
+                        )}
                     </div>
                 );
             }

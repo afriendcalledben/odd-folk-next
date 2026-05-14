@@ -67,7 +67,8 @@ model Product {
   category    String   // Event furniture, Lighting, etc.
   tags        String   @default("[]") // JSON array
   condition   String   // Like New, Good, Fair, Poor, Vintage/Antique
-  color       String
+  colors      String   @default("[]") // JSON array of up to 3 colour strings
+  materials   String   @default("[]") // JSON array of up to 3 material strings
   quantity    Int      @default(1)
   price1Day   Float    @map("price_1_day")
   price3Day   Float?   @map("price_3_day")

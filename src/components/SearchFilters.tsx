@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Input, Button } from '@/components/ui';
 import { SlidersHorizontal, X } from 'lucide-react';
+import { COLOUR_OPTIONS, COLOUR_HEX } from '@/lib/colours';
+import { MATERIAL_OPTIONS } from '@/lib/materials';
 
 const CATEGORIES = [
   'Event Furniture', 'Lighting', 'Backdrops', 'Tableware', 'Decorative Props',
@@ -11,25 +13,13 @@ const CATEGORIES = [
 
 const CONDITIONS = ['Like New', 'Good', 'Fair', 'Poor', 'Vintage/Antique'];
 
-const COLOURS = [
-  'Black', 'White', 'Grey', 'Beige', 'Brown', 'Red', 'Blue', 'Green',
-  'Yellow', 'Orange', 'Pink', 'Purple', 'Gold', 'Silver', 'Copper', 'Natural', 'Cream', 'Multi-colour',
-];
-
-const COLOUR_HEX: Record<string, string> = {
-  Black: '#1a1a1a', White: '#ffffff', Grey: '#9ca3af', Beige: '#d4b896',
-  Brown: '#92400e', Red: '#dc2626', Blue: '#2563eb', Green: '#16a34a',
-  Yellow: '#eab308', Orange: '#ea580c', Pink: '#ec4899', Purple: '#9333ea',
-  Gold: '#d97706', Silver: '#94a3b8', Copper: '#b45309', Natural: '#a3825a',
-  Cream: '#fef3c7', 'Multi-colour': 'conic-gradient(red, yellow, green, blue, red)',
-};
-
 
 export interface FilterState {
   search: string;
   categories: string[];
   conditions: string[];
   colors: string[];
+  materials: string[];
   minPrice: string;
   maxPrice: string;
   locationQuery: string;
@@ -45,6 +35,7 @@ export const defaultFilters: FilterState = {
   categories: [],
   conditions: [],
   colors: [],
+  materials: [],
   minPrice: '',
   maxPrice: '',
   locationQuery: '',
@@ -82,14 +73,15 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
 
   const update = (partial: Partial<FilterState>) => onChange({ ...filters, ...partial });
 
-  const toggleItem = (key: 'categories' | 'conditions' | 'colors', value: string) => {
+  const toggleItem = (key: 'categories' | 'conditions' | 'colors' | 'materials', value: string) => {
     const current = filters[key];
+    if (!current.includes(value) && (key === 'colors' || key === 'materials') && current.length >= 3) return;
     update({ [key]: current.includes(value) ? current.filter(v => v !== value) : [...current, value] });
   };
 
   const hasActiveFilters =
     filters.categories.length > 0 || filters.conditions.length > 0 || filters.colors.length > 0 ||
-    filters.minPrice || filters.maxPrice;
+    filters.materials.length > 0 || filters.minPrice || filters.maxPrice;
 
   const clearAll = () => onChange({ ...defaultFilters });
 
@@ -159,7 +151,7 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
 
       <FilterSection title="Colour">
         <div className="flex flex-wrap gap-2">
-          {COLOURS.map(colour => (
+          {COLOUR_OPTIONS.map(colour => (
             <button
               key={colour}
               type="button"
@@ -183,6 +175,28 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
         )}
       </FilterSection>
 
+      <FilterSection title="Material">
+        <div className="flex flex-wrap gap-1.5">
+          {MATERIAL_OPTIONS.map(mat => (
+            <button
+              key={mat}
+              type="button"
+              onClick={() => toggleItem('materials', mat)}
+              className={`px-2.5 py-1 rounded-full text-xs font-body transition-all ${
+                filters.materials.includes(mat)
+                  ? 'bg-brand-blue text-white'
+                  : 'bg-brand-grey/30 text-brand-burgundy hover:bg-brand-grey/60'
+              }`}
+            >
+              {mat}
+            </button>
+          ))}
+        </div>
+        {filters.materials.length > 0 && (
+          <p className="text-xs text-brand-burgundy/50 font-body mt-2">{filters.materials.join(', ')}</p>
+        )}
+      </FilterSection>
+
     </div>
   );
 
@@ -194,7 +208,7 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
           <SlidersHorizontal size={16} className="mr-2" /> Filters
           {hasActiveFilters && (
             <span className="ml-2 bg-brand-orange text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {filters.categories.length + filters.conditions.length + filters.colors.length + (filters.lat ? 1 : 0) + (filters.minPrice || filters.maxPrice ? 1 : 0)}
+              {filters.categories.length + filters.conditions.length + filters.colors.length + filters.materials.length + (filters.lat ? 1 : 0) + (filters.minPrice || filters.maxPrice ? 1 : 0)}
             </span>
           )}
         </Button>

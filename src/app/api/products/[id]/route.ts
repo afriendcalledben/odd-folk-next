@@ -89,6 +89,8 @@ export async function GET(
       ...product,
       tags: parseJsonField(product.tags),
       images: parseJsonField(product.images),
+      colors: parseJsonField(product.colors),
+      materials: parseJsonField(product.materials),
       blockedDates: parseJsonField(product.blockedDates),
       avgRating: avgRating._avg.rating,
       reviewCount: product._count.reviews,
@@ -136,6 +138,21 @@ export async function PUT(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = { ...body };
 
+    // Protect location changes when active bookings exist
+    if ('locationId' in updateData && updateData.locationId !== product.locationId) {
+      const activeBookings = await prisma.booking.count({
+        where: {
+          productId: id,
+          status: { in: ['PENDING', 'APPROVED', 'PAID', 'COLLECTED'] },
+        },
+      });
+      if (activeBookings > 0) {
+        return errorResponse('Location cannot be changed while active bookings are in place', 400);
+      }
+      // Auto-update status based on whether a location is now set
+      updateData.status = updateData.locationId ? 'ACTIVE' : 'DRAFT';
+    }
+
     // Handle array fields serialization
     if (updateData.tags) {
       updateData.tags = serializeArray(
@@ -145,6 +162,16 @@ export async function PUT(
     if (updateData.images) {
       updateData.images = serializeArray(
         Array.isArray(updateData.images) ? updateData.images : JSON.parse(updateData.images)
+      );
+    }
+    if (updateData.colors !== undefined) {
+      updateData.colors = serializeArray(
+        (Array.isArray(updateData.colors) ? updateData.colors : JSON.parse(updateData.colors || '[]')).slice(0, 3)
+      );
+    }
+    if (updateData.materials !== undefined) {
+      updateData.materials = serializeArray(
+        (Array.isArray(updateData.materials) ? updateData.materials : JSON.parse(updateData.materials || '[]')).slice(0, 3)
       );
     }
     if (updateData.blockedDates !== undefined) {
@@ -172,6 +199,8 @@ export async function PUT(
       ...updated,
       tags: parseJsonField(updated.tags),
       images: parseJsonField(updated.images),
+      colors: parseJsonField(updated.colors),
+      materials: parseJsonField(updated.materials),
       blockedDates: parseJsonField(updated.blockedDates),
     });
   } catch (error: unknown) {

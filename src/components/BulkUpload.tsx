@@ -3,15 +3,16 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui';
 import { Upload, Download, CheckCircle, XCircle, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { COLOUR_OPTIONS } from '@/lib/colours';
+import { MATERIAL_OPTIONS } from '@/lib/materials';
 
 const CATEGORIES = ["Furniture", "Lighting", "Decor", "Tableware", "Textiles", "Plants", "Seasonal", "Photography", "Weddings", "Signage"];
 const CONDITIONS = ["Like New", "Good", "Fair", "Poor", "Vintage/Antique"];
-const COLORS = ["Black", "White", "Grey", "Beige", "Brown", "Red", "Blue", "Green", "Yellow", "Orange", "Pink", "Purple", "Gold", "Silver", "Copper", "Natural", "Cream", "Multi-colour"];
 
 const TEMPLATE_CSV = [
-  'title,description,category,condition,color,quantity,price_1_day,price_3_day,price_7_day,tags',
-  '"Velvet Armchair","A stunning mid-century velvet armchair in excellent condition.",Furniture,"Like New",Purple,1,30,75,150,velvet|armchair|vintage',
-  '"Copper Lantern Set","Set of 6 hanging copper lanterns. Perfect for outdoor events.",Lighting,Good,Copper,6,15,35,70,copper|lantern|outdoor',
+  'title,description,category,condition,colors,materials,quantity,price_1_day,price_3_day,price_7_day,tags',
+  '"Velvet Armchair","A stunning mid-century velvet armchair in excellent condition.",Furniture,"Like New",Purple,Fabric,1,30,75,150,velvet|armchair|vintage',
+  '"Copper Lantern Set","Set of 6 hanging copper lanterns. Perfect for outdoor events.",Lighting,Good,Copper|Gold,Metal,6,15,35,70,copper|lantern|outdoor',
 ].join('\n');
 
 interface ParsedRow {
@@ -67,8 +68,18 @@ function validateRow(data: Record<string, string>): string[] {
   else if (!CATEGORIES.includes(data.category)) errors.push(`"${data.category}" not a valid category`);
   if (!data.condition) errors.push('condition required');
   else if (!CONDITIONS.includes(data.condition)) errors.push(`"${data.condition}" not a valid condition`);
-  if (!data.color) errors.push('color required');
-  else if (!COLORS.includes(data.color)) errors.push(`"${data.color}" not a valid color`);
+  if (!data.colors) errors.push('colors required');
+  else {
+    const vals = data.colors.split('|').map((c: string) => c.trim()).slice(0, 3);
+    const invalid = vals.filter((c: string) => !COLOUR_OPTIONS.includes(c));
+    if (invalid.length) errors.push(`Invalid colors: ${invalid.join(', ')}`);
+  }
+  if (!data.materials) errors.push('materials required');
+  else {
+    const vals = data.materials.split('|').map((m: string) => m.trim()).slice(0, 3);
+    const invalid = vals.filter((m: string) => !MATERIAL_OPTIONS.includes(m));
+    if (invalid.length) errors.push(`Invalid materials: ${invalid.join(', ')}`);
+  }
   if (!data.price_1_day) errors.push('price_1_day required');
   else if (isNaN(parseFloat(data.price_1_day)) || parseFloat(data.price_1_day) <= 0) errors.push('price_1_day must be positive');
   if (data.price_3_day && (isNaN(parseFloat(data.price_3_day)) || parseFloat(data.price_3_day) <= 0)) errors.push('price_3_day must be positive');
@@ -77,7 +88,7 @@ function validateRow(data: Record<string, string>): string[] {
   return errors;
 }
 
-const COLUMNS = ['title', 'description', 'category', 'condition', 'color', 'quantity', 'price_1_day', 'price_3_day', 'price_7_day', 'tags'];
+const COLUMNS = ['title', 'description', 'category', 'condition', 'colors', 'materials', 'quantity', 'price_1_day', 'price_3_day', 'price_7_day', 'tags'];
 
 export default function BulkUpload() {
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
@@ -190,10 +201,13 @@ export default function BulkUpload() {
                 {[
                   { label: 'category', values: CATEGORIES },
                   { label: 'condition', values: CONDITIONS },
-                  { label: 'color', values: COLORS },
-                ].map(({ label, values }) => (
+                  { label: 'colors', values: COLOUR_OPTIONS, note: 'Pipe-separated, up to 3 (e.g. Red|Blue)' },
+                  { label: 'materials', values: MATERIAL_OPTIONS, note: 'Pipe-separated, up to 3 (e.g. Wood|Metal)' },
+                ].map(({ label, values, note }) => (
                   <div key={label}>
-                    <p className="text-xs font-bold text-brand-burgundy/60 uppercase tracking-wider mb-2 mt-4">{label}</p>
+                    <p className="text-xs font-bold text-brand-burgundy/60 uppercase tracking-wider mb-2 mt-4">
+                      {label}{note && <span className="normal-case font-normal ml-2 text-brand-burgundy/40">{note}</span>}
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {values.map(v => (
                         <code key={v} className="bg-brand-grey/30 text-brand-burgundy text-xs px-2 py-0.5 rounded">{v}</code>
@@ -261,6 +275,7 @@ export default function BulkUpload() {
                     <th className="text-left px-4 py-3">Category</th>
                     <th className="text-left px-4 py-3">Condition</th>
                     <th className="text-left px-4 py-3">Colour</th>
+                    <th className="text-left px-4 py-3">Material</th>
                     <th className="text-left px-4 py-3">Qty</th>
                     <th className="text-left px-4 py-3">1d / 3d / 7d</th>
                     <th className="text-left px-4 py-3">Status</th>
@@ -273,7 +288,8 @@ export default function BulkUpload() {
                       <td className="px-4 py-3 text-brand-burgundy font-medium max-w-[180px] truncate">{row.data.title || <span className="text-brand-burgundy/30 italic">empty</span>}</td>
                       <td className="px-4 py-3 text-brand-burgundy/70">{row.data.category}</td>
                       <td className="px-4 py-3 text-brand-burgundy/70">{row.data.condition}</td>
-                      <td className="px-4 py-3 text-brand-burgundy/70">{row.data.color}</td>
+                      <td className="px-4 py-3 text-brand-burgundy/70">{row.data.colors}</td>
+                      <td className="px-4 py-3 text-brand-burgundy/70">{row.data.materials}</td>
                       <td className="px-4 py-3 text-brand-burgundy/70">{row.data.quantity || '1'}</td>
                       <td className="px-4 py-3 text-brand-burgundy/70 whitespace-nowrap">
                         £{row.data.price_1_day || '—'}

@@ -50,7 +50,8 @@ export async function POST(
     const cancellerName = cancelledByRole === 'hirer'
       ? (booking.hirer.username ?? booking.hirer.name)
       : (booking.lister.username ?? booking.lister.name);
-    notifyBookingCancelled(recipientId, cancellerName, booking.product.title, booking.threadId ?? undefined);
+    const recipientSubTab = cancelledByRole === 'hirer' ? 'received' : 'made';
+    notifyBookingCancelled(recipientId, cancellerName, booking.product.title, booking.threadId ?? undefined, bookingId, recipientSubTab);
     sendBookingCancelledEmail({
       id: bookingId,
       productTitle: booking.product.title,

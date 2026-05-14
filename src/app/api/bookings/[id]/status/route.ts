@@ -175,20 +175,20 @@ export async function PUT(
     const productTitle = updatedBooking.product.title;
     if (newStatus === 'APPROVED') {
       sendBookingApprovedEmail(emailData);
-      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
+      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id);
     }
     if (newStatus === 'DECLINED') {
       sendBookingDeclinedEmail(emailData);
-      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined);
+      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id);
     }
     if (newStatus === 'PAID') {
       sendPaymentReceivedEmail(emailData);
-      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.username ?? updatedBooking.hirer.name, productTitle, updatedBooking.threadId ?? undefined);
+      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.username ?? updatedBooking.hirer.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id);
     }
     if (newStatus === 'COMPLETED') {
       sendBookingCompletedEmail(emailData);
-      notifyBookingCompleted(updatedBooking.hirerId, productTitle, updatedBooking.threadId ?? undefined);
-      notifyBookingCompleted(updatedBooking.listerId, productTitle, updatedBooking.threadId ?? undefined);
+      notifyBookingCompleted(updatedBooking.hirerId, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, 'made');
+      notifyBookingCompleted(updatedBooking.listerId, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, 'received');
     }
 
     return successResponse(updatedBooking);

@@ -141,8 +141,10 @@ const toFrontendProduct = (p: any): Product => ({
   imageUrl: (p.images && p.images[0]) || 'https://picsum.photos/seed/default/800/600',
   images: p.images || [],
   tags: p.tags || [],
-  color: p.color || '',
+  colors: p.colors || [],
+  materials: p.materials || [],
   locationId: p.locationId ?? null,
+  status: p.status ?? 'ACTIVE',
   location: p.location?.city || 'London',
   locationLat: p.location?.lat ?? null,
   locationLng: p.location?.lng ?? null,
@@ -167,6 +169,7 @@ export interface SearchParams {
   maxPrice?: number;
   condition?: string;
   colors?: string[]; // multi-select
+  materials?: string[]; // multi-select
   lat?: number;
   lng?: number;
   distance?: number; // miles
@@ -184,6 +187,7 @@ export const fetchProducts = async (params?: SearchParams): Promise<Product[]> =
     if (params?.maxPrice) queryParts.push(`maxPrice=${params.maxPrice}`);
     if (params?.condition) queryParts.push(`condition=${encodeURIComponent(params.condition)}`);
     if (params?.colors?.length) queryParts.push(`colors=${encodeURIComponent(params.colors.join(','))}`);
+    if (params?.materials?.length) queryParts.push(`materials=${encodeURIComponent(params.materials.join(','))}`);
     if (params?.lat !== undefined) queryParts.push(`lat=${params.lat}`);
     if (params?.lng !== undefined) queryParts.push(`lng=${params.lng}`);
     if (params?.distance !== undefined) queryParts.push(`distance=${params.distance}`);
@@ -234,7 +238,8 @@ export const createProduct = async (productData: {
   category: string;
   tags: string[];
   condition: string;
-  color: string;
+  colors: string[];
+  materials: string[];
   quantity: number;
   price1Day: number;
   price3Day?: number;
@@ -252,7 +257,8 @@ export const updateProduct = async (id: string | number, data: {
   category?: string;
   tags?: string[];
   condition?: string;
-  color?: string;
+  colors?: string[];
+  materials?: string[];
   quantity?: number;
   price1Day?: number;
   price3Day?: number | null;

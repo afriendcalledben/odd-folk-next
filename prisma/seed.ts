@@ -408,7 +408,9 @@ async function main() {
           category: listing.category,
           tags: listing.tags,
           condition: listing.condition,
-          color: listing.color,
+          colors: JSON.stringify([listing.color].filter(Boolean)),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          materials: JSON.stringify([(listing as any).material].filter(Boolean)),
           quantity: listing.quantity,
           price1Day: listing.price1Day,
           price3Day: listing.price3Day ?? null,

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { LockKeyhole, CalendarDays, Star, ChevronLeft } from 'lucide-react';
+import { COLOUR_HEX, pillTextClass } from '@/lib/colours';
 import type { Product, Review } from '../types';
 import { createBookingRequest, fetchReviewsForProduct, getProductAvailability } from '../services/api';
 import { useAuth } from '@/context/AuthContext';
@@ -254,6 +255,38 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                         </span>
                     </div>
                 </div>
+
+                {/* Colours & Materials */}
+                {((product.colors?.length ?? 0) > 0 || (product.materials?.length ?? 0) > 0) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-brand-grey/10 rounded-2xl p-4">
+                      <p className="text-xs font-bold text-brand-burgundy/50 uppercase tracking-wider mb-2.5">Colour</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(product.colors || []).map(c => (
+                          <span
+                            key={c}
+                            style={c === 'Multi-colour' ? { background: COLOUR_HEX[c] } : { backgroundColor: COLOUR_HEX[c] }}
+                            className={`px-2.5 py-1 rounded-full text-xs font-body font-medium drop-shadow-sm ${pillTextClass(c)}`}
+                          >
+                            {c}
+                          </span>
+                        ))}
+                        {(product.colors?.length ?? 0) === 0 && <span className="text-xs text-brand-burgundy/30">—</span>}
+                      </div>
+                    </div>
+                    <div className="bg-brand-grey/10 rounded-2xl p-4">
+                      <p className="text-xs font-bold text-brand-burgundy/50 uppercase tracking-wider mb-2.5">Material</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(product.materials || []).map(m => (
+                          <span key={m} className="px-2.5 py-1 rounded-full text-xs font-body font-medium bg-brand-blue/10 text-brand-blue">
+                            {m}
+                          </span>
+                        ))}
+                        {(product.materials?.length ?? 0) === 0 && <span className="text-xs text-brand-burgundy/30">—</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <p className="text-brand-burgundy/80 leading-relaxed">{product.description}</p>
 

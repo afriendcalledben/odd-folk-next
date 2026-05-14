@@ -19,6 +19,13 @@ export function inboxUrl(threadId?: string | null) {
   return threadId ? `${SITE_URL}/inbox?t=${threadId}` : `${SITE_URL}/inbox`;
 }
 
+export function dashboardUrl(tab: string, subTab?: string, bookingId?: string) {
+  const base = `${SITE_URL}/dashboard/${tab}`;
+  if (subTab && bookingId) return `${base}/${subTab}/${bookingId}`;
+  if (subTab) return `${base}/${subTab}`;
+  return base;
+}
+
 export async function createNotification(
   userId: string,
   type: string,
@@ -37,78 +44,78 @@ export async function createNotification(
 
 // Convenience helpers
 
-export function notifyBookingRequest(listerId: string, hirerName: string, productTitle: string, threadId?: string) {
+export function notifyBookingRequest(listerId: string, hirerName: string, productTitle: string, threadId?: string, bookingId?: string) {
   return createNotification(
     listerId,
     NotificationType.BOOKING_REQUEST,
     'New booking request',
     `**${hirerName}** has requested **${productTitle}**`,
-    inboxUrl(threadId)
+    bookingId ? dashboardUrl('bookings', 'received', bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyBookingApproved(hirerId: string, listerName: string, productTitle: string, threadId?: string) {
+export function notifyBookingApproved(hirerId: string, listerName: string, productTitle: string, threadId?: string, bookingId?: string) {
   return createNotification(
     hirerId,
     NotificationType.BOOKING_APPROVED,
     'Booking approved',
     `**${listerName}** approved your request for **${productTitle}**`,
-    inboxUrl(threadId)
+    bookingId ? dashboardUrl('bookings', 'made', bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyBookingDeclined(hirerId: string, listerName: string, productTitle: string, threadId?: string) {
+export function notifyBookingDeclined(hirerId: string, listerName: string, productTitle: string, threadId?: string, bookingId?: string) {
   return createNotification(
     hirerId,
     NotificationType.BOOKING_DECLINED,
     'Booking declined',
     `**${listerName}** declined your request for **${productTitle}**`,
-    inboxUrl(threadId)
+    bookingId ? dashboardUrl('bookings', 'made', bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyBookingCancelled(recipientId: string, cancellerName: string, productTitle: string, threadId?: string) {
+export function notifyBookingCancelled(recipientId: string, cancellerName: string, productTitle: string, threadId?: string, bookingId?: string, subTab?: 'made' | 'received') {
   return createNotification(
     recipientId,
     NotificationType.BOOKING_CANCELLED,
     'Booking cancelled',
     `**${cancellerName}** cancelled the booking for **${productTitle}**`,
-    inboxUrl(threadId)
+    bookingId && subTab ? dashboardUrl('bookings', subTab, bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyPaymentReceived(listerId: string, hirerName: string, productTitle: string, threadId?: string) {
+export function notifyPaymentReceived(listerId: string, hirerName: string, productTitle: string, threadId?: string, bookingId?: string) {
   return createNotification(
     listerId,
     NotificationType.PAYMENT_RECEIVED,
     'Payment received',
     `**${hirerName}** has paid for **${productTitle}**`,
-    inboxUrl(threadId)
+    bookingId ? dashboardUrl('bookings', 'received', bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyBookingCompleted(userId: string, productTitle: string, threadId?: string) {
+export function notifyBookingCompleted(userId: string, productTitle: string, threadId?: string, bookingId?: string, subTab?: 'made' | 'received') {
   return createNotification(
     userId,
     NotificationType.BOOKING_COMPLETED,
     'Rental complete',
     `Your rental of **${productTitle}** is complete — leave a review!`,
-    inboxUrl(threadId)
+    bookingId && subTab ? dashboardUrl('bookings', subTab, bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyBookingReminder(listerId: string, hirerName: string, productTitle: string, hoursRemaining: number, threadId?: string) {
+export function notifyBookingReminder(listerId: string, hirerName: string, productTitle: string, hoursRemaining: number, threadId?: string, bookingId?: string) {
   const urgency = hoursRemaining <= 3 ? 'Urgent: ' : '';
   return createNotification(
     listerId,
     NotificationType.BOOKING_REMINDER,
     `${urgency}${hoursRemaining} hours to respond`,
     `You have ${hoursRemaining} hours to accept or decline **${hirerName}**'s request for **${productTitle}** before it is automatically declined`,
-    inboxUrl(threadId)
+    bookingId ? dashboardUrl('bookings', 'received', bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyBookingAutoDeclined(userId: string, productTitle: string, isLister: boolean, threadId?: string) {
+export function notifyBookingAutoDeclined(userId: string, productTitle: string, isLister: boolean, threadId?: string, bookingId?: string, subTab?: 'made' | 'received') {
   return createNotification(
     userId,
     NotificationType.BOOKING_AUTO_DECLINED,
@@ -116,17 +123,17 @@ export function notifyBookingAutoDeclined(userId: string, productTitle: string, 
     isLister
       ? `A booking request for **${productTitle}** was not responded to and has been automatically declined`
       : `Your booking request for **${productTitle}** was not responded to within 48 hours and has been automatically declined`,
-    inboxUrl(threadId)
+    bookingId && subTab ? dashboardUrl('bookings', subTab, bookingId) : inboxUrl(threadId)
   );
 }
 
-export function notifyReviewReceived(revieweeId: string, reviewerName: string, rating: number, productTitle: string) {
+export function notifyReviewReceived(revieweeId: string, reviewerName: string, rating: number, productTitle: string, bookingId?: string, subTab?: 'made' | 'received') {
   return createNotification(
     revieweeId,
     NotificationType.REVIEW_RECEIVED,
     'New review',
     `**${reviewerName}** left you a ${rating}-star review for **${productTitle}**`,
-    `${SITE_URL}/dashboard`
+    bookingId && subTab ? dashboardUrl('bookings', subTab, bookingId) : `${SITE_URL}/dashboard`
   );
 }
 

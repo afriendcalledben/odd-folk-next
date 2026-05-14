@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     await prisma.thread.update({ where: { id: thread.id }, data: { updatedAt: new Date() } });
 
     // Notify lister of new booking request (email + in-app)
-    notifyBookingRequest(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, thread.id);
+    notifyBookingRequest(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, thread.id, booking.id);
     sendBookingRequestEmail({
       id: booking.id,
       productTitle: booking.product.title,

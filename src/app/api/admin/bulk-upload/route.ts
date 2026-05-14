@@ -2,10 +2,11 @@ import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import prisma from '@/lib/prisma';
+import { COLOUR_OPTIONS } from '@/lib/colours';
+import { MATERIAL_OPTIONS } from '@/lib/materials';
 
 const CATEGORIES = ["Furniture", "Lighting", "Decor", "Tableware", "Textiles", "Plants", "Seasonal", "Photography", "Weddings", "Signage"];
 const CONDITIONS = ["Like New", "Good", "Fair", "Poor", "Vintage/Antique"];
-const COLORS = ["Black", "White", "Grey", "Beige", "Brown", "Red", "Blue", "Green", "Yellow", "Orange", "Pink", "Purple", "Gold", "Silver", "Copper", "Natural", "Cream", "Multi-colour"];
 
 const PLACEHOLDER_IMAGE = '/product-placeholder.svg';
 
@@ -57,8 +58,18 @@ function validateRow(data: Record<string, string>): string[] {
   else if (!CATEGORIES.includes(data.category)) errors.push(`invalid category: "${data.category}"`);
   if (!data.condition) errors.push('condition is required');
   else if (!CONDITIONS.includes(data.condition)) errors.push(`invalid condition: "${data.condition}"`);
-  if (!data.color) errors.push('color is required');
-  else if (!COLORS.includes(data.color)) errors.push(`invalid color: "${data.color}"`);
+  if (!data.colors) errors.push('colors is required');
+  else {
+    const vals = data.colors.split('|').map((c: string) => c.trim()).slice(0, 3);
+    const invalid = vals.filter((c: string) => !COLOUR_OPTIONS.includes(c));
+    if (invalid.length) errors.push(`invalid colors: ${invalid.join(', ')}`);
+  }
+  if (!data.materials) errors.push('materials is required');
+  else {
+    const vals = data.materials.split('|').map((m: string) => m.trim()).slice(0, 3);
+    const invalid = vals.filter((m: string) => !MATERIAL_OPTIONS.includes(m));
+    if (invalid.length) errors.push(`invalid materials: ${invalid.join(', ')}`);
+  }
   if (!data.price_1_day) errors.push('price_1_day is required');
   else if (isNaN(parseFloat(data.price_1_day)) || parseFloat(data.price_1_day) <= 0) errors.push('price_1_day must be a positive number');
   if (data.price_3_day && (isNaN(parseFloat(data.price_3_day)) || parseFloat(data.price_3_day) <= 0)) errors.push('price_3_day must be positive');
@@ -112,7 +123,8 @@ export async function POST(req: NextRequest) {
             description: data.description?.trim() || '',
             category: data.category,
             condition: data.condition,
-            color: data.color,
+            colors: JSON.stringify(data.colors.split('|').map((c: string) => c.trim()).slice(0, 3)),
+            materials: JSON.stringify(data.materials.split('|').map((m: string) => m.trim()).slice(0, 3)),
             quantity: data.quantity ? parseInt(data.quantity) : 1,
             price1Day: parseFloat(data.price_1_day),
             price3Day: data.price_3_day ? parseFloat(data.price_3_day) : null,
