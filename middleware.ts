@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const protectedPaths = ['/dashboard', '/profile', '/list-item', '/welcome']
 
 // Paths that bypass the preview gate entirely
-const previewGateExcluded = ['/coming-soon', '/preview', '/api/preview', '/api/newsletter', '/api/auth']
+const previewGateExcluded = ['/coming-soon', '/preview', '/api/preview', '/api/newsletter', '/api/auth', '/api/admin']
 
 // Middleware runs in the Edge runtime which doesn't support Node.js crypto.
 // We check the Better Auth session cookie here for routing decisions only.
