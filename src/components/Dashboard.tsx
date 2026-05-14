@@ -9,7 +9,6 @@ import { getUserBookings, updateBookingStatus, cancelBooking, declineBooking, fe
 import { changePassword } from '@/lib/auth-client';
 import ProductGrid from './ProductGrid';
 import { useAuth } from '@/context/AuthContext';
-import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import { Input, Textarea, Button, FieldRequirements, usernameRequirements, passwordRequirements, filterUsername } from '@/components/ui';
 import BookingTracker from './BookingTracker';
 import AvatarCropModal from './AvatarCropModal';
@@ -20,7 +19,7 @@ import type { Booking, BookingStatus, Product } from '../types';
 const LocationPicker = dynamic(() => import('./LocationPicker'), { ssr: false });
 
 interface DashboardProps {
-    user: { id: string; name: string; avatarUrl?: string; username?: string; bio?: string; phone?: string; email?: string; isGoogleUser?: boolean };
+    user: { id: string; name: string; avatarUrl?: string; username?: string; bio?: string; email?: string; isGoogleUser?: boolean };
     activeTab?: string;
     activeSubTab?: 'made' | 'received';
     activeBookingId?: string;
@@ -296,8 +295,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
     const [profileName, setProfileName] = useState(user.name || '');
     const [profileUsername, setProfileUsername] = useState(user.username || '');
     const [profileBio, setProfileBio] = useState(user.bio || '');
-    const [profilePhone, setProfilePhone] = useState(user.phone || '');
-    const [profileErrors, setProfileErrors] = useState<{ username?: string; phone?: string }>({});
+    const [profileErrors, setProfileErrors] = useState<{ username?: string }>({});
 
     // Listings — delete state
     const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -329,8 +327,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
         setProfileName(user.name || '');
         setProfileUsername(user.username || '');
         setProfileBio(user.bio || '');
-        setProfilePhone(user.phone || '');
-    }, [user.avatarUrl, user.name, user.username, user.bio, user.phone]);
+    }, [user.avatarUrl, user.name, user.username, user.bio]);
 
     // Debounced username availability check (skip if unchanged from saved username)
     const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
@@ -401,7 +398,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newErrors: { username?: string; phone?: string } = {};
+        const newErrors: { username?: string } = {};
         if (profileUsername && !USERNAME_RE.test(profileUsername)) {
             newErrors.username = 'Username must be 3–30 characters: letters, numbers, _ or -';
         }
@@ -423,7 +420,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
                 name: profileName || undefined,
                 username: profileUsername ? profileUsername.toLowerCase() : undefined,
                 bio: profileBio.trim() || undefined,
-                phone: profilePhone || undefined,
             });
             await refreshUser();
             toast.success('Profile updated');
@@ -1221,19 +1217,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block font-body text-sm font-bold text-brand-burgundy mb-1">Phone Number</label>
-                                    <p className="text-xs text-red-500 mb-1">Phone numbers are not required at this point</p>
-                                    <PhoneInput
-                                        value={profilePhone}
-                                        onChange={v => {
-                                            setProfilePhone(v);
-                                            if (profileErrors.phone) setProfileErrors(prev => ({ ...prev, phone: undefined }));
-                                        }}
-                                        error={profileErrors.phone}
-                                        disabled
-                                    />
-                                </div>
                                 <div>
                                     <Input
                                         label="Email Address"

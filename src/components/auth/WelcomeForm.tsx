@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Logo from '@/components/Logo';
-import PhoneInput, { validatePhone } from '@/components/PhoneInput';
 import { Input, Textarea, Button, FieldRequirements, usernameRequirements, filterUsername } from '@/components/ui';
 import { updateUserProfile } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
@@ -26,8 +25,7 @@ export default function WelcomeForm({ user }: { user: User }) {
   const skipRedirect = useRef(false);
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
-  const [phone, setPhone] = useState('');
-  const [errors, setErrors] = useState<{ username?: string; phone?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken';
@@ -70,7 +68,7 @@ export default function WelcomeForm({ user }: { user: User }) {
   const bioOverLimit = bioWords > 200;
 
   function validate(): boolean {
-    const newErrors: { username?: string; phone?: string } = {};
+    const newErrors: { username?: string } = {};
 
     if (!username) {
       newErrors.username = 'Username is required';
@@ -78,9 +76,6 @@ export default function WelcomeForm({ user }: { user: User }) {
       newErrors.username = 'Username must be 3–30 characters: letters, numbers, _ or -';
     }
 
-    if (phone && !validatePhone(phone)) {
-      newErrors.phone = 'Enter a valid phone number (6–15 digits)';
-    }
 
     if (bioOverLimit) {
       return false;
@@ -107,7 +102,6 @@ export default function WelcomeForm({ user }: { user: User }) {
       await updateUserProfile({
         username: username.toLowerCase(),
         bio: bio.trim() || undefined,
-        phone: phone || undefined,
       });
       skipRedirect.current = true;
       await refreshUser();
@@ -280,18 +274,6 @@ export default function WelcomeForm({ user }: { user: User }) {
           }
         />
 
-        <div>
-          <label className="block font-body text-sm font-bold text-brand-burgundy mb-1">
-            Phone number <span className="text-brand-burgundy/40 font-normal">(optional)</span>
-          </label>
-          <p className="text-xs text-red-500 mb-1">Phone numbers are not required at this point</p>
-          <PhoneInput
-            value={phone}
-            onChange={setPhone}
-            error={errors.phone}
-            disabled
-          />
-        </div>
 
         <Button
           type="submit"

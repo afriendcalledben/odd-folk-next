@@ -65,6 +65,7 @@ function SearchPage() {
       maxPrice: f.maxPrice ? parseFloat(f.maxPrice) : undefined,
       condition: f.conditions.length === 1 ? f.conditions[0] : undefined,
       colors: f.colors.length ? f.colors : undefined,
+      materials: f.materials.length ? f.materials : undefined,
       lat: f.lat ?? undefined,
       lng: f.lng ?? undefined,
       distance: f.lat !== null ? (f.distance ?? 3) : undefined,
