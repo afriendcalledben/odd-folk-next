@@ -56,8 +56,9 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
   const [title, setTitle] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [price1Day, setPrice1Day] = useState(initialData?.pricePerDay ? String(initialData.pricePerDay) : '');
-  const [price3Day, setPrice3Day] = useState(initialData?.price3Day ? String(initialData.price3Day) : '');
-  const [price7Day, setPrice7Day] = useState(initialData?.price7Day ? String(initialData.price7Day) : '');
+  const [discount7Day,  setDiscount7Day]  = useState<number>(initialData?.discount7Day  ?? 0);
+  const [discount14Day, setDiscount14Day] = useState<number>(initialData?.discount14Day ?? 0);
+  const [discount28Day, setDiscount28Day] = useState<number>(initialData?.discount28Day ?? 0);
   const [selectedLocationId, setSelectedLocationId] = useState<string>(initialData?.locationId || '');
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.images || []);
@@ -195,7 +196,6 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
     if (!selectedCategory) { setError('Please select a category'); return; }
     if (!condition) { setError('Please select the condition'); return; }
     if (selectedColors.length === 0) { setError('Please select at least one colour'); return; }
-    if (selectedMaterials.length === 0) { setError('Please select at least one material'); return; }
     if (!price1Day || parseFloat(price1Day) <= 0) { setError('Please enter a valid price for 1 day'); return; }
 
     if (imagePreviews.length === 0) { setError('Please upload at least one image'); return; }
@@ -222,8 +222,9 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           materials: selectedMaterials,
           quantity,
           price1Day: parseFloat(price1Day),
-          price3Day: price3Day ? parseFloat(price3Day) : null,
-          price7Day: price7Day ? parseFloat(price7Day) : null,
+          discount7Day,
+          discount14Day,
+          discount28Day,
           images: imageUrls,
           locationId: selectedLocationId || null,
           blockedDates: itemBlockedRanges,
@@ -239,8 +240,9 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           materials: selectedMaterials,
           quantity,
           price1Day: parseFloat(price1Day),
-          price3Day: price3Day ? parseFloat(price3Day) : undefined,
-          price7Day: price7Day ? parseFloat(price7Day) : undefined,
+          discount7Day,
+          discount14Day,
+          discount28Day,
           images: imageUrls,
           locationId: selectedLocationId || undefined,
         });
@@ -254,7 +256,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
     }
   };
 
-  const isFormValid = title && selectedCategory && condition && selectedColors.length > 0 && selectedMaterials.length > 0 && price1Day && imagePreviews.length > 0;
+  const isFormValid = title && selectedCategory && condition && selectedColors.length > 0 && price1Day && imagePreviews.length > 0;
 
   return (
     <>
@@ -298,101 +300,146 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
             </div>
           )}
 
-          {/* Step 1: Category */}
-          <FormStep number={1} title="Pick a category">
-            <select
-              className={inputClass}
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              <option value="" disabled>Select which fits best</option>
-              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
-          </FormStep>
-
-          {/* Step 2: Item Details */}
-          <FormStep number={2} title="Your Item">
+          {/* Step 1: Your Item */}
+          <FormStep number={1} title="Your Item">
             <div className="space-y-6">
               <div>
                 <label className={labelClass}>Title</label>
                 <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Stunning Mid-Century Velvet Armchair"
-                    className={inputClass}
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Stunning Mid-Century Velvet Armchair"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Category</label>
+                <select
+                  className={inputClass}
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  <option value="" disabled>Select which fits best</option>
+                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Description</label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className={`${inputClass} resize-none`}
+                  placeholder="Describe the style, history, dimensions, and any unique features."
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className={labelClass}>Condition</label>
-                    <select
-                        className={inputClass}
-                        value={condition}
-                        onChange={(e) => setCondition(e.target.value)}
-                    >
-                        <option value="" disabled>Be honest...</option>
-                        {['Like New', 'Good', 'Fair', 'Poor', 'Vintage/Antique'].map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                <div>
+                  <label className={labelClass}>How many do you have?</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Quality</label>
+                  <select
+                    className={inputClass}
+                    value={condition}
+                    onChange={(e) => setCondition(e.target.value)}
+                  >
+                    <option value="" disabled>Be honest...</option>
+                    {['Like New', 'Good', 'Fair', 'Poor', 'Vintage/Antique'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </FormStep>
+
+          {/* Step 2: Describe your item */}
+          <FormStep number={2} title="Describe your item">
+            <div className="space-y-6">
+              <div>
+                <label className={labelClass}>Keywords</label>
+                <p className="font-body text-brand-burgundy/60 mb-3 text-sm">Keywords matter. Think &apos;vintage&apos;, &apos;boho&apos;, &apos;70s&apos;, &apos;neon&apos;.</p>
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleAddTag}
+                    placeholder="e.g. velvet..."
+                    className={inputClass}
+                  />
+                  <Button variant="secondary" size="sm" onClick={handleAddTag} className="flex-shrink-0">
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedTags.map(tag => (
+                    <span key={tag} className="px-4 py-2 rounded-full text-sm bg-brand-orange/10 text-brand-burgundy border border-brand-orange/20 flex items-center gap-2 group">
+                      {tag}
+                      <button onClick={() => removeTag(tag)} className="text-brand-burgundy/40 hover:text-brand-orange transition-colors">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>
+                  Colour <span className="text-brand-burgundy/40 text-xs font-normal">({selectedColors.length}/3)</span>
+                </label>
+                {selectedColors.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedColors.map(c => (
+                      <span
+                        key={c}
+                        style={{ backgroundColor: COLOUR_HEX[c] }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-body font-medium drop-shadow-sm ${pillTextClass(c)}`}
+                      >
+                        {c}
+                        <button type="button" onClick={() => setSelectedColors(prev => prev.filter(x => x !== c))} className="opacity-70 hover:opacity-100">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
-                  <div>
-                    <label className={labelClass}>
-                      Colour <span className="text-brand-burgundy/40 text-xs font-normal">({selectedColors.length}/3)</span>
-                    </label>
-                    {selectedColors.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {selectedColors.map(c => (
-                          <span
+                )}
+                {selectedColors.length < 3 && (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Filter colours…"
+                      value={colorSearch}
+                      onChange={e => setColorSearch(e.target.value)}
+                      className={`${inputClass} mb-3`}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {COLOUR_OPTIONS
+                        .filter(c => !selectedColors.includes(c) && c.toLowerCase().includes(colorSearch.toLowerCase()))
+                        .map(c => (
+                          <button
+                            type="button"
                             key={c}
-                            style={c === 'Multi-colour' ? { background: COLOUR_HEX[c] } : { backgroundColor: COLOUR_HEX[c] }}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-body font-medium drop-shadow-sm ${pillTextClass(c)}`}
+                            onClick={() => { setSelectedColors(prev => [...prev, c]); setColorSearch(''); }}
+                            style={{ backgroundColor: COLOUR_HEX[c] }}
+                            className={`px-3 py-1.5 rounded-full text-sm font-body font-medium drop-shadow-sm hover:scale-105 transition-transform ${pillTextClass(c)}`}
                           >
                             {c}
-                            <button type="button" onClick={() => setSelectedColors(prev => prev.filter(x => x !== c))} className="opacity-70 hover:opacity-100">
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
+                          </button>
                         ))}
-                      </div>
-                    )}
-                    {selectedColors.length < 3 && (
-                      <>
-                        <input
-                          type="text"
-                          placeholder="Filter colours…"
-                          value={colorSearch}
-                          onChange={e => setColorSearch(e.target.value)}
-                          className={`${inputClass} mb-3`}
-                        />
-                        <div className="flex flex-wrap gap-2">
-                          {COLOUR_OPTIONS
-                            .filter(c => !selectedColors.includes(c) && c.toLowerCase().includes(colorSearch.toLowerCase()))
-                            .map(c => (
-                              <button
-                                type="button"
-                                key={c}
-                                onClick={() => { setSelectedColors(prev => [...prev, c]); setColorSearch(''); }}
-                                style={c === 'Multi-colour' ? { background: COLOUR_HEX[c] } : { backgroundColor: COLOUR_HEX[c] }}
-                                className={`px-3 py-1.5 rounded-full text-sm font-body font-medium drop-shadow-sm hover:scale-105 transition-transform ${pillTextClass(c)}`}
-                              >
-                                {c}
-                              </button>
-                            ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <div>
-                    <label className={labelClass}>How many do you have?</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={quantity}
-                      onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                      className={inputClass}
-                    />
-                  </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div>
@@ -437,46 +484,38 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
                   </>
                 )}
               </div>
-
-              <div>
-                <label className={labelClass}>Add a description</label>
-                <textarea
-                    rows={4}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className={`${inputClass} resize-none`}
-                    placeholder="Describe the style, history, dimensions, and any unique features."
-                />
-              </div>
             </div>
           </FormStep>
 
-          {/* Step 3: Tags */}
-          <FormStep number={3} title="Help them find it">
-              <p className="font-body text-brand-burgundy/60 mb-4 text-sm -mt-2">Keywords matter. Think &apos;vintage&apos;, &apos;boho&apos;, &apos;70s&apos;, &apos;neon&apos;.</p>
-              <div className="flex gap-2 mb-4">
-                  <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleAddTag}
-                      placeholder="e.g. velvet..."
-                      className={inputClass}
-                  />
-                  <Button variant="secondary" size="sm" onClick={handleAddTag} className="flex-shrink-0">
-                    Add
-                  </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                  {selectedTags.map(tag => (
-                      <span key={tag} className="px-4 py-2 rounded-full text-sm bg-brand-orange/10 text-brand-burgundy border border-brand-orange/20 flex items-center gap-2 group">
-                          {tag}
-                          <button onClick={() => removeTag(tag)} className="text-brand-burgundy/40 hover:text-brand-orange transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                      </span>
+          {/* Step 3: Location */}
+          <FormStep number={3} title="Location">
+            <div className="space-y-6">
+              <p className="font-body text-sm text-brand-burgundy/60">
+                We won't share the exact address until a booking is confirmed and paid for.
+              </p>
+              {locations.length > 0 ? (
+                <div className="space-y-4">
+                  {locations.map(loc => (
+                    <label key={loc.id} className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="radio"
+                        name="location"
+                        value={loc.id}
+                        checked={selectedLocationId === loc.id}
+                        onChange={(e) => setSelectedLocationId(e.target.value)}
+                        className="mt-1 w-5 h-5 rounded-full border-brand-grey bg-brand-white text-brand-orange focus:ring-brand-orange"
+                      />
+                      <div className="font-body">
+                        <p className="font-bold text-brand-burgundy group-hover:underline">{loc.name}</p>
+                        <p className="text-sm text-brand-burgundy/60">{loc.address}, {loc.city}</p>
+                      </div>
+                    </label>
                   ))}
-              </div>
+                </div>
+              ) : (
+                <p className="text-brand-burgundy/50 italic">No locations saved yet. You must add one to your profile first.</p>
+              )}
+            </div>
           </FormStep>
 
           {/* Step 4: Pictures */}
@@ -543,69 +582,71 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
 
           {/* Step 5: Price */}
           <FormStep number={5} title="Set your price">
-            <div className="space-y-6">
-              <p className="font-body text-sm text-brand-burgundy/60">
-                You can offer deals for longer bookings. It's up to you.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { label: 'Price for 1 day (required)', value: price1Day, setter: setPrice1Day, placeholder: '20' },
-                  { label: 'Price for 3 days', value: price3Day, setter: setPrice3Day, placeholder: '50' },
-                  { label: 'Price for 7 days', value: price7Day, setter: setPrice7Day, placeholder: '100' },
-                ].map(({ label, value, setter, placeholder }) => (
-                  <div key={label}>
-                    <label className={labelClass}>{label}</label>
-                    <div className="relative">
+            {(() => {
+              const p = parseFloat(price1Day) || 0;
+              const eff7  = discount7Day;
+              const eff14 = discount14Day > 0 ? discount14Day : eff7;
+              const eff28 = discount28Day > 0 ? discount28Day : eff14;
+              const preview = (days: number, eff: number, inherited: string | null) => {
+                if (!p || eff === 0) return null;
+                const total = (days * p * (1 - eff / 100)).toFixed(2);
+                return `${days}d × £${p} + ${eff}% discount = £${total}${inherited ? ` (from ${inherited})` : ''}`;
+              };
+              const rows: { label: string; days: number; val: number; set: (n: number) => void; eff: number; inherited: string | null }[] = [
+                { label: '7 days+',  days: 7,  val: discount7Day,  set: setDiscount7Day,  eff: eff7,  inherited: null },
+                { label: '14 days+', days: 14, val: discount14Day, set: setDiscount14Day, eff: eff14, inherited: eff14 !== discount14Day ? '7d' : null },
+                { label: '28 days+', days: 28, val: discount28Day, set: setDiscount28Day, eff: eff28, inherited: eff28 !== discount28Day ? (discount14Day > 0 ? '14d' : '7d') : null },
+              ];
+              return (
+                <div className="space-y-6">
+                  <div>
+                    <label className={labelClass}>Price per day (required)</label>
+                    <div className="relative max-w-xs">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-burgundy/40 font-body text-sm select-none">£</span>
                       <input
                         type="number"
                         min="1"
                         step="0.01"
-                        value={value}
-                        onChange={(e) => setter(e.target.value)}
-                        placeholder={placeholder}
+                        value={price1Day}
+                        onChange={(e) => setPrice1Day(e.target.value)}
+                        placeholder="35"
                         className={`${inputClass} pl-7`}
                       />
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </FormStep>
 
-          {/* Step 6: Location */}
-          <FormStep number={6} title="Location">
-            <div className="space-y-6">
-              <p className="font-body text-sm text-brand-burgundy/60">
-                We won't share the exact address until a booking is confirmed and paid for.
-              </p>
-              {locations.length > 0 ? (
-                <div className="space-y-4">
-                  {locations.map(loc => (
-                    <label key={loc.id} className="flex items-start gap-3 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="location"
-                        value={loc.id}
-                        checked={selectedLocationId === loc.id}
-                        onChange={(e) => setSelectedLocationId(e.target.value)}
-                        className="mt-1 w-5 h-5 rounded-full border-brand-grey bg-brand-white text-brand-orange focus:ring-brand-orange"
-                      />
-                      <div className="font-body">
-                        <p className="font-bold text-brand-burgundy group-hover:underline">{loc.name}</p>
-                        <p className="text-sm text-brand-burgundy/60">{loc.address}, {loc.city}</p>
+                  <div className="border border-brand-grey rounded-2xl p-5 space-y-4">
+                    <p className="font-body text-sm font-bold text-brand-burgundy">Longer-hire discounts <span className="font-normal text-brand-burgundy/40">(optional, 0–50%)</span></p>
+                    {rows.map(({ label, days, val, set, eff, inherited }) => (
+                      <div key={label} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <span className="font-body text-sm text-brand-burgundy w-24 flex-shrink-0">{label}</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            max="50"
+                            step="1"
+                            value={val}
+                            onChange={(e) => set(Math.min(50, Math.max(0, parseInt(e.target.value) || 0)))}
+                            className="w-20 p-2 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy text-center focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors"
+                          />
+                          <span className="font-body text-sm text-brand-burgundy/60">%</span>
+                        </div>
+                        {preview(days, eff, inherited) ? (
+                          <span className="font-body text-xs text-green-600">{preview(days, eff, inherited)}</span>
+                        ) : (
+                          <span className="font-body text-xs text-brand-burgundy/30">no discount</span>
+                        )}
                       </div>
-                    </label>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-brand-burgundy/50 italic">No locations saved yet. You must add one to your profile first.</p>
-              )}
-            </div>
+              );
+            })()}
           </FormStep>
 
-          {/* Step 7: Block dates for this item */}
-          <FormStep number={7} title="Block specific dates">
+          {/* Step 6: Booking days (optional) */}
+          <FormStep number={6} title="Booking days — Optional">
             <div className="space-y-4">
               <p className="font-body text-sm text-brand-burgundy/60">
                 Block dates when this item is unavailable — e.g. already booked elsewhere. This is separate from your account-wide block dates.

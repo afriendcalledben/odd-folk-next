@@ -8,6 +8,13 @@ import { findOrCreateThread, postSystemMessage } from '@/lib/threads';
 
 const PLATFORM_FEE_PERCENT = 0.15;
 
+function firstImage(imagesJson: string): string | null {
+  try {
+    const arr = JSON.parse(imagesJson);
+    return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
+  } catch { return null; }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth(req);
@@ -93,15 +100,19 @@ export async function POST(req: NextRequest) {
       return errorResponse('End date must be after start date', 400);
     }
 
-    // Determine price per day based on tier
-    let pricePerDay = product.price1Day;
-    if (days >= 7 && product.price7Day) {
-      pricePerDay = product.price7Day;
-    } else if (days >= 3 && product.price3Day) {
-      pricePerDay = product.price3Day;
-    }
+    // Apply cascade discount logic
+    const d7  = product.discount7Day  ?? 0;
+    const d14 = product.discount14Day ?? 0;
+    const d28 = product.discount28Day ?? 0;
+    const eff7  = d7;
+    const eff14 = d14 > 0 ? d14 : eff7;
+    const eff28 = d28 > 0 ? d28 : eff14;
+    let discountPct = 0;
+    if (days >= 28)      discountPct = eff28;
+    else if (days >= 14) discountPct = eff14;
+    else if (days >= 7)  discountPct = eff7;
 
-    const baseRental = pricePerDay * days;
+    const baseRental = Math.round(product.price1Day * days * (1 - discountPct / 100) * 100) / 100;
     const platformFee = Math.round(baseRental * PLATFORM_FEE_PERCENT * 100) / 100;
     const totalHirerCost = Math.round((baseRental + platformFee) * 100) / 100;
     const listerPayout = Math.round(baseRental * 100) / 100;
@@ -159,11 +170,13 @@ export async function POST(req: NextRequest) {
     // Update thread updatedAt
     await prisma.thread.update({ where: { id: thread.id }, data: { updatedAt: new Date() } });
 
+    const productImg = firstImage(booking.product.images);
     // Notify lister of new booking request (email + in-app)
-    notifyBookingRequest(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, thread.id, booking.id);
+    notifyBookingRequest(booking.listerId, booking.hirer.username ?? booking.hirer.name, booking.product.title, thread.id, booking.id, productImg ?? undefined);
     sendBookingRequestEmail({
       id: booking.id,
       productTitle: booking.product.title,
+      productImageUrl: productImg,
       startDate: booking.startDate,
       endDate: booking.endDate,
       listerPayout: booking.listerPayout,

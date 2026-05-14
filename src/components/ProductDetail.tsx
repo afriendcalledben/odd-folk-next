@@ -265,7 +265,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                         {(product.colors || []).map(c => (
                           <span
                             key={c}
-                            style={c === 'Multi-colour' ? { background: COLOUR_HEX[c] } : { backgroundColor: COLOUR_HEX[c] }}
+                            style={{ backgroundColor: COLOUR_HEX[c] }}
                             className={`px-2.5 py-1 rounded-full text-xs font-body font-medium drop-shadow-sm ${pillTextClass(c)}`}
                           >
                             {c}
@@ -338,6 +338,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                              pricePerDay={product.pricePerDay}
                              days={Math.floor((dropoffDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)) + 1}
                              quantity={selectedQuantity}
+                             discount7Day={product.discount7Day}
+                             discount14Day={product.discount14Day}
+                             discount28Day={product.discount28Day}
                              showListerPayout={false}
                            />
                          ) : (
@@ -346,6 +349,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                              <p className="font-heading text-lg text-brand-burgundy mt-1">
                                From <span className="text-brand-orange">£{product.pricePerDay}</span>/day
                              </p>
+                             {((product.discount7Day ?? 0) > 0 || (product.discount14Day ?? 0) > 0 || (product.discount28Day ?? 0) > 0) && (
+                               <p className="text-xs text-brand-burgundy/50 mt-1">Discounts available for 7+ day bookings</p>
+                             )}
                            </div>
                          )}
                          {(() => {

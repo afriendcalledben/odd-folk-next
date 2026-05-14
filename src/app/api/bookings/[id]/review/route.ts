@@ -2,6 +2,13 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
+
+function firstImage(imagesJson: string): string | null {
+  try {
+    const arr = JSON.parse(imagesJson);
+    return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
+  } catch { return null; }
+}
 import { sendReviewReceivedEmail } from '@/lib/email';
 import { notifyReviewReceived } from '@/lib/notifications';
 
@@ -52,7 +59,7 @@ export async function POST(
       include: {
         hirer: { select: { id: true, name: true, username: true, email: true } },
         lister: { select: { id: true, name: true, username: true, email: true } },
-        product: { select: { id: true, title: true } },
+        product: { select: { id: true, title: true, images: true } },
       },
     });
     if (!booking) return errorResponse('Booking not found', 404);
@@ -84,8 +91,9 @@ export async function POST(
       },
     });
 
+    const productImg = firstImage(booking.product.images) ?? undefined;
     const revieweeSubTab = isHirer ? 'received' : 'made';
-    notifyReviewReceived(revieweeId, reviewer.username ?? reviewer.name, rating, booking.product.title, bookingId, revieweeSubTab);
+    notifyReviewReceived(revieweeId, reviewer.username ?? reviewer.name, rating, booking.product.title, bookingId, revieweeSubTab, productImg);
     sendReviewReceivedEmail({
       reviewee: { name: reviewee.name, email: reviewee.email },
       reviewer: { name: reviewer.name, username: reviewer.username },

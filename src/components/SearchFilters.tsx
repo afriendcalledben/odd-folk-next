@@ -162,11 +162,7 @@ export default function SearchFilters({ filters, onChange }: SearchFiltersProps)
                   ? 'border-brand-orange scale-110 shadow-md'
                   : 'border-transparent hover:border-brand-grey'
               }`}
-              style={
-                colour === 'Multi-colour'
-                  ? { background: 'conic-gradient(red, yellow, green, blue, red)' }
-                  : { backgroundColor: COLOUR_HEX[colour] }
-              }
+              style={{ backgroundColor: COLOUR_HEX[colour] }}
             />
           ))}
         </div>

@@ -136,8 +136,9 @@ const toFrontendProduct = (p: any): Product => ({
   name: p.title,
   description: p.description,
   pricePerDay: p.price1Day,
-  price3Day: p.price3Day ?? null,
-  price7Day: p.price7Day ?? null,
+  discount7Day:  p.discount7Day  ?? 0,
+  discount14Day: p.discount14Day ?? 0,
+  discount28Day: p.discount28Day ?? 0,
   imageUrl: (p.images && p.images[0]) || 'https://picsum.photos/seed/default/800/600',
   images: p.images || [],
   tags: p.tags || [],
@@ -242,8 +243,9 @@ export const createProduct = async (productData: {
   materials: string[];
   quantity: number;
   price1Day: number;
-  price3Day?: number;
-  price7Day?: number;
+  discount7Day?: number;
+  discount14Day?: number;
+  discount28Day?: number;
   images: string[];
   locationId?: string;
 }): Promise<Product> => {
@@ -261,8 +263,9 @@ export const updateProduct = async (id: string | number, data: {
   materials?: string[];
   quantity?: number;
   price1Day?: number;
-  price3Day?: number | null;
-  price7Day?: number | null;
+  discount7Day?: number;
+  discount14Day?: number;
+  discount28Day?: number;
   images?: string[];
   locationId?: string | null;
   status?: string;

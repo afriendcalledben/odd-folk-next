@@ -6,8 +6,9 @@ export interface Product {
   name: string;
   description: string;
   pricePerDay: number;
-  price3Day?: number | null;
-  price7Day?: number | null;
+  discount7Day?: number;
+  discount14Day?: number;
+  discount28Day?: number;
   imageUrl: string;
   images?: string[];
   tags?: string[];

@@ -70,9 +70,10 @@ model Product {
   colors      String   @default("[]") // JSON array of up to 3 colour strings
   materials   String   @default("[]") // JSON array of up to 3 material strings
   quantity    Int      @default(1)
-  price1Day   Float    @map("price_1_day")
-  price3Day   Float?   @map("price_3_day")
-  price7Day   Float?   @map("price_7_day")
+  price1Day     Float    @map("price_1_day")
+  discount7Day  Int      @default(0) @map("discount_7_day")   // 0–50 %
+  discount14Day Int      @default(0) @map("discount_14_day")  // 0–50 %
+  discount28Day Int      @default(0) @map("discount_28_day")  // 0–50 %
   images        String   @default("[]") // JSON array of image URLs
   blockedDates  String   @default("[]") @map("blocked_dates") // JSON array of {start,end} ranges
   locationId    String?  @map("location_id")
@@ -296,6 +297,7 @@ model Notification {
   title     String
   body      String
   linkUrl   String?  @map("link_url")
+  imageUrl  String?  @map("image_url")
   isRead    Boolean  @default(false) @map("is_read")
   createdAt DateTime @default(now()) @map("created_at")
 

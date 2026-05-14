@@ -17,6 +17,13 @@ import {
 } from '@/lib/notifications';
 import { postSystemMessage } from '@/lib/threads';
 
+function firstImage(imagesJson: string): string | null {
+  try {
+    const arr = JSON.parse(imagesJson);
+    return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
+  } catch { return null; }
+}
+
 // Valid status transitions: { from: { to: allowedRole } }
 const STATUS_TRANSITIONS: Record<string, Record<string, 'hirer' | 'lister' | 'both'>> = {
   PENDING: {
@@ -161,9 +168,11 @@ export async function PUT(
     }
 
     // Send email notifications
+    const productImg = firstImage(updatedBooking.product.images);
     const emailData: BookingEmailData = {
       id: updatedBooking.id,
       productTitle: updatedBooking.product.title,
+      productImageUrl: productImg,
       startDate: updatedBooking.startDate,
       endDate: updatedBooking.endDate,
       listerPayout: updatedBooking.listerPayout,
@@ -175,20 +184,20 @@ export async function PUT(
     const productTitle = updatedBooking.product.title;
     if (newStatus === 'APPROVED') {
       sendBookingApprovedEmail(emailData);
-      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id);
+      notifyBookingApproved(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, productImg ?? undefined);
     }
     if (newStatus === 'DECLINED') {
       sendBookingDeclinedEmail(emailData);
-      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id);
+      notifyBookingDeclined(updatedBooking.hirerId, updatedBooking.lister.username ?? updatedBooking.lister.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, productImg ?? undefined);
     }
     if (newStatus === 'PAID') {
       sendPaymentReceivedEmail(emailData);
-      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.username ?? updatedBooking.hirer.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id);
+      notifyPaymentReceived(updatedBooking.listerId, updatedBooking.hirer.username ?? updatedBooking.hirer.name, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, productImg ?? undefined);
     }
     if (newStatus === 'COMPLETED') {
       sendBookingCompletedEmail(emailData);
-      notifyBookingCompleted(updatedBooking.hirerId, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, 'made');
-      notifyBookingCompleted(updatedBooking.listerId, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, 'received');
+      notifyBookingCompleted(updatedBooking.hirerId, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, 'made', productImg ?? undefined);
+      notifyBookingCompleted(updatedBooking.listerId, productTitle, updatedBooking.threadId ?? undefined, updatedBooking.id, 'received', productImg ?? undefined);
     }
 
     return successResponse(updatedBooking);

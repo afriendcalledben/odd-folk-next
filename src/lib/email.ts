@@ -16,6 +16,7 @@ export function inboxUrl(threadId?: string | null) {
 export interface BookingEmailData {
   id: string;
   productTitle: string;
+  productImageUrl?: string | null;
   startDate: Date;
   endDate: Date;
   listerPayout: number;
@@ -23,6 +24,11 @@ export interface BookingEmailData {
   hirer: { name: string; username?: string | null; email: string };
   lister: { name: string; username?: string | null; email: string };
   threadId?: string | null;
+}
+
+function absoluteImg(path: string | null | undefined): string | undefined {
+  if (!path || path === '/product-placeholder.svg') return undefined;
+  return path.startsWith('http') ? path : `${SITE_URL}${path}`;
 }
 
 function dn(u: { name: string; username?: string | null }) {
@@ -58,6 +64,7 @@ export async function sendBookingRequestEmail(b: BookingEmailData) {
       endDate: fmt(b.endDate),
       listerPayout: b.listerPayout,
       dashboardUrl: inboxUrl(b.threadId),
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }
@@ -73,6 +80,7 @@ export async function sendBookingApprovedEmail(b: BookingEmailData) {
       detail: `${fmt(b.startDate)} – ${fmt(b.endDate)} · Total: £${b.totalHirerCost.toFixed(2)}`,
       ctaText: 'Pay now',
       ctaUrl: inboxUrl(b.threadId),
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }
@@ -87,6 +95,7 @@ export async function sendBookingDeclinedEmail(b: BookingEmailData) {
       body: `Unfortunately @${dn(b.lister)} wasn't able to accept your request for ${b.productTitle} this time. Browse similar items on Odd Folk.`,
       ctaText: 'Browse listings',
       ctaUrl: `${SITE_URL}/search`,
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }
@@ -105,6 +114,7 @@ export async function sendBookingCancelledEmail(b: BookingEmailData, cancelledBy
       body: `${cancellerName} has cancelled the booking for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}).`,
       ctaText: 'View messages',
       ctaUrl: inboxUrl(b.threadId),
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }
@@ -120,6 +130,7 @@ export async function sendPaymentReceivedEmail(b: BookingEmailData) {
       detail: `${fmt(b.startDate)} – ${fmt(b.endDate)} · Your payout: £${b.listerPayout.toFixed(2)}`,
       ctaText: 'View booking',
       ctaUrl: inboxUrl(b.threadId),
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }
@@ -134,6 +145,7 @@ export async function sendBookingCompletedEmail(b: BookingEmailData) {
       body: `Your rental of ${b.productTitle} is complete — we hope it was perfect for your event! Leave a review for @${dn(b.lister)} to help the Odd Folk community.`,
       ctaText: 'Leave a review',
       ctaUrl: `${SITE_URL}/dashboard?tab=bookings`,
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
   await send(
@@ -146,6 +158,7 @@ export async function sendBookingCompletedEmail(b: BookingEmailData) {
       detail: `Payout: £${b.listerPayout.toFixed(2)}`,
       ctaText: 'Leave a review',
       ctaUrl: `${SITE_URL}/dashboard?tab=bookings`,
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }
@@ -161,6 +174,7 @@ export async function sendBookingReminderEmail(b: BookingEmailData, hoursRemaini
       body: `@${dn(b.hirer)} is waiting for your response to their booking request for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}). If you don't respond within ${hoursRemaining} hours the request will be automatically declined.`,
       ctaText: 'Respond now',
       ctaUrl: inboxUrl(b.threadId),
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }
@@ -175,6 +189,7 @@ export async function sendBookingAutoDeclinedEmail(b: BookingEmailData) {
       body: `The booking request from @${dn(b.hirer)} for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}) was not responded to within 48 hours and has been automatically declined.`,
       ctaText: 'View inbox',
       ctaUrl: inboxUrl(b.threadId),
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
   await send(
@@ -186,6 +201,7 @@ export async function sendBookingAutoDeclinedEmail(b: BookingEmailData) {
       body: `Unfortunately your booking request for ${b.productTitle} (${fmt(b.startDate)} – ${fmt(b.endDate)}) wasn't responded to within 48 hours and has been automatically declined. Browse similar items on Odd Folk.`,
       ctaText: 'Browse listings',
       ctaUrl: `${SITE_URL}/search`,
+      productImageUrl: absoluteImg(b.productImageUrl),
     })
   );
 }

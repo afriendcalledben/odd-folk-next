@@ -6,6 +6,13 @@ import { sendBookingCancelledEmail } from '@/lib/email';
 import { notifyBookingCancelled } from '@/lib/notifications';
 import { postSystemMessage } from '@/lib/threads';
 
+function firstImage(imagesJson: string): string | null {
+  try {
+    const arr = JSON.parse(imagesJson);
+    return Array.isArray(arr) && arr.length > 0 ? arr[0] : null;
+  } catch { return null; }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,7 +25,7 @@ export async function POST(
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
-        product: { select: { title: true } },
+        product: { select: { title: true, images: true } },
         hirer: { select: { name: true, username: true, email: true } },
         lister: { select: { name: true, username: true, email: true } },
       },
@@ -51,10 +58,12 @@ export async function POST(
       ? (booking.hirer.username ?? booking.hirer.name)
       : (booking.lister.username ?? booking.lister.name);
     const recipientSubTab = cancelledByRole === 'hirer' ? 'received' : 'made';
-    notifyBookingCancelled(recipientId, cancellerName, booking.product.title, booking.threadId ?? undefined, bookingId, recipientSubTab);
+    const productImg = firstImage(booking.product.images);
+    notifyBookingCancelled(recipientId, cancellerName, booking.product.title, booking.threadId ?? undefined, bookingId, recipientSubTab, productImg ?? undefined);
     sendBookingCancelledEmail({
       id: bookingId,
       productTitle: booking.product.title,
+      productImageUrl: productImg,
       startDate: booking.startDate,
       endDate: booking.endDate,
       listerPayout: booking.listerPayout,

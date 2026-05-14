@@ -12,6 +12,7 @@ interface BookingStatusEmailProps {
   detail?: string;
   ctaText: string;
   ctaUrl: string;
+  productImageUrl?: string;
 }
 
 export default function BookingStatusEmail({
@@ -21,6 +22,7 @@ export default function BookingStatusEmail({
   detail,
   ctaText,
   ctaUrl,
+  productImageUrl,
 }: BookingStatusEmailProps) {
   return (
     <Html>
@@ -37,6 +39,16 @@ export default function BookingStatusEmail({
               style={{ display: 'block' }}
             />
           </Section>
+
+          {/* Product image */}
+          {productImageUrl && (
+            <Img
+              src={productImageUrl}
+              alt="Item"
+              width={560}
+              style={{ display: 'block', width: '100%', maxHeight: '220px', objectFit: 'cover' }}
+            />
+          )}
 
           {/* Body */}
           <Section style={{ padding: '40px' }}>

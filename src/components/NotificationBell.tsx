@@ -10,6 +10,7 @@ interface Notification {
   title: string;
   body: string;
   linkUrl: string | null;
+  imageUrl: string | null;
   isRead: boolean;
   createdAt: string;
 }
@@ -141,7 +142,15 @@ export default function NotificationBell() {
                   onClick={() => handleNotificationClick(n)}
                   className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-brand-grey/10 transition-colors border-b border-brand-grey/10 last:border-0 ${!n.isRead ? 'bg-brand-orange/5' : ''}`}
                 >
-                  <NotifIcon type={n.type} />
+                  {n.imageUrl ? (
+                    <img
+                      src={n.imageUrl}
+                      alt=""
+                      className="w-10 h-[30px] rounded-md object-cover flex-shrink-0 mt-0.5"
+                    />
+                  ) : (
+                    <NotifIcon type={n.type} />
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <p className={`text-sm font-body leading-snug ${!n.isRead ? 'font-semibold text-brand-burgundy' : 'text-brand-burgundy/80'}`}>

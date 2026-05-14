@@ -1,6 +1,6 @@
 export const COLOUR_OPTIONS = [
   'Black', 'White', 'Grey', 'Beige', 'Brown', 'Red', 'Blue', 'Green',
-  'Yellow', 'Orange', 'Pink', 'Purple', 'Gold', 'Silver', 'Copper', 'Natural', 'Cream', 'Multi-colour',
+  'Yellow', 'Orange', 'Pink', 'Purple', 'Gold', 'Silver', 'Copper', 'Natural', 'Cream',
 ];
 
 export const COLOUR_HEX: Record<string, string> = {
@@ -21,7 +21,6 @@ export const COLOUR_HEX: Record<string, string> = {
   Copper: '#b45309',
   Natural: '#a3825a',
   Cream: '#fef3c7',
-  'Multi-colour': 'conic-gradient(red, yellow, green, blue, red)',
 };
 
 const LIGHT_COLOURS = new Set(['White', 'Cream', 'Beige', 'Natural', 'Silver', 'Grey', 'Yellow']);

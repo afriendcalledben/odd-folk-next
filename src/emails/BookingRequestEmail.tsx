@@ -13,6 +13,7 @@ interface BookingRequestEmailProps {
   endDate: string;
   listerPayout: number;
   dashboardUrl: string;
+  productImageUrl?: string;
 }
 
 export default function BookingRequestEmail({
@@ -23,6 +24,7 @@ export default function BookingRequestEmail({
   endDate,
   listerPayout,
   dashboardUrl,
+  productImageUrl,
 }: BookingRequestEmailProps) {
   return (
     <Html>
@@ -39,6 +41,16 @@ export default function BookingRequestEmail({
               style={{ display: 'block' }}
             />
           </Section>
+
+          {/* Product image */}
+          {productImageUrl && (
+            <Img
+              src={productImageUrl}
+              alt={productTitle}
+              width={560}
+              style={{ display: 'block', width: '100%', maxHeight: '220px', objectFit: 'cover' }}
+            />
+          )}
 
           {/* Body */}
           <Section style={{ padding: '40px' }}>

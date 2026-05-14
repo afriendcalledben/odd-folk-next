@@ -64,16 +64,19 @@ function validateRow(data: Record<string, string>): string[] {
     const invalid = vals.filter((c: string) => !COLOUR_OPTIONS.includes(c));
     if (invalid.length) errors.push(`invalid colors: ${invalid.join(', ')}`);
   }
-  if (!data.materials) errors.push('materials is required');
-  else {
+  if (data.materials) {
     const vals = data.materials.split('|').map((m: string) => m.trim()).slice(0, 3);
     const invalid = vals.filter((m: string) => !MATERIAL_OPTIONS.includes(m));
     if (invalid.length) errors.push(`invalid materials: ${invalid.join(', ')}`);
   }
   if (!data.price_1_day) errors.push('price_1_day is required');
   else if (isNaN(parseFloat(data.price_1_day)) || parseFloat(data.price_1_day) <= 0) errors.push('price_1_day must be a positive number');
-  if (data.price_3_day && (isNaN(parseFloat(data.price_3_day)) || parseFloat(data.price_3_day) <= 0)) errors.push('price_3_day must be positive');
-  if (data.price_7_day && (isNaN(parseFloat(data.price_7_day)) || parseFloat(data.price_7_day) <= 0)) errors.push('price_7_day must be positive');
+  ['discount_7_day', 'discount_14_day', 'discount_28_day'].forEach(key => {
+    if (data[key] !== undefined && data[key] !== '') {
+      const v = parseInt(data[key]);
+      if (isNaN(v) || v < 0 || v > 50) errors.push(`${key} must be 0–50`);
+    }
+  });
   if (data.quantity && (isNaN(parseInt(data.quantity)) || parseInt(data.quantity) < 1)) errors.push('quantity must be a positive integer');
   return errors;
 }
@@ -126,9 +129,10 @@ export async function POST(req: NextRequest) {
             colors: JSON.stringify(data.colors.split('|').map((c: string) => c.trim()).slice(0, 3)),
             materials: JSON.stringify(data.materials.split('|').map((m: string) => m.trim()).slice(0, 3)),
             quantity: data.quantity ? parseInt(data.quantity) : 1,
-            price1Day: parseFloat(data.price_1_day),
-            price3Day: data.price_3_day ? parseFloat(data.price_3_day) : null,
-            price7Day: data.price_7_day ? parseFloat(data.price_7_day) : null,
+            price1Day:     parseFloat(data.price_1_day),
+            discount7Day:  Math.min(50, Math.max(0, parseInt(data.discount_7_day)  || 0)),
+            discount14Day: Math.min(50, Math.max(0, parseInt(data.discount_14_day) || 0)),
+            discount28Day: Math.min(50, Math.max(0, parseInt(data.discount_28_day) || 0)),
             images: JSON.stringify([PLACEHOLDER_IMAGE]),
             tags: JSON.stringify(tags),
             locationId: firstLocation?.id ?? null,

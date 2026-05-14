@@ -412,9 +412,13 @@ async function main() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           materials: JSON.stringify([(listing as any).material].filter(Boolean)),
           quantity: listing.quantity,
-          price1Day: listing.price1Day,
-          price3Day: listing.price3Day ?? null,
-          price7Day: listing.price7Day ?? null,
+          price1Day:     listing.price1Day,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          discount7Day:  Math.min(50, Math.max(0, (listing as any).discount7Day  ?? 10)),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          discount14Day: Math.min(50, Math.max(0, (listing as any).discount14Day ?? 20)),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          discount28Day: Math.min(50, Math.max(0, (listing as any).discount28Day ?? 30)),
           images: imgs(slug),
           status: 'ACTIVE',
         },

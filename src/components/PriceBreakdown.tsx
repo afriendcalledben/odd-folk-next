@@ -6,36 +6,57 @@ interface PriceBreakdownProps {
   pricePerDay: number;
   days: number;
   quantity?: number;
+  discount7Day?: number;
+  discount14Day?: number;
+  discount28Day?: number;
   showListerPayout?: boolean;
   compact?: boolean;
 }
 
-// Fee percentages (configurable)
-const SERVICE_FEE_PERCENT = 0.10; // 10% service fee
-const LISTER_FEE_PERCENT = 0.10; // 10% platform fee for listers
+const SERVICE_FEE_PERCENT = 0.10;
+const LISTER_FEE_PERCENT = 0.10;
+
+function getEffectiveDiscount(days: number, d7 = 0, d14 = 0, d28 = 0): number {
+  const eff7  = d7;
+  const eff14 = d14 > 0 ? d14 : eff7;
+  const eff28 = d28 > 0 ? d28 : eff14;
+  if (days >= 28) return eff28;
+  if (days >= 14) return eff14;
+  if (days >= 7)  return eff7;
+  return 0;
+}
 
 const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
   pricePerDay,
   days,
   quantity = 1,
+  discount7Day = 0,
+  discount14Day = 0,
+  discount28Day = 0,
   showListerPayout = false,
   compact = false,
 }) => {
-  // Calculate all fees
-  const baseRental = pricePerDay * days * quantity;
-  const serviceFee = baseRental * SERVICE_FEE_PERCENT;
+  const discountPct  = getEffectiveDiscount(days, discount7Day, discount14Day, discount28Day);
+  const grossRental  = pricePerDay * days * quantity;
+  const discountAmt  = grossRental * (discountPct / 100);
+  const baseRental   = grossRental - discountAmt;
+  const serviceFee   = baseRental * SERVICE_FEE_PERCENT;
   const totalHirerCost = baseRental + serviceFee;
-
-  // Lister receives 90% of base rental
-  const listerPayout = baseRental * (1 - LISTER_FEE_PERCENT);
+  const listerPayout   = baseRental * (1 - LISTER_FEE_PERCENT);
 
   if (compact) {
     return (
       <div className="space-y-2 text-sm">
         <div className="flex justify-between text-brand-burgundy/70">
           <span>£{pricePerDay.toFixed(0)} × {days} day{days !== 1 ? 's' : ''}{quantity > 1 ? ` × ${quantity}` : ''}</span>
-          <span>£{baseRental.toFixed(2)}</span>
+          <span>£{grossRental.toFixed(2)}</span>
         </div>
+        {discountPct > 0 && (
+          <div className="flex justify-between text-green-600">
+            <span>{discountPct}% discount</span>
+            <span>−£{discountAmt.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-brand-burgundy/70">
           <span>Service fee</span>
           <span>£{serviceFee.toFixed(2)}</span>
@@ -52,18 +73,21 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
     <div className="bg-gray-50 rounded-xl p-4 space-y-3">
       <h4 className="font-heading text-sm text-brand-burgundy mb-3">Price breakdown</h4>
 
-      {/* Base rental */}
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-brand-burgundy/80">
-            Item rental ({days} day{days !== 1 ? 's' : ''})
-            {quantity > 1 && <span className="text-brand-burgundy/50"> × {quantity}</span>}
-          </span>
-        </div>
-        <span className="text-sm font-medium text-brand-burgundy">£{baseRental.toFixed(2)}</span>
+        <span className="text-sm text-brand-burgundy/80">
+          Item rental ({days} day{days !== 1 ? 's' : ''})
+          {quantity > 1 && <span className="text-brand-burgundy/50"> × {quantity}</span>}
+        </span>
+        <span className="text-sm font-medium text-brand-burgundy">£{grossRental.toFixed(2)}</span>
       </div>
 
-      {/* Service fee */}
+      {discountPct > 0 && (
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-green-600">{discountPct}% longer-hire discount</span>
+          <span className="text-sm font-medium text-green-600">−£{discountAmt.toFixed(2)}</span>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="text-sm text-brand-burgundy/80">Service fee (10%)</span>
@@ -79,7 +103,6 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
         <span className="text-sm font-medium text-brand-burgundy">£{serviceFee.toFixed(2)}</span>
       </div>
 
-      {/* Divider */}
       <div className="border-t border-brand-grey/30 pt-3">
         <div className="flex justify-between items-center">
           <span className="font-heading text-brand-burgundy">Total</span>
@@ -87,7 +110,6 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
         </div>
       </div>
 
-      {/* Lister payout section */}
       {showListerPayout && (
         <div className="border-t border-brand-grey/30 pt-3 mt-3">
           <div className="flex justify-between items-center bg-brand-blue/5 -mx-4 -mb-4 px-4 py-3 rounded-b-xl">

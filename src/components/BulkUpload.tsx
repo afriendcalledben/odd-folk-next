@@ -10,9 +10,9 @@ const CATEGORIES = ["Furniture", "Lighting", "Decor", "Tableware", "Textiles", "
 const CONDITIONS = ["Like New", "Good", "Fair", "Poor", "Vintage/Antique"];
 
 const TEMPLATE_CSV = [
-  'title,description,category,condition,colors,materials,quantity,price_1_day,price_3_day,price_7_day,tags',
-  '"Velvet Armchair","A stunning mid-century velvet armchair in excellent condition.",Furniture,"Like New",Purple,Fabric,1,30,75,150,velvet|armchair|vintage',
-  '"Copper Lantern Set","Set of 6 hanging copper lanterns. Perfect for outdoor events.",Lighting,Good,Copper|Gold,Metal,6,15,35,70,copper|lantern|outdoor',
+  'title,description,category,condition,colors,materials,quantity,price_1_day,discount_7_day,discount_14_day,discount_28_day,tags',
+  '"Velvet Armchair","A stunning mid-century velvet armchair in excellent condition.",Furniture,"Like New",Purple,Fabric,1,30,10,20,30,velvet|armchair|vintage',
+  '"Copper Lantern Set","Set of 6 hanging copper lanterns. Perfect for outdoor events.",Lighting,Good,Copper|Gold,Metal,6,15,0,15,0,copper|lantern|outdoor',
 ].join('\n');
 
 interface ParsedRow {
@@ -82,13 +82,17 @@ function validateRow(data: Record<string, string>): string[] {
   }
   if (!data.price_1_day) errors.push('price_1_day required');
   else if (isNaN(parseFloat(data.price_1_day)) || parseFloat(data.price_1_day) <= 0) errors.push('price_1_day must be positive');
-  if (data.price_3_day && (isNaN(parseFloat(data.price_3_day)) || parseFloat(data.price_3_day) <= 0)) errors.push('price_3_day must be positive');
-  if (data.price_7_day && (isNaN(parseFloat(data.price_7_day)) || parseFloat(data.price_7_day) <= 0)) errors.push('price_7_day must be positive');
+  ['discount_7_day', 'discount_14_day', 'discount_28_day'].forEach(key => {
+    if (data[key] !== undefined && data[key] !== '') {
+      const v = parseInt(data[key]);
+      if (isNaN(v) || v < 0 || v > 50) errors.push(`${key} must be 0–50`);
+    }
+  });
   if (data.quantity && (isNaN(parseInt(data.quantity)) || parseInt(data.quantity) < 1)) errors.push('quantity must be a positive integer');
   return errors;
 }
 
-const COLUMNS = ['title', 'description', 'category', 'condition', 'colors', 'materials', 'quantity', 'price_1_day', 'price_3_day', 'price_7_day', 'tags'];
+const COLUMNS = ['title', 'description', 'category', 'condition', 'colors', 'materials', 'quantity', 'price_1_day', 'discount_7_day', 'discount_14_day', 'discount_28_day', 'tags'];
 
 export default function BulkUpload() {
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
@@ -277,7 +281,7 @@ export default function BulkUpload() {
                     <th className="text-left px-4 py-3">Colour</th>
                     <th className="text-left px-4 py-3">Material</th>
                     <th className="text-left px-4 py-3">Qty</th>
-                    <th className="text-left px-4 py-3">1d / 3d / 7d</th>
+                    <th className="text-left px-4 py-3">Price / Discounts</th>
                     <th className="text-left px-4 py-3">Status</th>
                   </tr>
                 </thead>
@@ -292,9 +296,8 @@ export default function BulkUpload() {
                       <td className="px-4 py-3 text-brand-burgundy/70">{row.data.materials}</td>
                       <td className="px-4 py-3 text-brand-burgundy/70">{row.data.quantity || '1'}</td>
                       <td className="px-4 py-3 text-brand-burgundy/70 whitespace-nowrap">
-                        £{row.data.price_1_day || '—'}
-                        {row.data.price_3_day ? ` / £${row.data.price_3_day}` : ''}
-                        {row.data.price_7_day ? ` / £${row.data.price_7_day}` : ''}
+                        £{row.data.price_1_day || '—'}/day
+                        {(row.data.discount_7_day || row.data.discount_14_day || row.data.discount_28_day) ? ` · ${[row.data.discount_7_day, row.data.discount_14_day, row.data.discount_28_day].map((d, i) => d ? `${['7','14','28'][i]}d-${d}%` : null).filter(Boolean).join(' ')}` : ''}
                       </td>
                       <td className="px-4 py-3">
                         {row.errors.length === 0 ? (
