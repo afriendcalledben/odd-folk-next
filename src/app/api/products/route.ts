@@ -213,6 +213,7 @@ export async function POST(req: NextRequest) {
       discount7Day,
       discount14Day,
       discount28Day,
+      minRentalDays,
       images,
       locationId,
     } = body;
@@ -235,6 +236,7 @@ export async function POST(req: NextRequest) {
         discount7Day:  Math.min(50, Math.max(0, parseInt(discount7Day)  || 0)),
         discount14Day: Math.min(50, Math.max(0, parseInt(discount14Day) || 0)),
         discount28Day: Math.min(50, Math.max(0, parseInt(discount28Day) || 0)),
+        minRentalDays: Math.max(1, parseInt(minRentalDays) || 1),
         images: serializeArray(imagesArray),
         locationId,
         status: locationId ? 'ACTIVE' : 'DRAFT',

@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const user = await requireAuth(req);
 
-    const [availableResult, escrowResult, pendingResult] = await Promise.all([
+    const [availableResult, escrowResult, pendingResult, userData] = await Promise.all([
       prisma.transaction.aggregate({
         where: {
           userId: user.id,
@@ -33,12 +33,17 @@ export async function GET(req: NextRequest) {
         },
         _sum: { amount: true },
       }),
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: { walletBalance: true },
+      }),
     ]);
 
     return successResponse({
       available: Number(availableResult._sum.amount || 0),
       escrow: Number(escrowResult._sum.amount || 0),
       pending: Number(pendingResult._sum.amount || 0),
+      testBalance: userData?.walletBalance ?? 0,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error';

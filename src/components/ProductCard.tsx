@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { LockKeyhole, Star } from 'lucide-react';
+import { LockKeyhole, MessageCircle, Star } from 'lucide-react';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -20,6 +21,36 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onToggleFavorite,
   isLoggedIn = false,
 }) => {
+  const router = useRouter();
+  const [messaging, setMessaging] = useState(false);
+
+  const handleMessageClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      toast('Log in to message sellers', { icon: <LockKeyhole className="w-4 h-4" /> });
+      return;
+    }
+    setMessaging(true);
+    try {
+      const res = await fetch('/api/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ productId: product.id.toString() }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error || 'Could not open conversation');
+        return;
+      }
+      router.push(`/inbox?t=${json.data.threadId}`);
+    } catch {
+      toast.error('Could not open conversation');
+    } finally {
+      setMessaging(false);
+    }
+  };
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isLoggedIn) {
@@ -114,6 +145,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <img src={product.owner.avatarUrl} alt={product.owner.name} className="w-8 h-8 rounded-full object-cover border border-brand-white/20" />
           </div>
         </div>
+        <button
+          onClick={handleMessageClick}
+          disabled={messaging}
+          className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-brand-white/10 hover:bg-brand-white/20 text-brand-white text-sm font-body transition-colors disabled:opacity-50"
+        >
+          <MessageCircle className="w-4 h-4" />
+          {messaging ? 'Opening…' : 'Message Seller'}
+        </button>
       </div>
     </div>
   );

@@ -59,6 +59,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
   const [discount7Day,  setDiscount7Day]  = useState<number>(initialData?.discount7Day  ?? 0);
   const [discount14Day, setDiscount14Day] = useState<number>(initialData?.discount14Day ?? 0);
   const [discount28Day, setDiscount28Day] = useState<number>(initialData?.discount28Day ?? 0);
+  const [minRentalDays, setMinRentalDays] = useState<number>(initialData?.minRentalDays ?? 1);
   const [selectedLocationId, setSelectedLocationId] = useState<string>(initialData?.locationId || '');
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(initialData?.images || []);
@@ -225,6 +226,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           discount7Day,
           discount14Day,
           discount28Day,
+          minRentalDays,
           images: imageUrls,
           locationId: selectedLocationId || null,
           blockedDates: itemBlockedRanges,
@@ -243,6 +245,7 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
           discount7Day,
           discount14Day,
           discount28Day,
+          minRentalDays,
           images: imageUrls,
           locationId: selectedLocationId || undefined,
         });
@@ -639,6 +642,20 @@ const ListItem: React.FC<ListItemProps> = ({ onNavigate, initialData, productId 
                         )}
                       </div>
                     ))}
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Minimum rental period</label>
+                    <p className="font-body text-xs text-brand-burgundy/50 mb-2">Hirers must book for at least this many days</p>
+                    <select
+                      value={minRentalDays}
+                      onChange={(e) => setMinRentalDays(parseInt(e.target.value))}
+                      className="p-3 bg-brand-white border border-brand-grey rounded-xl font-body text-brand-burgundy focus:outline-none focus:ring-2 focus:ring-brand-orange/30 transition-colors"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 10, 14, 21, 28].map(d => (
+                        <option key={d} value={d}>{d === 1 ? '1 day (no minimum)' : `${d} days`}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               );

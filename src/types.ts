@@ -9,6 +9,7 @@ export interface Product {
   discount7Day?: number;
   discount14Day?: number;
   discount28Day?: number;
+  minRentalDays?: number;
   imageUrl: string;
   images?: string[];
   tags?: string[];

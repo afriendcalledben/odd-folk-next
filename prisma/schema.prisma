@@ -19,6 +19,7 @@ model User {
   bio               String?
   emailVerified     Boolean   @default(false) @map("email_verified")
   image             String?
+  walletBalance     Float     @default(200) @map("wallet_balance")
   vacationMode      Boolean   @default(false) @map("vacation_mode")
   blockedDates      String    @default("[]") @map("blocked_dates") // JSON array of dates
   stripeCustomerId  String?   @map("stripe_customer_id")
@@ -74,6 +75,7 @@ model Product {
   discount7Day  Int      @default(0) @map("discount_7_day")   // 0–50 %
   discount14Day Int      @default(0) @map("discount_14_day")  // 0–50 %
   discount28Day Int      @default(0) @map("discount_28_day")  // 0–50 %
+  minRentalDays Int      @default(1) @map("min_rental_days")
   images        String   @default("[]") // JSON array of image URLs
   blockedDates  String   @default("[]") @map("blocked_dates") // JSON array of {start,end} ranges
   locationId    String?  @map("location_id")

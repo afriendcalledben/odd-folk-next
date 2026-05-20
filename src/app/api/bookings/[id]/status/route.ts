@@ -141,30 +141,49 @@ export async function PUT(
       await prisma.thread.update({ where: { id: updatedBooking.threadId }, data: { updatedAt: new Date() } });
     }
 
-    // Create ESCROW transaction when booking is PAID
+    // Deduct from hirer wallet and create ESCROW transaction when booking is PAID
     if (newStatus === 'PAID') {
-      await prisma.transaction.create({
-        data: {
-          userId: booking.hirerId,
-          bookingId: id,
-          amount: booking.totalHirerCost,
-          type: 'ESCROW',
-          status: 'COMPLETED',
-        },
+      const hirer = await prisma.user.findUnique({
+        where: { id: booking.hirerId },
+        select: { walletBalance: true },
       });
+      if ((hirer?.walletBalance ?? 0) < booking.totalHirerCost) {
+        return errorResponse('Insufficient wallet balance', 400);
+      }
+      await Promise.all([
+        prisma.user.update({
+          where: { id: booking.hirerId },
+          data: { walletBalance: { decrement: booking.totalHirerCost } },
+        }),
+        prisma.transaction.create({
+          data: {
+            userId: booking.hirerId,
+            bookingId: id,
+            amount: booking.totalHirerCost,
+            type: 'ESCROW',
+            status: 'COMPLETED',
+          },
+        }),
+      ]);
     }
 
-    // Release escrow when booking is COMPLETED
+    // Credit lister wallet and release escrow when booking is COMPLETED
     if (newStatus === 'COMPLETED') {
-      await prisma.transaction.create({
-        data: {
-          userId: booking.listerId,
-          bookingId: id,
-          amount: booking.listerPayout,
-          type: 'ESCROW_RELEASE',
-          status: 'COMPLETED',
-        },
-      });
+      await Promise.all([
+        prisma.user.update({
+          where: { id: booking.listerId },
+          data: { walletBalance: { increment: booking.listerPayout } },
+        }),
+        prisma.transaction.create({
+          data: {
+            userId: booking.listerId,
+            bookingId: id,
+            amount: booking.listerPayout,
+            type: 'ESCROW_RELEASE',
+            status: 'COMPLETED',
+          },
+        }),
+      ]);
     }
 
     // Send email notifications

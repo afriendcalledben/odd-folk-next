@@ -100,6 +100,14 @@ export async function POST(req: NextRequest) {
       return errorResponse('End date must be after start date', 400);
     }
 
+    const minDays = product.minRentalDays ?? 1;
+    if (days < minDays) {
+      return errorResponse(
+        `This item requires a minimum rental of ${minDays} day${minDays === 1 ? '' : 's'}`,
+        400
+      );
+    }
+
     // Apply cascade discount logic
     const d7  = product.discount7Day  ?? 0;
     const d14 = product.discount14Day ?? 0;

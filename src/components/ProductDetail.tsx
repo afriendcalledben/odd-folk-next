@@ -84,6 +84,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
           toast('Please select rental dates', { icon: <CalendarDays className="w-4 h-4" /> });
           return;
       }
+      const days = Math.floor((dropoffDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const minDays = product.minRentalDays ?? 1;
+      if (days < minDays) {
+          toast.error(`This item requires a minimum rental of ${minDays} day${minDays === 1 ? '' : 's'}`);
+          return;
+      }
       try {
           const startDateStr = pickupDate.toISOString().split('T')[0];
           const endDateStr = dropoffDate.toISOString().split('T')[0];
@@ -314,6 +320,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, onNaviga
                         />
                         {unavailableDates.length > 0 && (
                             <p className="text-xs text-brand-burgundy/50 mt-2 text-center">Red dates are unavailable — select from the remaining dates.</p>
+                        )}
+                        {(product.minRentalDays ?? 1) > 1 && (
+                            <p className="text-xs text-brand-orange font-body font-medium mt-2 text-center">
+                                Minimum rental: {product.minRentalDays} days
+                            </p>
                         )}
                     </div>
 

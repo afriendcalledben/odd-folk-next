@@ -246,6 +246,7 @@ export const createProduct = async (productData: {
   discount7Day?: number;
   discount14Day?: number;
   discount28Day?: number;
+  minRentalDays?: number;
   images: string[];
   locationId?: string;
 }): Promise<Product> => {
@@ -266,6 +267,7 @@ export const updateProduct = async (id: string | number, data: {
   discount7Day?: number;
   discount14Day?: number;
   discount28Day?: number;
+  minRentalDays?: number;
   images?: string[];
   locationId?: string | null;
   status?: string;
@@ -494,7 +496,7 @@ export const uploadImages = async (files: File[]): Promise<string[]> => {
 
 // --- WALLET ---
 export const getWalletBalance = async () => {
-  return api.get<{ available: number; pending: number; escrow: number }>('/wallet/balance');
+  return api.get<{ available: number; pending: number; escrow: number; testBalance: number }>('/wallet/balance');
 };
 
 export const getTransactions = async () => {

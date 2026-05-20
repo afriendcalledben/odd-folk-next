@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Package, CalendarDays, Heart, User, MapPinned, PiggyBank, LogOut, Trash2, Timer, Star } from 'lucide-react';
 import { getUserBookings, updateBookingStatus, cancelBooking, declineBooking, fetchProducts, getLocations, getWalletBalance, getTransactions, updateUserProfile, uploadAvatar, removeAvatar, deleteProduct, createLocation, updateLocation, deleteLocation, getUserFavorites, updateVacationMode, updateBlockedDates, getBlockedDates, type BlockedRange } from '../services/api';
 import { changePassword } from '@/lib/auth-client';
@@ -73,6 +74,7 @@ function getDeadlineCountdown(responseDeadlineAt: string | undefined): { hoursRe
 }
 
 const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusChange, onDecline, onCancel, onReview, currentUserId }) => {
+    const router = useRouter();
     const countdown = isLister && booking.status === 'pending' ? getDeadlineCountdown(booking.responseDeadlineAt) : null;
     return (
     <div className="bg-white border border-brand-grey rounded-3xl p-6 shadow-xl mb-6 text-brand-blue">
@@ -138,7 +140,11 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, isLister, onStatusCh
                                 Confirm safe return
                             </button>
                             <button
-                                onClick={() => onStatusChange(booking.id, 'completed')}
+                                onClick={() => {
+                                    const params = new URLSearchParams({ product: booking.productName });
+                                    if (booking.threadId) params.set('threadId', booking.threadId);
+                                    router.push(`/damage-guide?${params.toString()}`);
+                                }}
                                 className="bg-red-50 text-red-600 border border-red-200 px-6 py-2 rounded-xl font-body font-bold hover:bg-red-100 transition-colors"
                             >
                                 Report damage to item
@@ -286,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
 
     const [locations, setLocations] = useState<any[]>([]);
     const [editingLocation, setEditingLocation] = useState<any | null>(null);
-    const [walletBalance, setWalletBalance] = useState({ available: 0, pending: 0, escrow: 0 });
+    const [walletBalance, setWalletBalance] = useState({ available: 0, pending: 0, escrow: 0, testBalance: 200 });
     const [transactions, setTransactions] = useState<any[]>([]);
 
     // Profile form state
@@ -478,7 +484,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
                     getUserBookings(currentUserId),
                     fetchProducts({ ownerId: currentUserId }),
                     getLocations().catch(() => []),
-                    getWalletBalance().catch(() => ({ available: 0, pending: 0, escrow: 0 })),
+                    getWalletBalance().catch(() => ({ available: 0, pending: 0, escrow: 0, testBalance: 200 })),
                     getTransactions().catch(() => []),
                 ]);
                 setBookings(bookingsData);
@@ -1028,6 +1034,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, activeTab = 'listings', act
             case 'wallet':
                 return (
                     <div className="space-y-8">
+                        {/* Test Balance */}
+                        <div className="bg-brand-orange text-white rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20 group-hover:scale-150 transition-transform duration-700" />
+                            <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-3">Test Balance</p>
+                            <h3 className="font-heading text-6xl">£{walletBalance.testBalance.toFixed(2)}</h3>
+                            <p className="text-sm text-white/60 mt-4">Your allocated test budget — used when hiring, topped up when you receive a payout.</p>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="bg-brand-blue text-white rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
