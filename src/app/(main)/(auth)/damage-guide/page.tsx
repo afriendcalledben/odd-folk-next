@@ -1,10 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MessageCircle, Phone, ChevronLeft, AlertTriangle } from 'lucide-react';
 
-export default function DamageGuidePage() {
+function DamageGuideContent() {
   const searchParams = useSearchParams();
   const threadId = searchParams.get('threadId');
   const product = searchParams.get('product');
@@ -107,5 +108,13 @@ export default function DamageGuidePage() {
 
       </div>
     </div>
+  );
+}
+
+export default function DamageGuidePage() {
+  return (
+    <Suspense>
+      <DamageGuideContent />
+    </Suspense>
   );
 }
