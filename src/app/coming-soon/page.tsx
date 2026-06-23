@@ -54,7 +54,7 @@ export default function ComingSoonPage() {
         </h1>
 
         <p className="font-body text-white/80 text-sm sm:text-base leading-relaxed mb-8 max-w-sm">
-          We are building something amazing. Subscribe to our mailing list to get notified when we launch.
+          Peer-to-peer Prop Hire. Subscribe to our mailing list to get notified when we launch.
         </p>
 
         {subscribed ? (

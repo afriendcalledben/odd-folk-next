@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { fetchProducts } from '@/services/api';
+import { fetchProductsPaged } from '@/services/api';
 import type { Product } from '@/types';
 import ProductGrid from '@/components/ProductGrid';
 import SearchFilters, { FilterState } from '@/components/SearchFilters';
-import SearchTopBar from '@/components/SearchTopBar';
+import SearchBar, { type SearchFilters as BarFilters } from '@/components/SearchBar';
 import { useAuth } from '@/context/AuthContext';
 
 function filtersToSearchParams(filters: FilterState): URLSearchParams {
@@ -45,6 +45,37 @@ function searchParamsToFilters(params: URLSearchParams): FilterState {
   };
 }
 
+const PAGE_SIZE = 12;
+
+// Build API params for a given filter state and page. API takes a single category/condition;
+// multi-select is narrowed client-side via clientFilter below.
+function buildParams(f: FilterState, page: number) {
+  return {
+    search: f.search || undefined,
+    category: f.categories.length === 1 ? f.categories[0] : undefined,
+    minPrice: f.minPrice ? parseFloat(f.minPrice) : undefined,
+    maxPrice: f.maxPrice ? parseFloat(f.maxPrice) : undefined,
+    condition: f.conditions.length === 1 ? f.conditions[0] : undefined,
+    colors: f.colors.length ? f.colors : undefined,
+    materials: f.materials.length ? f.materials : undefined,
+    lat: f.lat ?? undefined,
+    lng: f.lng ?? undefined,
+    distance: f.lat !== null ? (f.distance ?? 3) : undefined,
+    startDate: f.startDate || undefined,
+    endDate: f.endDate || undefined,
+    page,
+    pageSize: PAGE_SIZE,
+  };
+}
+
+function clientFilter(items: Product[], f: FilterState): Product[] {
+  return items.filter(p => {
+    if (f.categories.length > 1 && !f.categories.includes(p.category)) return false;
+    if (f.conditions.length > 1 && !f.conditions.includes(p.condition)) return false;
+    return true;
+  });
+}
+
 function SearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,37 +84,44 @@ function SearchPage() {
   const [filters, setFilters] = useState<FilterState>(() => searchParamsToFilters(searchParams));
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const runSearch = useCallback(async (f: FilterState) => {
     setLoading(true);
-    // Build multi-value params — API takes first category for now; extend as needed
-    const params = {
-      search: f.search || undefined,
-      category: f.categories.length === 1 ? f.categories[0] : undefined,
-      minPrice: f.minPrice ? parseFloat(f.minPrice) : undefined,
-      maxPrice: f.maxPrice ? parseFloat(f.maxPrice) : undefined,
-      condition: f.conditions.length === 1 ? f.conditions[0] : undefined,
-      colors: f.colors.length ? f.colors : undefined,
-      materials: f.materials.length ? f.materials : undefined,
-      lat: f.lat ?? undefined,
-      lng: f.lng ?? undefined,
-      distance: f.lat !== null ? (f.distance ?? 3) : undefined,
-      startDate: f.startDate || undefined,
-      endDate: f.endDate || undefined,
-    };
-    const results = await fetchProducts(params);
-
-    // Client-side multi-value filtering for categories/conditions (API supports single values)
-    const filtered = results.filter(p => {
-      if (f.categories.length > 1 && !f.categories.includes(p.category)) return false;
-      if (f.conditions.length > 1 && !f.conditions.includes(p.condition)) return false;
-      return true;
-    });
-
-    setProducts(filtered);
+    setPage(1);
+    const { items, total, totalPages } = await fetchProductsPaged(buildParams(f, 1));
+    setProducts(clientFilter(items, f));
+    setTotal(total);
+    setTotalPages(totalPages);
     setLoading(false);
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (loading || loadingMore || page >= totalPages) return;
+    const next = page + 1;
+    setLoadingMore(true);
+    const { items } = await fetchProductsPaged(buildParams(filters, next));
+    setProducts(prev => [...prev, ...clientFilter(items, filters)]);
+    setPage(next);
+    setLoadingMore(false);
+  }, [loading, loadingMore, page, totalPages, filters]);
+
+  // Auto-load the next page when the sentinel scrolls into view
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) loadMore(); },
+      { rootMargin: '400px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loadMore]);
 
   // Sync filters → URL and trigger search (debounced for text inputs)
   const handleFilterChange = useCallback((newFilters: FilterState) => {
@@ -93,6 +131,20 @@ function SearchPage() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => runSearch(newFilters), 400);
   }, [router, runSearch]);
+
+  // Map the SearchBar output into FilterState, preserving sidebar selections
+  const handleBarSearch = useCallback((sf: BarFilters) => {
+    handleFilterChange({
+      ...filters,
+      search: sf.search,
+      locationQuery: sf.location,
+      lat: sf.lat ?? null,
+      lng: sf.lng ?? null,
+      distance: sf.distance ?? 3,
+      startDate: sf.startDate,
+      endDate: sf.endDate,
+    });
+  }, [filters, handleFilterChange]);
 
   // Initial search on mount
   useEffect(() => {
@@ -113,12 +165,27 @@ function SearchPage() {
         <div className="mb-4">
           <h1 className="font-heading text-3xl text-brand-blue mb-1">Browse listings</h1>
           <p className="font-body text-brand-burgundy/60 text-sm">
-            {loading ? 'Searching…' : `${products.length} listing${products.length !== 1 ? 's' : ''} found`}
+            {loading ? 'Searching…' : `${total} listing${total !== 1 ? 's' : ''} found`}
             {activeCount > 0 && ` · ${activeCount} filter${activeCount !== 1 ? 's' : ''} active`}
           </p>
         </div>
 
-        <SearchTopBar filters={filters} onChange={handleFilterChange} />
+        <div className="mb-6">
+          <SearchBar
+            widthClass="w-full"
+            datePickerPosition="bottom"
+            onSearch={handleBarSearch}
+            initialFilters={{
+              search: filters.search,
+              location: filters.locationQuery,
+              lat: filters.lat ?? undefined,
+              lng: filters.lng ?? undefined,
+              distance: filters.distance ?? 3,
+              startDate: filters.startDate,
+              endDate: filters.endDate,
+            }}
+          />
+        </div>
 
         <div className="flex gap-8 items-start">
           <SearchFilters filters={filters} onChange={handleFilterChange} />
@@ -136,13 +203,30 @@ function SearchPage() {
                 <p className="font-body text-brand-burgundy/60">Try adjusting your filters or broadening your search.</p>
               </div>
             ) : (
-              <ProductGrid
-                products={products}
-                onSelectProduct={p => router.push(`/products/${p.id}`)}
-                favoriteIds={favoriteIds}
-                onToggleFavorite={id => toggleFavorite(id)}
-                isLoggedIn={isLoggedIn}
-              />
+              <>
+                <ProductGrid
+                  products={products}
+                  onSelectProduct={p => router.push(`/products/${p.id}`)}
+                  favoriteIds={favoriteIds}
+                  onToggleFavorite={id => toggleFavorite(id)}
+                  isLoggedIn={isLoggedIn}
+                />
+                {/* Load-more sentinel — auto-loads when scrolled near, with a manual fallback */}
+                <div ref={sentinelRef} className="mt-10 flex justify-center">
+                  {loadingMore ? (
+                    <div className="inline-block w-6 h-6 border-2 border-brand-orange border-t-transparent rounded-full animate-spin" />
+                  ) : page < totalPages ? (
+                    <button
+                      onClick={loadMore}
+                      className="bg-brand-orange text-white font-heading rounded-full px-8 py-3 hover:brightness-90 transition-all"
+                    >
+                      Load more
+                    </button>
+                  ) : (
+                    <p className="font-body text-sm text-brand-burgundy/40">You&apos;ve reached the end</p>
+                  )}
+                </div>
+              </>
             )}
           </main>
         </div>

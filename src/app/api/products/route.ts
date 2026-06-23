@@ -176,9 +176,17 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Paginate the distance-filtered results
-    const total = filtered.length;
-    const items = filterByLocation ? filtered.slice((page - 1) * pageSize, page * pageSize) : filtered;
+    // When we fetched all rows for JS-side filtering (location/dates), paginate that
+    // result set here. Otherwise the DB already applied skip/take, so just count the total.
+    let total: number;
+    let items;
+    if (fetchAll) {
+      total = filtered.length;
+      items = filtered.slice((page - 1) * pageSize, page * pageSize);
+    } else {
+      total = await prisma.product.count({ where });
+      items = filtered;
+    }
 
     return successResponse({
       items,

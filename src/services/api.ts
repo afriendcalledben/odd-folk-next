@@ -177,31 +177,62 @@ export interface SearchParams {
   ownerId?: string;
   startDate?: string; // YYYY-MM-DD
   endDate?: string;   // YYYY-MM-DD
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PagedProducts {
+  items: Product[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+function buildProductQuery(params?: SearchParams): string {
+  const queryParts: string[] = [];
+  if (params?.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
+  if (params?.category && params.category !== 'All') queryParts.push(`category=${encodeURIComponent(params.category)}`);
+  if (params?.minPrice) queryParts.push(`minPrice=${params.minPrice}`);
+  if (params?.maxPrice) queryParts.push(`maxPrice=${params.maxPrice}`);
+  if (params?.condition) queryParts.push(`condition=${encodeURIComponent(params.condition)}`);
+  if (params?.colors?.length) queryParts.push(`colors=${encodeURIComponent(params.colors.join(','))}`);
+  if (params?.materials?.length) queryParts.push(`materials=${encodeURIComponent(params.materials.join(','))}`);
+  if (params?.lat !== undefined) queryParts.push(`lat=${params.lat}`);
+  if (params?.lng !== undefined) queryParts.push(`lng=${params.lng}`);
+  if (params?.distance !== undefined) queryParts.push(`distance=${params.distance}`);
+  if (params?.ownerId) queryParts.push(`ownerId=${encodeURIComponent(params.ownerId)}`);
+  if (params?.startDate) queryParts.push(`startDate=${params.startDate}`);
+  if (params?.endDate) queryParts.push(`endDate=${params.endDate}`);
+  if (params?.page !== undefined) queryParts.push(`page=${params.page}`);
+  if (params?.pageSize !== undefined) queryParts.push(`pageSize=${params.pageSize}`);
+  return queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
 }
 
 export const fetchProducts = async (params?: SearchParams): Promise<Product[]> => {
   try {
-    const queryParts: string[] = [];
-    if (params?.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
-    if (params?.category && params.category !== 'All') queryParts.push(`category=${encodeURIComponent(params.category)}`);
-    if (params?.minPrice) queryParts.push(`minPrice=${params.minPrice}`);
-    if (params?.maxPrice) queryParts.push(`maxPrice=${params.maxPrice}`);
-    if (params?.condition) queryParts.push(`condition=${encodeURIComponent(params.condition)}`);
-    if (params?.colors?.length) queryParts.push(`colors=${encodeURIComponent(params.colors.join(','))}`);
-    if (params?.materials?.length) queryParts.push(`materials=${encodeURIComponent(params.materials.join(','))}`);
-    if (params?.lat !== undefined) queryParts.push(`lat=${params.lat}`);
-    if (params?.lng !== undefined) queryParts.push(`lng=${params.lng}`);
-    if (params?.distance !== undefined) queryParts.push(`distance=${params.distance}`);
-    if (params?.ownerId) queryParts.push(`ownerId=${encodeURIComponent(params.ownerId)}`);
-    if (params?.startDate) queryParts.push(`startDate=${params.startDate}`);
-    if (params?.endDate) queryParts.push(`endDate=${params.endDate}`);
-
-    const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
-    const result = await api.get<{ items: unknown[] }>(`/products${queryString}`);
+    const result = await api.get<{ items: unknown[] }>(`/products${buildProductQuery(params)}`);
     return (result.items || []).map(toFrontendProduct);
   } catch (error) {
     console.error('Failed to fetch products:', error);
     return [];
+  }
+};
+
+// Like fetchProducts but surfaces pagination metadata for load-more / infinite scroll.
+export const fetchProductsPaged = async (params?: SearchParams): Promise<PagedProducts> => {
+  try {
+    const result = await api.get<{ items: unknown[]; total: number; page: number; totalPages: number }>(
+      `/products${buildProductQuery(params)}`
+    );
+    return {
+      items: (result.items || []).map(toFrontendProduct),
+      total: result.total ?? 0,
+      page: result.page ?? 1,
+      totalPages: result.totalPages ?? 1,
+    };
+  } catch (error) {
+    console.error('Failed to fetch products:', error);
+    return { items: [], total: 0, page: 1, totalPages: 1 };
   }
 };
 
